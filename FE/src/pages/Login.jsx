@@ -1,7 +1,14 @@
 import React from "react";
 import "./Login.css";
 
-const Login = () => {
+const Login = ({ onLogin }) => {
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    if (onLogin) {
+      onLogin();
+    }
+  };
+
   return (
     <div className="login-root">
       <div className="login-background" />
@@ -15,7 +22,7 @@ const Login = () => {
           <h1 className="login-title">Fleet Management System</h1>
           <p className="login-subtitle">Hệ thống quản lý đội xe</p>
 
-          <form className="login-form">
+          <form className="login-form" onSubmit={handleSubmit}>
             <label className="login-label" htmlFor="email">
               Email
             </label>
