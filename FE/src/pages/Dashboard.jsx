@@ -1,7 +1,10 @@
 import React from "react";
 import "./Dashboard.css";
+import { Outlet, useNavigate } from "react-router-dom";
+
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   return (
     <div className="dashboard-root">
       <aside className="dashboard-sidebar">
@@ -14,7 +17,7 @@ const Dashboard = () => {
         </div>
 
         <nav className="dashboard-nav">
-          <button className="dashboard-nav-item is-active">
+          <button className="dashboard-nav-item is-active" onClick={() => navigate("/")}>
             <span className="dashboard-nav-icon">🏠</span>
             <span className="dashboard-nav-label">Trang chủ</span>
           </button>
@@ -46,7 +49,7 @@ const Dashboard = () => {
             <span className="dashboard-nav-icon">📊</span>
             <span className="dashboard-nav-label">Báo cáo &amp; Thống kê</span>
           </button>
-          <button className="dashboard-nav-item">
+          <button className="dashboard-nav-item" onClick={() => navigate("/account")}>
             <span className="dashboard-nav-icon">⚙️</span>
             <span className="dashboard-nav-label">Tài khoản</span>
           </button>
@@ -68,7 +71,9 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      <main className="dashboard-main">{/* right side intentionally empty */}</main>
+      <main className="dashboard-main">
+        <Outlet />{/* right side intentionally empty */}
+      </main>
     </div>
   );
 };

@@ -150,7 +150,7 @@
 
 .dashboard-main {
   flex: 1;
-  background-color: #0f172a;
+  background-color: whitesmoke;
 }
 
 @media (max-width: 768px) {
