@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Dashboard.css";
-import { Outlet, useNavigate } from "react-router-dom";
-
+import ReportsDashboard from "./ReportsDashboard"; // 👈 import màn báo cáo
+import Account from "./Account"; // 👈 import Account
 
 const Dashboard = () => {
-  const navigate = useNavigate();
+  const [activeMenu, setActiveMenu] = useState("home"); // 👈 state chọn menu
+
+  const getNavItemClass = (key) =>
+    "dashboard-nav-item" + (activeMenu === key ? " is-active" : "");
+
   return (
     <div className="dashboard-root">
       <aside className="dashboard-sidebar">
@@ -17,39 +21,74 @@ const Dashboard = () => {
         </div>
 
         <nav className="dashboard-nav">
-          <button className="dashboard-nav-item is-active" onClick={() => navigate("/")}>
+          <button
+            className={getNavItemClass("home")}
+            onClick={() => setActiveMenu("home")}
+          >
             <span className="dashboard-nav-icon">🏠</span>
             <span className="dashboard-nav-label">Trang chủ</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("vehicles")}
+            onClick={() => setActiveMenu("vehicles")}
+          >
             <span className="dashboard-nav-icon">🚛</span>
             <span className="dashboard-nav-label">Quản lý phương tiện</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("drivers")}
+            onClick={() => setActiveMenu("drivers")}
+          >
             <span className="dashboard-nav-icon">👨‍✈️</span>
             <span className="dashboard-nav-label">Quản lý tài xế</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("trips")}
+            onClick={() => setActiveMenu("trips")}
+          >
             <span className="dashboard-nav-icon">🧭</span>
             <span className="dashboard-nav-label">Quản lý chuyến đi</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("fuel")}
+            onClick={() => setActiveMenu("fuel")}
+          >
             <span className="dashboard-nav-icon">⛽</span>
             <span className="dashboard-nav-label">Quản lý nhiên liệu</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("maintenance")}
+            onClick={() => setActiveMenu("maintenance")}
+          >
             <span className="dashboard-nav-icon">🛠️</span>
             <span className="dashboard-nav-label">Bảo dưỡng</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("gps")}
+            onClick={() => setActiveMenu("gps")}
+          >
             <span className="dashboard-nav-icon">📡</span>
             <span className="dashboard-nav-label">GPS / Tracking</span>
           </button>
-          <button className="dashboard-nav-item">
+
+          <button
+            className={getNavItemClass("reports")}
+            onClick={() => setActiveMenu("reports")}
+          >
             <span className="dashboard-nav-icon">📊</span>
             <span className="dashboard-nav-label">Báo cáo &amp; Thống kê</span>
           </button>
-          <button className="dashboard-nav-item" onClick={() => navigate("/account")}>
+
+          <button
+            className={getNavItemClass("account")}
+            onClick={() => setActiveMenu("account")} 
+          >
             <span className="dashboard-nav-icon">⚙️</span>
             <span className="dashboard-nav-label">Tài khoản</span>
           </button>
@@ -71,13 +110,30 @@ const Dashboard = () => {
         </div>
       </aside>
 
-      <main className="dashboard-main">
-        <Outlet />{/* right side intentionally empty */}
+       <main className="dashboard-main">
+        {activeMenu === "reports" ? (
+          <ReportsDashboard />                     // 👈 màn báo cáo
+        ) : activeMenu === "account" ? (
+          <Account />                              // 👈 màn account thật
+        ) : (
+          <div className="dashboard-empty-state">  {/* các màn khác tạm */}
+            {activeMenu === "home" && (
+              <>
+                <h2>Trang chủ</h2>
+                <p>Chọn menu ở sidebar để xem nội dung.</p>
+              </>
+            )}
+            {activeMenu === "vehicles" && <h2>Quản lý phương tiện</h2>}
+            {activeMenu === "drivers" && <h2>Quản lý tài xế</h2>}
+            {activeMenu === "trips" && <h2>Quản lý chuyến đi</h2>}
+            {activeMenu === "fuel" && <h2>Quản lý nhiên liệu</h2>}
+            {activeMenu === "maintenance" && <h2>Bảo dưỡng</h2>}
+            {activeMenu === "gps" && <h2>GPS / Tracking</h2>}
+          </div>
+        )}
       </main>
     </div>
   );
 };
 
 export default Dashboard;
-
-
