@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import "./Dashboard.css";
 import ReportsDashboard from "./ReportsDashboard"; // 👈 import màn báo cáo
 import Account from "./Account"; // 👈 import Account
+import Home from "./Home";   // 👈 file Home.jsx bạn vừa tạo
+import Vehicles from "./Vehicles";
+import Drivers from "./Drivers";
 
 const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState("home"); // 👈 state chọn menu
@@ -87,7 +90,7 @@ const Dashboard = () => {
 
           <button
             className={getNavItemClass("account")}
-            onClick={() => setActiveMenu("account")} 
+            onClick={() => setActiveMenu("account")}
           >
             <span className="dashboard-nav-icon">⚙️</span>
             <span className="dashboard-nav-label">Tài khoản</span>
@@ -110,19 +113,24 @@ const Dashboard = () => {
         </div>
       </aside>
 
-       <main className="dashboard-main">
+      <main className="dashboard-main">
         {activeMenu === "reports" ? (
-          <ReportsDashboard />                     // 👈 màn báo cáo
+          <ReportsDashboard />
+
         ) : activeMenu === "account" ? (
-          <Account />                              // 👈 màn account thật
+          <Account />
+
+        ) : activeMenu === "home" ? (
+          <Home />                // 👈 HIỂN THỊ TRANG HOME THẬT Ở ĐÂY
+
+        ) : activeMenu === "vehicles" ? (
+          <Vehicles />                // 👈 HIỂN THỊ TRANG Vehicles
+
+        ) : activeMenu === "drivers" ? (
+          <Drivers />                // 👈 HIỂN THỊ TRANG Vehicles
+
         ) : (
-          <div className="dashboard-empty-state">  {/* các màn khác tạm */}
-            {activeMenu === "home" && (
-              <>
-                <h2>Trang chủ</h2>
-                <p>Chọn menu ở sidebar để xem nội dung.</p>
-              </>
-            )}
+          <div className="dashboard-empty-state">
             {activeMenu === "vehicles" && <h2>Quản lý phương tiện</h2>}
             {activeMenu === "drivers" && <h2>Quản lý tài xế</h2>}
             {activeMenu === "trips" && <h2>Quản lý chuyến đi</h2>}

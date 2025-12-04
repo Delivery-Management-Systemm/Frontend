@@ -1,0 +1,218 @@
+.vehicles-container {
+    padding: 25px;
+}
+
+.vehicles-title {
+    font-size: 28px;
+    font-weight: 700;
+}
+
+.vehicles-subtitle {
+    color: #666;
+    margin-bottom: 20px;
+}
+
+/* ============= STAT CARDS ============= */
+
+.vehicles-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 25px;
+}
+
+.vehicles-stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e5e7eb;
+}
+
+.vehicles-stat-label {
+    color: #777;
+}
+
+.vehicles-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+}
+
+.vehicles-green { color: #3cbf3c; }
+.vehicles-orange { color: #ffa133; }
+.vehicles-red { color: #e54343; }
+
+/* ============= SEARCH & FILTER ============= */
+
+.vehicles-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.vehicles-search-box {
+    flex: 1;
+    background: white;
+    border: 1px solid #dcdfe6;
+    border-radius: 10px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vehicles-search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+}
+
+.vehicles-search-icon {
+    color: #888;
+}
+
+/* Modern Add Button */
+.vehicles-add-btn {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    cursor: pointer;
+}
+
+.vehicles-add-btn:hover {
+    background: #1d4ed8;
+}
+
+/* ============= CUSTOM FILTER DROPDOWN (NO DEFAULT SELECT) ============= */
+
+.vehicles-filter-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    padding: 10px 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    width: 180px;
+}
+
+.vehicles-filter-box:hover {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Custom arrow */
+.vehicles-filter-arrow {
+    margin-left: auto;
+    width: 7px;
+    height: 7px;
+    border-right: 2px solid #555;
+    border-bottom: 2px solid #555;
+    transform: rotate(45deg);
+}
+
+/* Dropdown menu */
+.vehicles-filter-menu {
+    position: absolute;
+    top: 115%;
+    left: 0;
+    width: 100%;
+    background: white;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 6px 0;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+    z-index: 20;
+}
+
+.vehicles-filter-menu div {
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.vehicles-filter-menu div:hover {
+    background: #f3f4f6;
+}
+
+/* ============= TABLE ============= */
+
+.vehicles-table {
+    width: 100%;
+    background: white;
+    border-radius: 12px;
+    border-collapse: collapse;
+    overflow: hidden;
+}
+
+.vehicles-table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 14px;
+    font-weight: 600;
+    color: #555;
+}
+
+.vehicles-table td {
+    padding: 14px;
+    border-top: 1px solid #ececec;
+}
+
+/* ============= STATUS BADGES ============= */
+
+.vehicles-status {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.vehicles-status-active {
+    background: #d4fbe2;
+    color: #2e9d57;
+}
+
+.vehicles-status-maintenance {
+    background: #ffe6c9;
+    color: #d97a00;
+}
+
+.vehicles-status-inactive {
+    background: #e5e7eb;
+    color: #555;
+}
+
+/* ============= ACTION ICONS ============= */
+
+.vehicles-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.vehicles-edit {
+    color: #1d4ed8;
+    cursor: pointer;
+}
+
+.vehicles-edit:hover {
+    color: #153eae;
+}
+
+.vehicles-delete {
+    color: #e11d48;
+    cursor: pointer;
+}
+
+.vehicles-delete:hover {
+    color: #be123c;
+}

@@ -1,8 +1,12 @@
 import React, { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+
 import LoginPage from "./pages/Login.jsx";
 import DashboardPage from "./pages/Dashboard.jsx";
 import Account from "./pages/Account.jsx";
+import Home from "./pages/Home.jsx";   // 👈 IMPORT Home.jsx
+import Vehicles from "./pages/Vehicles.jsx";
+import Drivers from "./pages/Drivers.jsx";
 import "./App.css";
 
 function App() {
@@ -11,17 +15,22 @@ function App() {
   if (!isLoggedIn) {
     return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
   }
-  
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* Dashboard là layout chính */}
+        {/* Dashboard layout */}
         <Route path="/" element={<DashboardPage />}>
-          {/* Trang mặc định bên trong Dashboard */}
-          <Route index element={<div>Chọn mục ở menu</div>} />
 
-          {/* Trang Account */}
+          {/* 👈 Trang chủ (Home) */}
+          <Route index element={<Home />} />
+
+          {/* Vehicles page */}
+          <Route path="vehicles" element={<Vehicles />} />
+
+          {/* Account page */}
           <Route path="account" element={<Account />} />
+
         </Route>
       </Routes>
     </BrowserRouter>
@@ -29,5 +38,3 @@ function App() {
 }
 
 export default App;
-
-
