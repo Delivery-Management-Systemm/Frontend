@@ -1,7 +1,8 @@
 .dashboard-root {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #0f172a;
+  overflow: hidden;
 }
 
 .dashboard-sidebar {
@@ -11,6 +12,10 @@
   display: flex;
   flex-direction: column;
   padding: 20px 16px;
+  height: 100vh;         /* sidebar luôn đúng 1 màn hình */
+  position: sticky;      /* dính */
+  top: 0;                /* dính vào top */
+  overflow-y: auto;      /* nếu menu quá dài thì tự scroll riêng */
 }
 
 .dashboard-logo {
