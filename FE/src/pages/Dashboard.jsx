@@ -137,6 +137,8 @@ const Dashboard = () => {
             {activeMenu === "fuel" && <h2>Quản lý nhiên liệu</h2>}
             {activeMenu === "maintenance" && <h2>Bảo dưỡng</h2>}
             {activeMenu === "gps" && <h2>GPS / Tracking</h2>}
+            {activeMenu === "reports" && <h2>Báo cáo và thống kê</h2>}
+            {activeMenu === "account" && <h2>Quản lý tài khoản</h2>}
           </div>
         )}
       </main>
