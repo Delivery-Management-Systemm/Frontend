@@ -4,9 +4,13 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LoginPage from "./pages/Login.jsx";
 import DashboardPage from "./pages/Dashboard.jsx";
 import Account from "./pages/Account.jsx";
-import Home from "./pages/Home.jsx";   // 👈 IMPORT Home.jsx
+import Home from "./pages/Home.jsx";
 import Vehicles from "./pages/Vehicles.jsx";
 import Drivers from "./pages/Drivers.jsx";
+import TripManagement from "./pages/TripManagement.jsx";
+import FuelManagement from "./pages/FuelManagement.jsx";
+import Maintenance from "./pages/Maintenance.jsx";
+import GPSTracking from "./pages/GPSTracking.jsx";
 import "./App.css";
 
 function App() {
@@ -21,16 +25,29 @@ function App() {
       <Routes>
         {/* Dashboard layout */}
         <Route path="/" element={<DashboardPage />}>
-
-          {/* 👈 Trang chủ (Home) */}
+          {/* Trang chủ (Home) */}
           <Route index element={<Home />} />
 
           {/* Vehicles page */}
           <Route path="vehicles" element={<Vehicles />} />
 
+          {/* Drivers page */}
+          <Route path="drivers" element={<Drivers />} />
+
+          {/* Trip Management */}
+          <Route path="trips" element={<TripManagement />} />
+
+          {/* Fuel Management */}
+          <Route path="fuel" element={<FuelManagement />} />
+
+          {/* Maintenance */}
+          <Route path="maintenance" element={<Maintenance />} />
+
+          {/* GPS Tracking */}
+          <Route path="gps" element={<GPSTracking />} />
+
           {/* Account page */}
           <Route path="account" element={<Account />} />
-
         </Route>
       </Routes>
     </BrowserRouter>

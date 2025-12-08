@@ -1,10 +1,14 @@
 import React, { useState } from "react";
 import "./Dashboard.css";
-import ReportsDashboard from "./ReportsDashboard"; // 👈 import màn báo cáo
-import Account from "./Account"; // 👈 import Account
-import Home from "./Home";   // 👈 file Home.jsx bạn vừa tạo
+import ReportsDashboard from "./ReportsDashboard";
+import Account from "./Account";
+import Home from "./Home";
 import Vehicles from "./Vehicles";
 import Drivers from "./Drivers";
+import TripManagement from "./TripManagement";
+import FuelManagement from "./FuelManagement";
+import Maintenance from "./Maintenance";
+import GPSTracking from "./GPSTracking";
 
 const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState("home"); // 👈 state chọn menu
@@ -114,31 +118,27 @@ const Dashboard = () => {
       </aside>
 
       <main className="dashboard-main">
-        {activeMenu === "reports" ? (
+        {activeMenu === "home" ? (
+          <Home />
+        ) : activeMenu === "vehicles" ? (
+          <Vehicles />
+        ) : activeMenu === "drivers" ? (
+          <Drivers />
+        ) : activeMenu === "trips" ? (
+          <TripManagement />
+        ) : activeMenu === "fuel" ? (
+          <FuelManagement />
+        ) : activeMenu === "maintenance" ? (
+          <Maintenance />
+        ) : activeMenu === "gps" ? (
+          <GPSTracking />
+        ) : activeMenu === "reports" ? (
           <ReportsDashboard />
-
         ) : activeMenu === "account" ? (
           <Account />
-
-        ) : activeMenu === "home" ? (
-          <Home />                // 👈 HIỂN THỊ TRANG HOME THẬT Ở ĐÂY
-
-        ) : activeMenu === "vehicles" ? (
-          <Vehicles />                // 👈 HIỂN THỊ TRANG Vehicles
-
-        ) : activeMenu === "drivers" ? (
-          <Drivers />                // 👈 HIỂN THỊ TRANG Vehicles
-
         ) : (
           <div className="dashboard-empty-state">
-            {activeMenu === "vehicles" && <h2>Quản lý phương tiện</h2>}
-            {activeMenu === "drivers" && <h2>Quản lý tài xế</h2>}
-            {activeMenu === "trips" && <h2>Quản lý chuyến đi</h2>}
-            {activeMenu === "fuel" && <h2>Quản lý nhiên liệu</h2>}
-            {activeMenu === "maintenance" && <h2>Bảo dưỡng</h2>}
-            {activeMenu === "gps" && <h2>GPS / Tracking</h2>}
-            {activeMenu === "reports" && <h2>Báo cáo và thống kê</h2>}
-            {activeMenu === "account" && <h2>Quản lý tài khoản</h2>}
+            <h2>Chọn menu để bắt đầu</h2>
           </div>
         )}
       </main>
