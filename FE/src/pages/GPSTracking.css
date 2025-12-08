@@ -1,0 +1,310 @@
+.gps-tracking {
+  padding: 24px;
+  background: #f5f6fa;
+  min-height: 100vh;
+}
+
+.gps-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.map-section {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.map-container-wrapper {
+  height: 600px;
+  position: relative;
+}
+
+.map-placeholder {
+  height: 600px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  position: relative;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  border-radius: 12px;
+}
+
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  z-index: 10;
+}
+
+.map-title {
+  background: white;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-title h3 {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  color: #1a1d1f;
+}
+
+.map-subtitle {
+  margin: 0;
+  font-size: 13px;
+  color: #6f767e;
+}
+
+.map-legend {
+  background: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.legend-dot.moving {
+  background: #4caf50;
+}
+.legend-dot.idle {
+  background: #ff9800;
+}
+.legend-dot.alert {
+  background: #f44336;
+}
+.legend-dot.geofencing {
+  background: #9c27b0;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alerts-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.alerts-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.alerts-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1d1f;
+}
+
+.alert-item {
+  padding: 12px;
+  background: #fff3e0;
+  border-left: 3px solid #ff9800;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.alert-item:last-child {
+  margin-bottom: 0;
+}
+
+.alert-vehicle {
+  font-weight: 600;
+  color: #1a1d1f;
+  margin-bottom: 4px;
+}
+
+.alert-message {
+  font-size: 13px;
+  color: #6f767e;
+  margin-bottom: 4px;
+}
+
+.alert-time {
+  font-size: 12px;
+  color: #9a9fa5;
+}
+
+.vehicles-list-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.vehicles-list-header {
+  padding: 20px;
+  border-bottom: 1px solid #efefef;
+}
+
+.vehicles-list-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1a1d1f;
+}
+
+.vehicles-list-content {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.vehicle-item {
+  padding: 16px 20px;
+  border-bottom: 1px solid #efefef;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.vehicle-item:hover {
+  background: #f9fafb;
+}
+
+.vehicle-item:last-child {
+  border-bottom: none;
+}
+
+.vehicle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.vehicle-id {
+  font-weight: 600;
+  color: #2a85ff;
+  font-size: 14px;
+}
+
+.vehicle-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.vehicle-status-dot.moving {
+  background: #4caf50;
+}
+.vehicle-status-dot.idle {
+  background: #ff9800;
+}
+
+.vehicle-driver {
+  font-size: 13px;
+  color: #1a1d1f;
+  margin-bottom: 4px;
+}
+
+.vehicle-info {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #6f767e;
+}
+
+.vehicle-info-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fuel-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fuel-bar {
+  width: 40px;
+  height: 4px;
+  background: #efefef;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.fuel-fill {
+  height: 100%;
+  background: #4caf50;
+  transition: width 0.3s;
+}
+
+.fuel-fill.low {
+  background: #f44336;
+}
+
+.fuel-fill.medium {
+  background: #ff9800;
+}
+
+@media (max-width: 1200px) {
+  .gps-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar-section {
+    flex-direction: row;
+  }
+
+  .alerts-card,
+  .vehicles-list-card {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-section {
+    flex-direction: column;
+  }
+
+  .map-overlay {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
