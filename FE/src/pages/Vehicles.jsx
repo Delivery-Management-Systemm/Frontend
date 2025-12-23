@@ -1,228 +1,328 @@
-import React, { useState } from "react";
-import {
-    FaPlus,
-    FaSearch,
-    FaFilter,
-    FaPen,
-    FaTrash,
-} from "react-icons/fa";
-
+import React, { useMemo, useState } from "react";
+import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash } from "react-icons/fa";
 import "./Vehicles.css";
-import VehicleAddModal from "../components/VehicleAddModal";
 
+// ====================== MOCK DATA =============================
+
+const vehiclesMock = [
+  {
+    id: 1,
+    plate: "29A-12345",
+    typeKey: "small_truck",
+    brand: "Hyundai",
+    model: "Porter H150",
+    payload: "1.5 tấn",
+    km: "45,000 km",
+    statusKey: "ready",
+  },
+  {
+    id: 2,
+    plate: "30B-67890",
+    typeKey: "big_truck",
+    brand: "Hino",
+    model: "FC9JLSW",
+    payload: "6 tấn",
+    km: "78,000 km",
+    statusKey: "in_use",
+  },
+  {
+    id: 3,
+    plate: "51C-11111",
+    typeKey: "container",
+    brand: "Dongfeng",
+    model: "Hoàng Huy",
+    payload: "40 feet",
+    km: "120,000 km",
+    statusKey: "on_trip",
+  },
+  {
+    id: 4,
+    plate: "29D-22222",
+    typeKey: "bus",
+    brand: "Thaco",
+    model: "Universe",
+    payload: "45 chỗ",
+    km: "25,000 km",
+    statusKey: "ready",
+  },
+  {
+    id: 5,
+    plate: "59E-33333",
+    typeKey: "pickup",
+    brand: "Ford",
+    model: "Ranger XLS",
+    payload: "1 tấn",
+    km: "35,000 km",
+    statusKey: "maintenance",
+  },
+];
+
+const vehiclesUiMock = {
+  header: {
+    title: "Quản lý phương tiện",
+    totalPrefix: "Tổng số:",
+    totalSuffix: "xe",
+    addButton: "Thêm xe mới",
+  },
+  filterCard: {
+    title: "Bộ lọc",
+    searchPlaceholder: "Tìm kiếm theo biển số, hãng, model...",
+    typeAllLabel: "Tất cả loại xe",
+    statusAllLabel: "Tất cả trạng thái",
+  },
+  table: {
+    columns: {
+      stt: "STT",
+      plate: "BIỂN SỐ",
+      type: "LOẠI XE",
+      brandModel: "HÃNG/MODEL",
+      payload: "TẢI TRỌNG",
+      km: "KM ĐÃ ĐI",
+      status: "TRẠNG THÁI",
+      actions: "THAO TÁC",
+    },
+  },
+  vehicleTypes: [
+    { key: "all", label: "Tất cả loại xe" },
+    { key: "small_truck", label: "Xe tải nhỏ" },
+    { key: "big_truck", label: "Xe tải lớn" },
+    { key: "container", label: "Xe container" },
+    { key: "bus", label: "Xe khách" },
+    { key: "pickup", label: "Xe bán tải" },
+  ],
+  statuses: [
+    { key: "all", label: "Tất cả trạng thái" },
+    { key: "ready", label: "Sẵn sàng" },
+    { key: "in_use", label: "Đang sử dụng" },
+    { key: "on_trip", label: "Đang công tác" },
+    { key: "maintenance", label: "Bảo trì" },
+  ],
+};
+
+// =============================================================
+
+function vehiclesGetStatusBadgeClass(statusKey) {
+  switch (statusKey) {
+    case "ready":
+      return "vehicles-badge vehicles-badge--ready";
+    case "in_use":
+      return "vehicles-badge vehicles-badge--inuse";
+    case "on_trip":
+      return "vehicles-badge vehicles-badge--trip";
+    case "maintenance":
+      return "vehicles-badge vehicles-badge--maint";
+    default:
+      return "vehicles-badge";
+  }
+}
 
 export default function Vehicles() {
-    const [search, setSearch] = useState("");
-    const [filterStatus, setFilterStatus] = useState("all");
-    const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
-    const [openFilter, setOpenFilter] = useState(false);
+  const [vehicles] = useState(vehiclesMock);
 
-    // ========================= MOCK DATA ============================
-    const vehicles = [
-        {
-            plate: "29A-12345",
-            type: "Xe tải",
-            model: "Hino 500",
-            year: 2020,
-            km: "45,000 km",
-            status: "active",
-            nextMaintenance: "15/01/2025",
-        },
-        {
-            plate: "30B-98765",
-            type: "Xe tải",
-            model: "Isuzu QKR",
-            year: 2021,
-            km: "32,000 km",
-            status: "active",
-            nextMaintenance: "20/01/2025",
-        },
-        {
-            plate: "29A-54321",
-            type: "Xe con",
-            model: "Toyota Hilux",
-            year: 2019,
-            km: "68,000 km",
-            status: "maintenance",
-            nextMaintenance: "05/12/2024",
-        },
-        {
-            plate: "51F-11111",
-            type: "Xe tải",
-            model: "Hyundai Mighty",
-            year: 2018,
-            km: "89,000 km",
-            status: "active",
-            nextMaintenance: "10/01/2025",
-        },
-        {
-            plate: "29C-22222",
-            type: "Xe con",
-            model: "Ford Ranger",
-            year: 2022,
-            km: "15,000 km",
-            status: "inactive",
-            nextMaintenance: "01/12/2024",
-        },
-    ];
+  const [search, setSearch] = useState("");
+  const [typeKey, setTypeKey] = useState("all");
+  const [statusKey, setStatusKey] = useState("all");
 
-    const filtered = vehicles.filter((v) => {
-        const matchesSearch =
-            v.plate.toLowerCase().includes(search.toLowerCase()) ||
-            v.model.toLowerCase().includes(search.toLowerCase());
+  const totalCount = vehicles.length;
 
-        const matchesStatus =
-            filterStatus === "all" ? true : v.status === filterStatus;
+  const typeLabelMap = useMemo(() => {
+    const map = new Map();
+    vehiclesUiMock.vehicleTypes.forEach((t) => map.set(t.key, t.label));
+    return map;
+  }, []);
 
-        return matchesSearch && matchesStatus;
+  const statusLabelMap = useMemo(() => {
+    const map = new Map();
+    vehiclesUiMock.statuses.forEach((s) => map.set(s.key, s.label));
+    return map;
+  }, []);
+
+  const filteredVehicles = useMemo(() => {
+    const q = search.trim().toLowerCase();
+
+    return vehicles.filter((v) => {
+      const matchesSearch =
+        q.length === 0
+          ? true
+          : [
+              v.plate,
+              v.brand,
+              v.model,
+              typeLabelMap.get(v.typeKey) || "",
+              statusLabelMap.get(v.statusKey) || "",
+            ]
+              .join(" ")
+              .toLowerCase()
+              .includes(q);
+
+      const matchesType = typeKey === "all" ? true : v.typeKey === typeKey;
+      const matchesStatus = statusKey === "all" ? true : v.statusKey === statusKey;
+
+      return matchesSearch && matchesType && matchesStatus;
     });
+  }, [vehicles, search, typeKey, statusKey, typeLabelMap, statusLabelMap]);
 
-    const total = vehicles.length;
-    const active = vehicles.filter((v) => v.status === "active").length;
-    const maintenance = vehicles.filter((v) => v.status === "maintenance").length;
-    const inactive = vehicles.filter((v) => v.status === "inactive").length;
+  const handleAdd = () => {
+    // TODO: sau này thay bằng mở modal / route create
+    console.log("Add vehicle clicked");
+  };
 
-    // ========================= RENDER ===============================
-    return (
-        <div className="vehicles-container">
+  const handleEdit = (vehicle) => {
+    console.log("Edit", vehicle);
+  };
 
-            <h1 className="vehicles-title">Quản lý phương tiện</h1>
-            <p className="vehicles-subtitle">
-                Quản lý thông tin và trạng thái các phương tiện
-            </p>
+  const handleDelete = (vehicle) => {
+    console.log("Delete", vehicle);
+  };
 
-            {/* ================== TOP STAT CARDS ===================== */}
-            <div className="vehicles-stat-grid">
+  return (
+    <div className="vehicles-page">
+      {/* ===================== HEADER CARD ===================== */}
+      <div className="vehicles-card vehicles-headerCard">
+        <div className="vehicles-headerLeft">
+          <div className="vehicles-headerIcon">
+            <FaTruck />
+          </div>
 
-                <div className="vehicles-stat-card">
-                    <span className="vehicles-stat-label">Tổng số xe</span>
-                    <span className="vehicles-stat-value">{total}</span>
-                </div>
-
-                <div className="vehicles-stat-card">
-                    <span className="vehicles-stat-label">Đang hoạt động</span>
-                    <span className="vehicles-stat-value vehicles-green">{active}</span>
-                </div>
-
-                <div className="vehicles-stat-card">
-                    <span className="vehicles-stat-label">Đang bảo trì</span>
-                    <span className="vehicles-stat-value vehicles-orange">{maintenance}</span>
-                </div>
-
-                <div className="vehicles-stat-card">
-                    <span className="vehicles-stat-label">Ngừng hoạt động</span>
-                    <span className="vehicles-stat-value vehicles-red">{inactive}</span>
-                </div>
-
+          <div className="vehicles-headerText">
+            <div className="vehicles-headerTitle">{vehiclesUiMock.header.title}</div>
+            <div className="vehicles-headerSub">
+              {vehiclesUiMock.header.totalPrefix} {totalCount} {vehiclesUiMock.header.totalSuffix}
             </div>
-
-            {/* ================== SEARCH & FILTER ===================== */}
-            <div className="vehicles-controls">
-
-                {/* Search box */}
-                <div className="vehicles-search-box">
-                    <FaSearch className="vehicles-search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Tìm kiếm theo biển số hoặc model..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-
-                {/* Filter dropdown */}
-                <div className="vehicles-filter-box" onClick={() => setOpenFilter(!openFilter)}>
-                    <FaFilter className="vehicles-filter-icon" />
-                    <span>
-                        {
-                            filterStatus === "all" ? "Tất cả trạng thái" :
-                                filterStatus === "active" ? "Đang hoạt động" :
-                                    filterStatus === "maintenance" ? "Đang bảo trì" :
-                                        "Ngừng hoạt động"
-                        }
-                    </span>
-
-                    <div className="vehicles-filter-arrow" />
-
-                    {openFilter && (
-                        <div className="vehicles-filter-menu">
-                            <div onClick={() => setFilterStatus("all")}>Tất cả trạng thái</div>
-                            <div onClick={() => setFilterStatus("active")}>Đang hoạt động</div>
-                            <div onClick={() => setFilterStatus("maintenance")}>Đang bảo trì</div>
-                            <div onClick={() => setFilterStatus("inactive")}>Ngừng hoạt động</div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Add vehicle button */}
-                <button className="vehicles-add-btn" onClick={() => setShowAddVehicleModal(true)}>
-                    <FaPlus /> Thêm xe mới
-                </button>
-
-
-            </div>
-
-            {/* ================== VEHICLE TABLE ===================== */}
-            <table className="vehicles-table">
-                <thead>
-                    <tr>
-                        <th>Biển số</th>
-                        <th>Loại xe</th>
-                        <th>Model</th>
-                        <th>Năm SX</th>
-                        <th>Km đã chạy</th>
-                        <th>Trạng thái</th>
-                        <th>Bảo trì tiếp theo</th>
-                        <th>Thao tác</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    {filtered.map((v, i) => (
-                        <tr key={i}>
-                            <td>{v.plate}</td>
-                            <td>{v.type}</td>
-                            <td>{v.model}</td>
-                            <td>{v.year}</td>
-                            <td>{v.km}</td>
-
-                            <td>
-                                <span
-                                    className={
-                                        "vehicles-status " +
-                                        (v.status === "active"
-                                            ? "vehicles-status-active"
-                                            : v.status === "maintenance"
-                                                ? "vehicles-status-maintenance"
-                                                : "vehicles-status-inactive")
-                                    }
-                                >
-                                    {v.status === "active" && "✔ Đang hoạt động"}
-                                    {v.status === "maintenance" && "⚠ Đang bảo trì"}
-                                    {v.status === "inactive" && "✖ Ngừng hoạt động"}
-                                </span>
-                            </td>
-
-                            <td>{v.nextMaintenance}</td>
-
-                            <td className="vehicles-actions">
-                                <FaPen className="vehicles-edit" />
-                                <FaTrash className="vehicles-delete" />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-            {showAddVehicleModal && (
-                <VehicleAddModal
-                    onClose={() => setShowAddVehicleModal(false)}
-                    onSubmit={(data) => {
-                        console.log("🚗 Xe mới:", data);
-                        setShowAddVehicleModal(false);
-                    }}
-                />
-            )}
-
+          </div>
         </div>
-    );
+
+        <button className="vehicles-primaryBtn" onClick={handleAdd} type="button">
+          <FaPlus className="vehicles-btnIcon" />
+          {vehiclesUiMock.header.addButton}
+        </button>
+      </div>
+
+      {/* ===================== FILTER CARD ===================== */}
+      <div className="vehicles-card vehicles-filterCard">
+        <div className="vehicles-filterTitleRow">
+          <FaFilter className="vehicles-filterTitleIcon" />
+          <div className="vehicles-filterTitle">{vehiclesUiMock.filterCard.title}</div>
+        </div>
+
+        <div className="vehicles-filterRow">
+          {/* Search */}
+          <div className="vehicles-inputWrap vehicles-inputWrap--search">
+            <FaSearch className="vehicles-inputIcon" />
+            <input
+              className="vehicles-input"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={vehiclesUiMock.filterCard.searchPlaceholder}
+              type="text"
+            />
+          </div>
+
+          {/* Type select */}
+          <div className="vehicles-inputWrap">
+            <select
+              className="vehicles-select"
+              value={typeKey}
+              onChange={(e) => setTypeKey(e.target.value)}
+            >
+              {vehiclesUiMock.vehicleTypes.map((t) => (
+                <option key={t.key} value={t.key}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status select */}
+          <div className="vehicles-inputWrap">
+            <select
+              className="vehicles-select"
+              value={statusKey}
+              onChange={(e) => setStatusKey(e.target.value)}
+            >
+              {vehiclesUiMock.statuses.map((s) => (
+                <option key={s.key} value={s.key}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* ===================== TABLE CARD ===================== */}
+      <div className="vehicles-card vehicles-tableCard">
+        <div className="vehicles-tableWrap">
+          <table className="vehicles-table">
+            <thead>
+              <tr>
+                <th className="vehicles-th vehicles-th--stt">{vehiclesUiMock.table.columns.stt}</th>
+                <th className="vehicles-th">{vehiclesUiMock.table.columns.plate}</th>
+                <th className="vehicles-th">{vehiclesUiMock.table.columns.type}</th>
+                <th className="vehicles-th">{vehiclesUiMock.table.columns.brandModel}</th>
+                <th className="vehicles-th">{vehiclesUiMock.table.columns.payload}</th>
+                <th className="vehicles-th">{vehiclesUiMock.table.columns.km}</th>
+                <th className="vehicles-th">{vehiclesUiMock.table.columns.status}</th>
+                <th className="vehicles-th vehicles-th--actions">{vehiclesUiMock.table.columns.actions}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {filteredVehicles.map((v, idx) => (
+                <tr className="vehicles-tr" key={v.id}>
+                  <td className="vehicles-td vehicles-td--stt">{idx + 1}</td>
+                  <td className="vehicles-td vehicles-td--plate">{v.plate}</td>
+
+                  <td className="vehicles-td">{typeLabelMap.get(v.typeKey) || v.typeKey}</td>
+
+                  <td className="vehicles-td">
+                    <div className="vehicles-brand">{v.brand}</div>
+                    <div className="vehicles-model">{v.model}</div>
+                  </td>
+
+                  <td className="vehicles-td">{v.payload}</td>
+                  <td className="vehicles-td">{v.km}</td>
+
+                  <td className="vehicles-td">
+                    <span className={vehiclesGetStatusBadgeClass(v.statusKey)}>
+                      {statusLabelMap.get(v.statusKey) || v.statusKey}
+                    </span>
+                  </td>
+
+                  <td className="vehicles-td vehicles-td--actions">
+                    <button
+                      className="vehicles-iconBtn vehicles-iconBtn--edit"
+                      type="button"
+                      onClick={() => handleEdit(v)}
+                      aria-label="edit"
+                      title="Sửa"
+                    >
+                      <FaPen />
+                    </button>
+                    <button
+                      className="vehicles-iconBtn vehicles-iconBtn--delete"
+                      type="button"
+                      onClick={() => handleDelete(v)}
+                      aria-label="delete"
+                      title="Xóa"
+                    >
+                      <FaTrash />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {filteredVehicles.length === 0 && (
+                <tr>
+                  <td className="vehicles-empty" colSpan={8}>
+                    Không có dữ liệu phù hợp bộ lọc.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 }
