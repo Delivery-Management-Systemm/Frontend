@@ -8,9 +8,7 @@ import Home from "./pages/Home.jsx";
 import Vehicles from "./pages/Vehicles.jsx";
 import Drivers from "./pages/Drivers.jsx";
 import TripManagement from "./pages/TripManagement.jsx";
-import FuelManagement from "./pages/FuelManagement.jsx";
 import Maintenance from "./pages/Maintenance.jsx";
-import GPSTracking from "./pages/GPSTracking.jsx";
 import "./App.css";
 
 function App() {
@@ -37,14 +35,9 @@ function App() {
           {/* Trip Management */}
           <Route path="trips" element={<TripManagement />} />
 
-          {/* Fuel Management */}
-          <Route path="fuel" element={<FuelManagement />} />
-
           {/* Maintenance */}
           <Route path="maintenance" element={<Maintenance />} />
-
-          {/* GPS Tracking */}
-          <Route path="gps" element={<GPSTracking />} />
+          {/* GPS Tracking (removed) */}
 
           {/* Account page */}
           <Route path="account" element={<Account />} />

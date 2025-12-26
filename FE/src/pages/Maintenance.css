@@ -68,3 +68,59 @@
   font-size: 18px;
   color: #6f767e;
 }
+
+/* New page styles */
+.maintenance-page {
+  padding: 22px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.maintenance-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:#fff;
+  border:1px solid #ececec;
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:16px;
+}
+.maintenance-header-left { display:flex; gap:12px; align-items:center; }
+.maintenance-header-icon { width:44px; height:44px; border-radius:10px; background:#eaf2ff; color:#1d5bff; display:flex; align-items:center; justify-content:center; font-size:18px; }
+.maintenance-header-title { font-size:20px; font-weight:700; }
+.maintenance-header-sub { color:#6b7280; margin-top:4px; font-size:13px; }
+.maintenance-add { background:#1d5bff; color:#fff; padding:10px 14px; border-radius:10px; border:none; cursor:pointer; }
+
+.maintenance-stats { display:grid; grid-template-columns: repeat(3, 1fr); gap:12px; margin-bottom:18px; }
+.stat-card { background:#fff; border:1px solid #ececec; border-radius:12px; padding:18px; }
+.stat-label { color:#6b7280; font-size:13px; margin-bottom:8px; }
+.stat-value { font-size:22px; font-weight:800; color:#111827; }
+
+.maintenance-content { display:grid; grid-template-columns: 1fr 360px; gap:18px; align-items:start; }
+.maintenance-left {}
+.maintenance-right {}
+
+.maintenance-list { display:flex; flex-direction:column; gap:18px; }
+.maintenance-card { background:#fff; border-radius:12px; padding:18px; border:1px solid #ececec; }
+.maintenance-card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.inv-id { font-weight:800; }
+.inv-meta { color:#6b7280; margin-top:6px; }
+.maintenance-card-body { border-top:1px solid #f3f5f8; padding-top:12px; }
+.mc-row { display:flex; gap:24px; justify-content:space-between; margin-bottom:12px; }
+.mc-label { color:#6b7280; font-size:13px; }
+.mc-value { font-weight:700; }
+.service-lines { margin-top:8px; }
+.service-line { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #fbfdff; color:#374151; }
+.maintenance-total { display:flex; justify-content:space-between; padding-top:12px; font-weight:700; font-size:18px; }
+
+.service-list { background:#fff; border:1px solid #ececec; border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:12px; }
+.service-item { background:#fbfdff; border-radius:10px; padding:12px; display:flex; justify-content:space-between; align-items:center; border:1px solid #eef2f7; }
+.service-title { font-weight:700; }
+.service-sub { color:#6b7280; font-size:13px; }
+.service-price { color:#1d5bff; font-weight:700; }
+
+@media (max-width: 980px) {
+  .maintenance-content { grid-template-columns: 1fr; }
+  .maintenance-right { order: 2; }
+}

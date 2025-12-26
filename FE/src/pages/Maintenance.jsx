@@ -49,144 +49,134 @@ const Maintenance = () => {
   const overdueRecords = records.filter((r) => r.status === "overdue");
 
   return (
-    <div className="maintenance">
-      <div className="page-header">
-        <div>
-          <h1>Quản lý bảo dưỡng</h1>
-          <p className="page-subtitle">
-            Lập lịch và theo dõi bảo dưỡng phương tiện
-          </p>
+    <div className="maintenance-page">
+      <div className="maintenance-header">
+        <div className="maintenance-header-left">
+          <div className="maintenance-header-icon">
+            <MdBuild />
+          </div>
+          <div>
+            <div className="maintenance-header-title">Bảo trì & Sửa chữa</div>
+            <div className="maintenance-header-sub">Quản lý bảo dưỡng và hóa đơn</div>
+          </div>
+        </div>
+        <button className="maintenance-add">
+          <FiPlus /> Tạo hóa đơn mới
+        </button>
+      </div>
+
+      <div className="maintenance-stats">
+        <div className="stat-card">
+          <div className="stat-label">Tổng hóa đơn</div>
+          <div className="stat-value">{stats.totalInvoices || 0}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Tổng chi phí</div>
+          <div className="stat-value">{stats.totalCost || "0đ"}</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-label">Dịch vụ khả dụng</div>
+          <div className="stat-value">{stats.availableServices || 0}</div>
         </div>
       </div>
 
-      {overdueRecords.length > 0 && (
-        <div className="alert-banner">
-          <FiAlertTriangle className="alert-icon" />
-          <div className="alert-content">
-            <div className="alert-title">Cảnh báo bảo trì</div>
-            <ul className="alert-items">
-              {overdueRecords.map((record) => (
-                <li key={record.id}>
-                  Xe {record.vehicle} - {record.description} - Ngày{" "}
-                  {record.scheduledDate}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+      <div className="maintenance-content">
+        <div className="maintenance-left">
+          {overdueRecords.length > 0 && (
+            <div className="alert-banner">
+              <FiAlertTriangle className="alert-icon" />
+              <div className="alert-content">
+                <div className="alert-title">Cảnh báo bảo trì</div>
+                <ul className="alert-items">
+                  {overdueRecords.map((record) => (
+                    <li key={record.id}>
+                      Xe {record.vehicle} - {record.description} - Ngày{" "}
+                      {record.scheduledDate}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
 
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icon blue">
-            <MdCalendarToday />
-          </div>
-          <div className="stat-content">
-            <div className="stat-label">Đã lên lịch</div>
-            <div className="stat-value">{stats.scheduled}</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon orange">
-            <MdBuild />
-          </div>
-          <div className="stat-content">
-            <div className="stat-label">Đang thực hiện</div>
-            <div className="stat-value">{stats.inProgress}</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon green">
-            <MdBuild />
-          </div>
-          <div className="stat-content">
-            <div className="stat-label">Hoàn thành tháng này</div>
-            <div className="stat-value">{stats.completed}</div>
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-icon purple">
-            <FiAlertTriangle />
-          </div>
-          <div className="stat-content">
-            <div className="stat-label">Quá hạn</div>
-            <div className="stat-value">{stats.overdue}</div>
-          </div>
-        </div>
-      </div>
+          <div className="maintenance-list">
+            {loading ? (
+              <div className="loading-cell">Đang tải...</div>
+            ) : filteredRecords.length === 0 ? (
+              <div className="empty-cell">Không tìm thấy bản ghi</div>
+            ) : (
+              filteredRecords.map((record) => {
+                const badge = getStatusBadge(record.status);
+                return (
+                  <div className="maintenance-card" key={record.id}>
+                    <div className="maintenance-card-top">
+                      <div>
+                        <div className="inv-id">INV-{record.id}</div>
+                        <div className="inv-meta">Xe {record.vehicle} • {record.type}</div>
+                      </div>
+                      <div>
+                        <div className={`status-badge ${badge.class}`}>{badge.text}</div>
+                      </div>
+                    </div>
 
-      <div className="content-card">
-        <div className="card-header">
-          <div className="search-box">
-            <FiSearch />
-            <input
-              type="text"
-              placeholder="Tìm kiếm theo xe, loại, mô tả..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <button className="btn-primary">
-            <FiPlus /> Lên lịch bảo trì
-          </button>
-        </div>
-
-        <div className="table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Xe</th>
-                <th>Loại bảo trì</th>
-                <th>Mô tả</th>
-                <th>Lên lịch</th>
-                <th>Hoàn thành</th>
-                <th>Chi phí</th>
-                <th>Km</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan="8" className="loading-cell">
-                    Đang tải...
-                  </td>
-                </tr>
-              ) : filteredRecords.length === 0 ? (
-                <tr>
-                  <td colSpan="8" className="empty-cell">
-                    Không tìm thấy bản ghi
-                  </td>
-                </tr>
-              ) : (
-                filteredRecords.map((record) => {
-                  const badge = getStatusBadge(record.status);
-                  return (
-                    <tr key={record.id}>
-                      <td className="vehicle-cell">{record.vehicle}</td>
-                      <td>
-                        <div className="maintenance-type">
-                          <MdBuild className="type-icon" />
-                          {record.type}
+                    <div className="maintenance-card-body">
+                      <div className="mc-row">
+                        <div>
+                          <div className="mc-label">Xưởng</div>
+                          <div className="mc-value">{record.workshop || "Garage"}</div>
                         </div>
-                      </td>
-                      <td>{record.description}</td>
-                      <td>{record.scheduledDate}</td>
-                      <td>{record.completedDate || "-"}</td>
-                      <td>{record.cost}</td>
-                      <td>{record.cost}</td>
-                      <td>
-                        <span className={`status-badge ${badge.class}`}>
-                          {badge.text}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        <div>
+                          <div className="mc-label">Ngày</div>
+                          <div className="mc-value">{record.scheduledDate}</div>
+                        </div>
+                        <div>
+                          <div className="mc-label">Kỹ thuật viên</div>
+                          <div className="mc-value">{record.technician || "-"}</div>
+                        </div>
+                      </div>
+
+                      <div className="service-lines">
+                        <div className="service-line">
+                          <div className="service-name">Thay dầu động cơ</div>
+                          <div className="service-cost">500,000đ</div>
+                        </div>
+                        <div className="service-line">
+                          <div className="service-name">Kiểm tra tổng quát</div>
+                          <div className="service-cost">300,000đ</div>
+                        </div>
+                      </div>
+
+                      <div className="maintenance-total">
+                        <div>Tổng cộng</div>
+                        <div className="total-amount">800,000đ</div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
+
+        <aside className="maintenance-right">
+          <div className="service-list">
+            <div className="service-item">
+              <div className="service-title">Thay dầu động cơ</div>
+              <div className="service-sub">Bảo dưỡng</div>
+              <div className="service-price">500,000đ</div>
+            </div>
+            <div className="service-item">
+              <div className="service-title">Thay phanh</div>
+              <div className="service-sub">Sửa chữa</div>
+              <div className="service-price">1,200,000đ</div>
+            </div>
+            <div className="service-item">
+              <div className="service-title">Kiểm tra tổng quát</div>
+              <div className="service-sub">Kiểm tra</div>
+              <div className="service-price">300,000đ</div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
   );

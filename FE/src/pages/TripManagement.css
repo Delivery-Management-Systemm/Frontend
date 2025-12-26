@@ -220,3 +220,75 @@
   color: #6f767e;
   padding: 40px 20px !important;
 }
+
+/* Trip table specific styles */
+.trip-code {
+  font-weight: 600;
+  color: #111827;
+  padding-left: 12px;
+}
+
+.trip-vehicle {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vehicle-main {
+  font-weight: 600;
+  color: #2a85ff;
+}
+
+.vehicle-sub {
+  color: #6f767e;
+  font-size: 13px;
+}
+
+.multiday-badge {
+  display: inline-block;
+  background: #f3e8ff;
+  color: #7e22ce;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.cost-cell {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.actions-cell {
+  text-align: center;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.action-btn--view {
+  color: #1d5bff;
+}
+
+.action-btn--view:hover {
+  background: rgba(29, 91, 255, 0.08);
+}
+
+.action-btn--pay {
+  color: #ef4444;
+}
+
+.action-btn--pay:hover {
+  background: rgba(239, 68, 68, 0.06);
+}

@@ -99,6 +99,48 @@ const homeMockData = {
       },
     ],
   },
+  capabilityByType: [
+    {
+      key: "small_truck",
+      title: "Xe tải nhỏ",
+      requiredLicenses: "C, FC",
+      numVehicles: 1,
+      driversWithLicense: 3,
+      driversReady: 2,
+    },
+    {
+      key: "big_truck",
+      title: "Xe tải lớn",
+      requiredLicenses: "C, D, FC, FD",
+      numVehicles: 1,
+      driversWithLicense: 4,
+      driversReady: 2,
+    },
+    {
+      key: "container",
+      title: "Xe container",
+      requiredLicenses: "E, FE",
+      numVehicles: 1,
+      driversWithLicense: 1,
+      driversReady: 0,
+    },
+    {
+      key: "bus",
+      title: "Xe khách",
+      requiredLicenses: "D, FD",
+      numVehicles: 1,
+      driversWithLicense: 2,
+      driversReady: 0,
+    },
+    {
+      key: "pickup",
+      title: "Xe bán tải",
+      requiredLicenses: "B2, C, FB2, FC",
+      numVehicles: 1,
+      driversWithLicense: 3,
+      driversReady: 2,
+    },
+  ],
 };
 // ===============================================================
 
@@ -128,6 +170,7 @@ function HomeProgressRow({ item, maxValue }) {
 export default function Home() {
   const { user, topCards, vehicleStatus, driverStatus, recentActivities } =
     homeMockData;
+  const capabilityByType = homeMockData.capabilityByType || [];
 
   const vehicleMax = Math.max(...vehicleStatus.items.map((x) => x.value), 0);
   const driverMax = Math.max(...driverStatus.items.map((x) => x.value), 0);
@@ -215,6 +258,49 @@ export default function Home() {
               </div>
 
               <div className="home-activity-date">{act.date}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* CAPABILITY BY VEHICLE TYPE */}
+      <div className="home-panel-card capability-panel">
+        <div className="home-panel-title">Khả năng vận hành theo loại xe</div>
+        <div className="capability-list">
+          {capabilityByType.map((item) => (
+            <div className="capability-item" key={item.key}>
+              <div className="capability-left">
+                <div className="capability-title">
+                  {item.title} <span className="capability-ok">✔</span>
+                </div>
+                <div className="capability-sub">Bằng lái cần: {item.requiredLicenses}</div>
+
+                <div className="capability-stats">
+                  <div className="cap-stat">
+                    <div className="cap-stat-label">Số xe</div>
+                    <div className="cap-stat-value">{item.numVehicles}</div>
+                  </div>
+
+                  <div className="cap-stat">
+                    <div className="cap-stat-label">Tài xế có bằng</div>
+                    <div className="cap-stat-value">{item.driversWithLicense}</div>
+                  </div>
+
+                  <div className="cap-stat">
+                    <div className="cap-stat-label">Tài xế sẵn sàng</div>
+                    <div className={`cap-stat-value ${item.driversReady === 0 ? "cap-zero" : ""}`}>
+                      {item.driversReady}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="capability-right">
+                <div className="cap-ratio">
+                  {item.driversWithLicense}/{item.numVehicles}
+                </div>
+                <div className="cap-ratio-sub">Tài xế/Xe</div>
+              </div>
             </div>
           ))}
         </div>

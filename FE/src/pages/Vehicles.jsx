@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash } from "react-icons/fa";
+import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye } from "react-icons/fa";
 import "./Vehicles.css";
+import VehicleViewModal from "../components/VehicleViewModal";
 
 // ====================== MOCK DATA =============================
 
@@ -122,6 +123,7 @@ export default function Vehicles() {
   const [search, setSearch] = useState("");
   const [typeKey, setTypeKey] = useState("all");
   const [statusKey, setStatusKey] = useState("all");
+  const [viewVehicle, setViewVehicle] = useState(null);
 
   const totalCount = vehicles.length;
 
@@ -307,6 +309,15 @@ export default function Vehicles() {
                       title="Xóa"
                     >
                       <FaTrash />
+                    </button>
+                    <button
+                      className="vehicles-iconBtn vehicles-iconBtn--view"
+                      type="button"
+                      onClick={() => setViewVehicle(v)}
+                      aria-label="view"
+                      title="Xem"
+                    >
+                      <FaEye />
                     </button>
                   </td>
                 </tr>
