@@ -1,14 +1,17 @@
 import { useState, useEffect } from "react";
 import { FiSearch, FiPlus } from "react-icons/fi";
 import { MdLocationOn } from "react-icons/md";
+import { FaEye, FaDollarSign } from "react-icons/fa";
 import { getTrips, getTripStats } from "../services/tripService";
 import "./TripManagement.css";
+import TripCostModal from "../components/TripCostModal";
 
 const TripManagement = () => {
   const [trips, setTrips] = useState([]);
   const [stats, setStats] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [payTrip, setPayTrip] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -20,6 +23,8 @@ const TripManagement = () => {
       getTrips(),
       getTripStats(),
     ]);
+    // ensure each trip has charges array
+    const normalized = (tripsData || []).map((t) => ({ ...t, charges: t.charges || [] }));
     setTrips(tripsData);
     setStats(statsData);
     setLoading(false);
@@ -31,6 +36,19 @@ const TripManagement = () => {
       trip.driver.toLowerCase().includes(searchTerm.toLowerCase()) ||
       trip.route.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleAddCharge = (tripId, charge) => {
+    setTrips((prev) =>
+      prev.map((t) => {
+        if (t.id !== tripId) return t;
+        const newCharges = [...(t.charges || []), charge];
+        // compute numeric total from existing cost or charges
+        const existingTotal = (t.charges || []).reduce((s, c) => s + (c.amountNumber || 0), 0);
+        const newTotal = existingTotal + (charge.amountNumber || 0);
+        return { ...t, charges: newCharges, cost: `${newTotal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}đ` };
+      })
+    );
+  };
 
   const getStatusBadge = (status) => {
     const badges = {
@@ -108,14 +126,14 @@ const TripManagement = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>Ngày</th>
-                <th>Xe</th>
-                <th>Tài xế</th>
-                <th>Lộ trình</th>
-                <th>Thời gian</th>
-                <th>Quãng đường</th>
-                <th>Nhiên liệu</th>
-                <th>Trạng thái</th>
+                <th>MÃ CHUYẾN</th>
+                <th>XE / TÀI XẾ</th>
+                <th>LỘ TRÌNH</th>
+                <th>THỜI GIAN</th>
+                <th>KHOẢNG CÁCH</th>
+                <th>CHI PHÍ PS</th>
+                <th>TRẠNG THÁI</th>
+                <th>THAO TÁC</th>
               </tr>
             </thead>
             <tbody>
@@ -136,20 +154,33 @@ const TripManagement = () => {
                   const badge = getStatusBadge(trip.status);
                   return (
                     <tr key={trip.id}>
-                      <td>{trip.date}</td>
-                      <td className="vehicle-cell">{trip.vehicle}</td>
-                      <td>{trip.driver}</td>
+                      <td className="trip-code">{trip.id}</td>
+                      <td>
+                        <div className="trip-vehicle">
+                          {trip.multiday ? <span className="multiday-badge">Nhiều ngày</span> : null}
+                          <div className="vehicle-main">{trip.vehicle}</div>
+                          <div className="vehicle-sub">{trip.driver}</div>
+                        </div>
+                      </td>
                       <td className="route-cell">
                         <MdLocationOn className="route-icon" />
-                        {trip.route}
+                        <div>{trip.route}</div>
                       </td>
-                      <td>{trip.time}</td>
-                      <td>{trip.distance}</td>
-                      <td>{trip.fuel}</td>
+                      <td>{trip.date}{trip.time ? ` • ${trip.time}` : ""}</td>
+                      <td>{trip.distance || "0 km"}</td>
+                      <td className="cost-cell">{trip.cost || "0đ"}</td>
                       <td>
                         <span className={`status-badge ${badge.class}`}>
                           {badge.text}
                         </span>
+                      </td>
+                      <td className="actions-cell">
+                        <button className="action-btn action-btn--view" title="Xem" onClick={() => {}}>
+                          <FaEye />
+                        </button>
+                        <button className="action-btn action-btn--pay" title="Chi phí" onClick={() => setPayTrip(trip)}>
+                          <FaDollarSign />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -159,6 +190,13 @@ const TripManagement = () => {
           </table>
         </div>
       </div>
+      {payTrip && (
+        <TripCostModal
+          trip={payTrip}
+          onClose={() => setPayTrip(null)}
+          onAddCharge={handleAddCharge}
+        />
+      )}
     </div>
   );
 };

@@ -4,12 +4,14 @@ import {
   FaSearch,
   FaPen,
   FaTrash,
+  FaEye,
   FaFilter,
   FaStar,
   FaUsers,
 } from "react-icons/fa";
 
 import DriverAddModal from "../components/DriverAddModal";
+import DriverViewModal from "../components/DriverViewModal";
 import "./Drivers.css";
 
 // ========================= MOCK CONFIG + DATA =========================
@@ -146,6 +148,7 @@ export default function Drivers() {
   const [driversFilterStatus, setDriversFilterStatus] = useState("all");
   const [driversFilterLicense, setDriversFilterLicense] = useState("all");
   const [driversShowAddModal, setDriversShowAddModal] = useState(false);
+  const [driversViewDriver, setDriversViewDriver] = useState(null);
 
   const driversFiltered = useMemo(() => {
     const q = driversSearch.trim().toLowerCase();
@@ -385,6 +388,15 @@ export default function Drivers() {
                         >
                           <FaTrash />
                         </button>
+ 
+                        <button
+                          type="button"
+                          className="drivers-icon-btn drivers-icon-view"
+                          aria-label="Xem"
+                          onClick={() => setDriversViewDriver(d)}
+                        >
+                          <FaEye />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -402,6 +414,12 @@ export default function Drivers() {
             console.log("👤 Tài xế mới:", data);
             setDriversShowAddModal(false);
           }}
+        />
+      )}
+      {driversViewDriver && (
+        <DriverViewModal
+          driver={driversViewDriver}
+          onClose={() => setDriversViewDriver(null)}
         />
       )}
     </div>

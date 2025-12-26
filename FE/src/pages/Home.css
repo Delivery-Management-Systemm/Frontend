@@ -322,3 +322,93 @@
     align-self: flex-end;
   }
 }
+
+/* Capability by vehicle type styles */
+.capability-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.capability-item {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.capability-left {
+  flex: 1;
+}
+
+.capability-title {
+  font-weight: 700;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.capability-ok {
+  color: #16a34a;
+  font-size: 14px;
+}
+
+.capability-sub {
+  color: #6b7280;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.capability-stats {
+  display: flex;
+  gap: 40px;
+  margin-top: 12px;
+}
+
+.cap-stat {
+  min-width: 120px;
+}
+
+.cap-stat-label {
+  color: #6b7280;
+  font-size: 13px;
+}
+
+.cap-stat-value {
+  margin-top: 6px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
+}
+
+.cap-zero {
+  color: #ef4444;
+}
+
+.capability-right {
+  width: 90px;
+  text-align: right;
+}
+
+.cap-ratio {
+  font-weight: 800;
+  color: #16a34a;
+  font-size: 18px;
+}
+
+.cap-ratio-sub {
+  color: #9ca3af;
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+/* specific spacing for capability panel relative to previous section */
+.capability-panel {
+  margin-top: 22px;
+}

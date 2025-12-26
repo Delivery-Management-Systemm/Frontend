@@ -1,14 +1,17 @@
 import React, { useState } from "react";
 import "./Dashboard.css";
-import ReportsDashboard from "./ReportsDashboard";
 import Account from "./Account";
 import Home from "./Home";
 import Vehicles from "./Vehicles";
 import Drivers from "./Drivers";
+import VehicleHistory from "./VehicleHistory";
+const LazyDriverHistory = React.lazy(() => import("./DriverHistory"));
 import TripManagement from "./TripManagement";
-import FuelManagement from "./FuelManagement";
+import DriverAssignment from "./DriverAssignment";
+import Bookings from "./Bookings";
+import Orders from "./Orders";
+import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
-import GPSTracking from "./GPSTracking";
 
 const Dashboard = () => {
   const [activeMenu, setActiveMenu] = useState("home"); // 👈 state chọn menu
@@ -23,7 +26,7 @@ const Dashboard = () => {
           <div className="dashboard-logo-icon">🚚</div>
           <div className="dashboard-logo-text">
             <span className="dashboard-logo-title">FMS</span>
-            <span className="dashboard-logo-subtitle">Fleet Manager</span>
+            <span className="dashboard-logo-subtitle">Fleet Management</span>
           </div>
         </div>
 
@@ -33,7 +36,7 @@ const Dashboard = () => {
             onClick={() => setActiveMenu("home")}
           >
             <span className="dashboard-nav-icon">🏠</span>
-            <span className="dashboard-nav-label">Trang chủ</span>
+            <span className="dashboard-nav-label">Tổng quan</span>
           </button>
 
           <button
@@ -61,11 +64,27 @@ const Dashboard = () => {
           </button>
 
           <button
-            className={getNavItemClass("fuel")}
-            onClick={() => setActiveMenu("fuel")}
+            className={getNavItemClass("bookings")}
+            onClick={() => setActiveMenu("bookings")}
           >
-            <span className="dashboard-nav-icon">⛽</span>
-            <span className="dashboard-nav-label">Quản lý nhiên liệu</span>
+            <span className="dashboard-nav-icon">📅</span>
+            <span className="dashboard-nav-label">Lịch đặt trước</span>
+          </button>
+
+          <button
+            className={getNavItemClass("orders")}
+            onClick={() => setActiveMenu("orders")}
+          >
+            <span className="dashboard-nav-icon">📦</span>
+            <span className="dashboard-nav-label">Quản lý đơn hàng</span>
+          </button>
+
+          <button
+            className={`${getNavItemClass("emergency")} emergency-item`}
+            onClick={() => setActiveMenu("emergency")}
+          >
+            <span className="dashboard-nav-icon">⚠️</span>
+            <span className="dashboard-nav-label">Báo cáo khẩn cấp</span>
           </button>
 
           <button
@@ -73,40 +92,40 @@ const Dashboard = () => {
             onClick={() => setActiveMenu("maintenance")}
           >
             <span className="dashboard-nav-icon">🛠️</span>
-            <span className="dashboard-nav-label">Bảo dưỡng</span>
+            <span className="dashboard-nav-label">Bảo trì &amp; Sửa chữa</span>
           </button>
 
           <button
-            className={getNavItemClass("gps")}
-            onClick={() => setActiveMenu("gps")}
+            className={getNavItemClass("vehicleHistory")}
+            onClick={() => setActiveMenu("vehicleHistory")}
           >
-            <span className="dashboard-nav-icon">📡</span>
-            <span className="dashboard-nav-label">GPS / Tracking</span>
+            <span className="dashboard-nav-icon">🚗</span>
+            <span className="dashboard-nav-label">Lịch sử xe</span>
           </button>
 
           <button
-            className={getNavItemClass("reports")}
-            onClick={() => setActiveMenu("reports")}
+            className={getNavItemClass("driverHistory")}
+            onClick={() => setActiveMenu("driverHistory")}
           >
-            <span className="dashboard-nav-icon">📊</span>
-            <span className="dashboard-nav-label">Báo cáo &amp; Thống kê</span>
+            <span className="dashboard-nav-icon">🕒</span>
+            <span className="dashboard-nav-label">Lịch sử tài xế</span>
           </button>
 
           <button
-            className={getNavItemClass("account")}
-            onClick={() => setActiveMenu("account")}
+            className={getNavItemClass("assignments")}
+            onClick={() => setActiveMenu("assignments")}
           >
-            <span className="dashboard-nav-icon">⚙️</span>
-            <span className="dashboard-nav-label">Tài khoản</span>
+            <span className="dashboard-nav-icon">👥</span>
+            <span className="dashboard-nav-label">Phân công tài xế</span>
           </button>
         </nav>
 
         <div className="dashboard-sidebar-footer">
           <div className="dashboard-user">
-            <div className="dashboard-user-avatar">A</div>
+            <div className="dashboard-user-avatar">T</div>
             <div className="dashboard-user-info">
-              <span className="dashboard-user-name">Admin User</span>
-              <span className="dashboard-user-email">admin@example.com</span>
+              <span className="dashboard-user-name">Trần Thị Bình</span>
+              <span className="role-badge">Quản lý</span>
             </div>
           </div>
 
@@ -124,16 +143,22 @@ const Dashboard = () => {
           <Vehicles />
         ) : activeMenu === "drivers" ? (
           <Drivers />
+        ) : activeMenu === "vehicleHistory" ? (
+          <VehicleHistory />
+        ) : activeMenu === "driverHistory" ? (
+          <React.Suspense fallback={null}><LazyDriverHistory /></React.Suspense>
         ) : activeMenu === "trips" ? (
           <TripManagement />
-        ) : activeMenu === "fuel" ? (
-          <FuelManagement />
+        ) : activeMenu === "assignments" ? (
+          <DriverAssignment />
+        ) : activeMenu === "bookings" ? (
+          <Bookings />
+        ) : activeMenu === "orders" ? (
+          <Orders />
+        ) : activeMenu === "emergency" ? (
+          <Emergency />
         ) : activeMenu === "maintenance" ? (
           <Maintenance />
-        ) : activeMenu === "gps" ? (
-          <GPSTracking />
-        ) : activeMenu === "reports" ? (
-          <ReportsDashboard />
         ) : activeMenu === "account" ? (
           <Account />
         ) : (

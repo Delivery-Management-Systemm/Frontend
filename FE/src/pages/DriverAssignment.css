@@ -1,0 +1,47 @@
+.da-page { padding: 24px; font-family: inherit; }
+.da-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; background:#fff; padding:18px; border-radius:12px; box-shadow:0 6px 18px rgba(16,24,40,0.03); }
+.da-header-left h1 { margin:0; font-size:20px; }
+.da-sub { color:#6b7280; margin-top:4px; }
+.btn-primary { background:#1666f2; color:white; padding:10px 14px; border-radius:10px; border:none; cursor:pointer; font-weight:600; }
+
+.da-stats { display:flex; gap:12px; margin:18px 0; }
+.stat-card { background:#fff; padding:14px; border-radius:10px; flex:1; box-shadow:0 1px 6px rgba(0,0,0,0.04); display:flex; justify-content:space-between; align-items:center; }
+.stat-label { color:#6b7280; font-size:13px; }
+.stat-num { font-weight:700; color:#f59e0b; font-size:18px; }
+
+.da-list { display:flex; flex-direction:column; gap:16px; margin-top:6px; }
+.da-card { background:#fff; border-radius:12px; padding:18px; box-shadow:0 6px 18px rgba(16,24,40,0.03); }
+.da-card-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+.req-title { margin:0; font-size:16px; }
+.req-badge { padding:6px 10px; border-radius:999px; font-size:13px; }
+.req-badge.pending { background:#fff4e5; color:#b45309; }
+.req-badge.approved { background:#ecfdf5; color:#065f46; }
+.req-badge.rejected { background:#fff1f2; color:#9f1239; }
+
+.da-row { display:flex; gap:24px; margin-bottom:12px; }
+.da-col { flex:1; }
+.label { color:#6b7280; font-size:13px; margin-bottom:6px; }
+.vehicle { font-weight:600; margin-bottom:10px; }
+
+.driver-box { border-radius:8px; padding:12px; margin-top:8px; }
+.driver-box.current { background:#FBEAEA; }
+.driver-box.new { background:#EAF9EE; }
+.small-label { font-size:12px; color:#6b7280; margin-bottom:6px; }
+.driver-name { font-weight:600; }
+
+.reason { margin:10px 0; background:#fbfbfb; padding:12px; border-radius:8px; }
+.reason-text { color:#374151; }
+
+.da-card-foot { display:flex; justify-content:space-between; align-items:center; margin-top:10px; gap:12px; flex-wrap:wrap; }
+.timestamps { color:#6b7280; font-size:13px; }
+.actions { display:flex; gap:8px; }
+.btn-approve { background:#10b981; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; }
+.btn-reject { background:transparent; color:#ef4444; border:1px solid #ef9a9a; padding:8px 12px; border-radius:8px; cursor:pointer; }
+
+@media (max-width: 720px) {
+  .da-row { flex-direction:column; }
+  .da-header { flex-direction:column; align-items:flex-start; gap:12px; }
+  .da-stats { flex-direction:column; }
+}
+
+

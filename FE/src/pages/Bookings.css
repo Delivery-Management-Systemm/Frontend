@@ -1,0 +1,276 @@
+.bookings-page {
+  padding: 22px;
+  background: #f5f7fb;
+  min-height: 100vh;
+}
+
+.bookings-header {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.bookings-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bookings-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #eaf2ff;
+  color: #1d5bff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.bookings-title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.bookings-sub {
+  color: #6b7280;
+  margin-top: 4px;
+  font-size: 13px;
+}
+
+.bookings-add {
+  background: #1d5bff;
+  color: #fff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+}
+
+.bookings-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.stat-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.stat-label {
+  color: #6b7280;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.bookings-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.bookings-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f5f7fb;
+  padding: 8px 12px;
+  border-radius: 8px;
+  min-width: 360px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 100%;
+}
+
+.bookings-table-wrap {
+  overflow-x: auto;
+}
+
+.bookings-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bookings-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.bookings-table td {
+  padding: 18px 16px;
+  border-bottom: 1px solid #f3f5f8;
+  vertical-align: top;
+}
+
+.td-customer .cust-name {
+  font-weight: 700;
+}
+
+.cust-id {
+  color: #9ca3af;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.cust-email {
+  color: #9ca3af;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.route-text {
+  max-width: 420px;
+  color: #374151;
+  white-space: normal;
+}
+
+.type-title {
+  font-weight: 700;
+}
+
+.type-note {
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.assign-none {
+  color: #9ca3af;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+.badge-pending {
+  background: #fff7ed;
+  color: #b45309;
+}
+.badge-confirmed {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+.badge-assigned {
+  background: #eaf2ff;
+  color: #1d4ed8;
+}
+.badge-done {
+  background: #e6fff2;
+  color: #15803d;
+}
+
+.td-actions .btn-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  padding: 4px;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+/* ensure action buttons stay on a single line and aligned */
+.td-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+/* View: blue outline circle with blue icon */
+.btn-icon--view {
+  color: #1d5bff;
+  border-color: #1d5bff;
+  background: transparent;
+}
+
+.btn-icon--view:hover {
+  background: rgba(29, 91, 255, 0.06);
+}
+
+/* Confirm: green filled circle with white icon */
+.btn-icon--confirm {
+  color: #16a34a;
+  border-color: #16a34a;
+  background: transparent;
+  margin-left: 10px;
+}
+
+.btn-icon--confirm:hover {
+  background: rgba(22, 163, 74, 0.06);
+}
+
+/* Reject: red outline circle with red icon */
+.btn-icon--reject {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: transparent;
+  margin-left: 10px;
+}
+
+.btn-icon--reject:hover {
+  background: rgba(239, 68, 68, 0.06);
+}
+
+/* stronger specificity to avoid unexpected overrides */
+.td-actions .btn-icon.btn-icon--confirm {
+  /* removed filled override — keep outline style */
+}
+
+@media (max-width: 980px) {
+  .bookings-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+
