@@ -4,8 +4,7 @@ import Account from "./Account";
 import Home from "./Home";
 import Vehicles from "./Vehicles";
 import Drivers from "./Drivers";
-import VehicleHistory from "./VehicleHistory";
-const LazyDriverHistory = React.lazy(() => import("./DriverHistory"));
+// VehicleHistory and DriverHistory removed from sidebar per request
 import TripManagement from "./TripManagement";
 import DriverAssignment from "./DriverAssignment";
 import Bookings from "./Bookings";
@@ -95,21 +94,7 @@ const Dashboard = () => {
             <span className="dashboard-nav-label">Bảo trì &amp; Sửa chữa</span>
           </button>
 
-          <button
-            className={getNavItemClass("vehicleHistory")}
-            onClick={() => setActiveMenu("vehicleHistory")}
-          >
-            <span className="dashboard-nav-icon">🚗</span>
-            <span className="dashboard-nav-label">Lịch sử xe</span>
-          </button>
-
-          <button
-            className={getNavItemClass("driverHistory")}
-            onClick={() => setActiveMenu("driverHistory")}
-          >
-            <span className="dashboard-nav-icon">🕒</span>
-            <span className="dashboard-nav-label">Lịch sử tài xế</span>
-          </button>
+          {/* VehicleHistory and DriverHistory nav items removed */}
 
           <button
             className={getNavItemClass("assignments")}
@@ -143,10 +128,6 @@ const Dashboard = () => {
           <Vehicles />
         ) : activeMenu === "drivers" ? (
           <Drivers />
-        ) : activeMenu === "vehicleHistory" ? (
-          <VehicleHistory />
-        ) : activeMenu === "driverHistory" ? (
-          <React.Suspense fallback={null}><LazyDriverHistory /></React.Suspense>
         ) : activeMenu === "trips" ? (
           <TripManagement />
         ) : activeMenu === "assignments" ? (
