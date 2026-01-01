@@ -89,7 +89,7 @@
 
 .drivers-filters-row {
   display: grid;
-  grid-template-columns: 1.15fr 1fr 1fr 1fr;
+  grid-template-columns: 1.35fr 1fr 1fr;
   gap: 16px;
 }
 
@@ -240,6 +240,122 @@
   color: #64748b;
 }
 
+/* ================= VEHICLE CELL ================= */
+
+.drivers-vehicle-plate {
+  font-weight: 600;
+}
+
+.drivers-vehicle-sub {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ================= DRIVER HISTORY LAYOUT ================= */
+.drivers-history-page {
+  padding: 22px 0 0 0;
+}
+.drivers-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.drivers-history-left {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.drivers-history-avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+}
+.drivers-history-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+.drivers-history-contact {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 14px;
+}
+.drivers-history-email {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+}
+.drivers-history-licenses {
+  margin-top: 8px;
+}
+.drivers-chip--small {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.drivers-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.drivers-history-back {
+  background: transparent;
+  color: #1d5bff;
+  padding: 8px 12px;
+}
+.drivers-history-overview {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+.drivers-overview-item {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 140px;
+}
+.drivers-overview-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+.drivers-overview-label {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 13px;
+}
+.drivers-history-table-wrap {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 12px;
+}
+.drivers-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.drivers-history-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 1px solid #eef2f7;
+}
+.drivers-history-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f5f8;
+  color: #111827;
+  vertical-align: middle;
+}
+.drivers-right {
+  text-align: right;
+}
+
 /* ================= LICENSE CHIPS ================= */
 
 .drivers-license-chips {
@@ -272,25 +388,7 @@
 }
 
 /* Shift colors giống ảnh */
-.drivers-pill-shift-morning {
-  background: #fff3cc;
-  color: #a16207;
-}
-
-.drivers-pill-shift-afternoon {
-  background: #ffe8d1;
-  color: #c2410c;
-}
-
-.drivers-pill-shift-night {
-  background: #e7efff;
-  color: #1d4ed8;
-}
-
-.drivers-pill-shift-long {
-  background: #ffe0e0;
-  color: #dc2626;
-}
+/* Shift pill styles removed (work shift UI deleted) */
 
 /* Status colors giống ảnh */
 .drivers-pill-status-driving {
@@ -379,6 +477,14 @@
 
 .drivers-icon-view:hover {
   background: rgba(107, 114, 128, 0.08);
+}
+
+.drivers-icon-history {
+  color: #6b7280;
+}
+
+.drivers-icon-history:hover {
+  background: rgba(107, 114, 128, 0.06);
 }
 
 .drivers-empty {

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye } from "react-icons/fa";
+import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye, FaHistory } from "react-icons/fa";
 import "./Vehicles.css";
 import VehicleViewModal from "../components/VehicleViewModal";
 
@@ -9,51 +9,61 @@ const vehiclesMock = [
   {
     id: 1,
     plate: "29A-12345",
+    year: 2022,
     typeKey: "small_truck",
     brand: "Hyundai",
     model: "Porter H150",
     payload: "1.5 tấn",
     km: "45,000 km",
+    licenses: ["C"],
     statusKey: "ready",
   },
   {
     id: 2,
     plate: "30B-67890",
+    year: 2021,
     typeKey: "big_truck",
     brand: "Hino",
     model: "FC9JLSW",
     payload: "6 tấn",
     km: "78,000 km",
+    licenses: ["C", "E"],
     statusKey: "in_use",
   },
   {
     id: 3,
     plate: "51C-11111",
+    year: 2020,
     typeKey: "container",
     brand: "Dongfeng",
     model: "Hoàng Huy",
     payload: "40 feet",
     km: "120,000 km",
+    licenses: ["E"],
     statusKey: "on_trip",
   },
   {
     id: 4,
     plate: "29D-22222",
+    year: 2023,
     typeKey: "bus",
     brand: "Thaco",
     model: "Universe",
     payload: "45 chỗ",
     km: "25,000 km",
+    licenses: ["D"],
     statusKey: "ready",
   },
   {
     id: 5,
     plate: "59E-33333",
+    year: 2022,
     typeKey: "pickup",
     brand: "Ford",
     model: "Ranger XLS",
     payload: "1 tấn",
     km: "35,000 km",
+    licenses: ["B2", "C"],
     statusKey: "maintenance",
   },
 ];
@@ -262,6 +272,7 @@ export default function Vehicles() {
                 <th className="vehicles-th">{vehiclesUiMock.table.columns.plate}</th>
                 <th className="vehicles-th">{vehiclesUiMock.table.columns.type}</th>
                 <th className="vehicles-th">{vehiclesUiMock.table.columns.brandModel}</th>
+                <th className="vehicles-th">NĂM SX</th>
                 <th className="vehicles-th">{vehiclesUiMock.table.columns.payload}</th>
                 <th className="vehicles-th">{vehiclesUiMock.table.columns.km}</th>
                 <th className="vehicles-th">{vehiclesUiMock.table.columns.status}</th>
@@ -275,12 +286,19 @@ export default function Vehicles() {
                   <td className="vehicles-td vehicles-td--stt">{idx + 1}</td>
                   <td className="vehicles-td vehicles-td--plate">{v.plate}</td>
 
-                  <td className="vehicles-td">{typeLabelMap.get(v.typeKey) || v.typeKey}</td>
+                  <td className="vehicles-td">
+                    <div className="vehicles-type-label">{typeLabelMap.get(v.typeKey) || v.typeKey}</div>
+                    {v.licenses && v.licenses.length > 0 ? (
+                      <div className="vehicles-license-link">Bằng {v.licenses.join(", ")}</div>
+                    ) : null}
+                  </td>
 
                   <td className="vehicles-td">
                     <div className="vehicles-brand">{v.brand}</div>
                     <div className="vehicles-model">{v.model}</div>
                   </td>
+
+                  <td className="vehicles-td">{v.year}</td>
 
                   <td className="vehicles-td">{v.payload}</td>
                   <td className="vehicles-td">{v.km}</td>
@@ -311,6 +329,15 @@ export default function Vehicles() {
                       <FaTrash />
                     </button>
                     <button
+                      className="vehicles-iconBtn vehicles-iconBtn--history"
+                      type="button"
+                      onClick={() => {}}
+                      aria-label="history"
+                      title="Lịch sử"
+                    >
+                      <FaHistory />
+                    </button>
+                    <button
                       className="vehicles-iconBtn vehicles-iconBtn--view"
                       type="button"
                       onClick={() => setViewVehicle(v)}
@@ -325,7 +352,7 @@ export default function Vehicles() {
 
               {filteredVehicles.length === 0 && (
                 <tr>
-                  <td className="vehicles-empty" colSpan={8}>
+                  <td className="vehicles-empty" colSpan={9}>
                     Không có dữ liệu phù hợp bộ lọc.
                   </td>
                 </tr>

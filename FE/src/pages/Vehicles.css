@@ -216,6 +216,22 @@
   line-height: 1.2;
 }
 
+/* License link under LOẠI XE */
+.vehicles-license-link {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #1d4ed8;
+}
+
+/* History icon button */
+.vehicles-iconBtn--history {
+  color: #6b7280;
+}
+
+.vehicles-iconBtn--history:hover {
+  background: rgba(107, 114, 128, 0.06);
+}
+
 /* Status badges giống ảnh */
 .vehicles-badge {
   display: inline-flex;
