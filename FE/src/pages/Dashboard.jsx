@@ -26,7 +26,7 @@ import Maintenance from "./Maintenance";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
-  user: "Người dùng",
+  user: "Quản lý",
   driver: "Tài xế",
 };
 
@@ -89,7 +89,7 @@ const MENU_ITEMS = [
     key: "assignments",
     label: "Phân công tài xế",
     icon: <FaUserFriends />,
-    roles: ["admin"],
+    roles: ["admin", "user"],
   },
 ];
 

@@ -8,12 +8,10 @@ import {
   FaFilter,
   FaStar,
   FaUsers,
-  FaHistory,
 } from "react-icons/fa";
 
 import DriverAddModal from "../components/DriverAddModal";
 import DriverViewModal from "../components/DriverViewModal";
-import DriverHistory from "./DriverHistory";
 import "./Drivers.css";
 
 // ========================= MOCK CONFIG + DATA =========================
@@ -148,8 +146,6 @@ export default function Drivers() {
   const [driversFilterLicense, setDriversFilterLicense] = useState("all");
   const [driversShowAddModal, setDriversShowAddModal] = useState(false);
   const [driversViewDriver, setDriversViewDriver] = useState(null);
-  const [viewMode, setViewMode] = useState("list"); // list | detail | history
-  const [historyDriver, setHistoryDriver] = useState(null);
 
   const driversFiltered = useMemo(() => {
     const q = driversSearch.trim().toLowerCase();
@@ -178,131 +174,8 @@ export default function Drivers() {
 
   const driversTotal = driversMockData.length;
 
-  // Mock driver history data keyed by driver id (simplified)
-  const mockDriverHistory = {
-    d1: [
-      { date: "15/12/2024", vehicle: "30B-67890", route: "Hà Nội - Hải Phòng", distance: "120 km", duration: "9h 0m", rating: 4.5 },
-      { date: "10/12/2024", vehicle: "30B-67890", route: "Hà Nội - Thanh Hóa", distance: "320 km", duration: "12h 0m", rating: 4.8 },
-    ],
-    d2: [
-      { date: "01/12/2024", vehicle: "29A-12345", route: "Hà Nội - Bắc Ninh", distance: "45 km", duration: "1h 15m", rating: 4.6 },
-    ],
-  };
-
-  const openDriverHistory = (driver) => {
-    setHistoryDriver(driver);
-    setViewMode("history");
-  };
-
-  const closeHistory = () => {
-    setHistoryDriver(null);
-    setViewMode("list");
-  };
-
   return (
     <div className="drivers-page">
-      {viewMode === "history" && historyDriver ? (
-        <div className="drivers-history-page">
-          <div className="drivers-history-header">
-            <div className="drivers-history-left">
-              <div className="drivers-avatar drivers-history-avatar">
-                {driversGetInitials(historyDriver.name)}
-              </div>
-              <div>
-                <div className="drivers-history-name">{historyDriver.name}</div>
-                <div className="drivers-history-contact">
-                  <div>{historyDriver.phone}</div>
-                  <div className="drivers-history-email">{historyDriver.email}</div>
-                </div>
-                <div className="drivers-history-licenses">
-                  {historyDriver.licenses.map((l) => (
-                    <span key={l} className="drivers-chip drivers-chip--small">{l}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="drivers-history-actions">
-              <div className="drivers-history-rating">
-                <FaStar className="drivers-star" /> {historyDriver.rating}
-              </div>
-              <button className="drivers-primary-btn drivers-history-back" onClick={closeHistory}>
-                Quay lại
-              </button>
-            </div>
-          </div>
-
-          <div className="drivers-history-overview">
-            {/* compute overview from mock data */}
-            {(() => {
-              const rows = mockDriverHistory[historyDriver.id] || [];
-              const totalTrips = rows.length;
-              const totalKm = rows.reduce((acc, r) => {
-                const n = Number((r.distance || "0").toString().replace(/[^\d]/g, ""));
-                return acc + (isNaN(n) ? 0 : n);
-              }, 0);
-              const totalHours = rows.reduce((acc, r) => {
-                const m = (r.duration || "").match(/(\d+)h\s*(\d+)?m?/);
-                if (!m) return acc;
-                const h = Number(m[1] || 0);
-                const min = Number(m[2] || 0);
-                return acc + h + min / 60;
-              }, 0);
-              const avgRating = rows.length ? (rows.reduce((s, r) => s + (r.rating || 0), 0) / rows.length).toFixed(1) : "-";
-
-              return (
-                <>
-                  <div className="drivers-overview-item">
-                    <div className="drivers-overview-value">{totalTrips}</div>
-                    <div className="drivers-overview-label">Tổng chuyến</div>
-                  </div>
-                  <div className="drivers-overview-item">
-                    <div className="drivers-overview-value">{totalKm.toLocaleString()} km</div>
-                    <div className="drivers-overview-label">Tổng km</div>
-                  </div>
-                  <div className="drivers-overview-item">
-                    <div className="drivers-overview-value">{Math.round(totalHours)} giờ</div>
-                    <div className="drivers-overview-label">Tổng giờ lái</div>
-                  </div>
-                  <div className="drivers-overview-item">
-                    <div className="drivers-overview-value">{avgRating}</div>
-                    <div className="drivers-overview-label">Đánh giá TB</div>
-                  </div>
-                </>
-              );
-            })()}
-          </div>
-
-          <div className="drivers-history-table-wrap">
-            <table className="drivers-history-table">
-              <thead>
-                <tr>
-                  <th>NGÀY</th>
-                  <th>XE</th>
-                  <th>LỘ TRÌNH</th>
-                  <th>KHOẢNG CÁCH</th>
-                  <th>THỜI GIAN</th>
-                  <th>ĐÁNH GIÁ</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(mockDriverHistory[historyDriver.id] || []).map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.date}</td>
-                    <td>{r.vehicle}</td>
-                    <td>{r.route}</td>
-                    <td className="drivers-right">{r.distance}</td>
-                    <td className="drivers-right">{r.duration}</td>
-                    <td className="drivers-right">
-                      <FaStar className="drivers-star" /> {r.rating}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : null}
 
       {/* ================= HEADER CARD ================= */}
       <div className="drivers-card drivers-header">
@@ -514,15 +387,7 @@ export default function Drivers() {
                           <FaEye />
                         </button>
 
-                        <button
-                          type="button"
-                          className="drivers-icon-btn drivers-icon-history"
-                          aria-label="Lịch sử"
-                          onClick={() => openDriverHistory(d)}
-                        >
-                          <FaHistory />
-                        </button>
-                      </div>
+                        </div>
                     </td>
                   </tr>
                 ))
@@ -550,3 +415,10 @@ export default function Drivers() {
     </div>
   );
 }
+
+
+
+
+
+
+

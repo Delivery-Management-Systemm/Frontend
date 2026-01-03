@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import LoginPage from "./pages/Login.jsx";
@@ -12,7 +12,26 @@ import Maintenance from "./pages/Maintenance.jsx";
 import "./App.css";
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("fms.currentUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem("fms.currentUser", JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem("fms.currentUser");
+      }
+    } catch (error) {
+      // ignore storage errors (private mode, quota, etc.)
+    }
+  }, [currentUser]);
 
   if (!currentUser) {
     return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
