@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye, FaHistory } from "react-icons/fa";
+import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye } from "react-icons/fa";
 import "./Vehicles.css";
 import VehicleViewModal from "../components/VehicleViewModal";
 
@@ -329,15 +329,6 @@ export default function Vehicles() {
                       <FaTrash />
                     </button>
                     <button
-                      className="vehicles-iconBtn vehicles-iconBtn--history"
-                      type="button"
-                      onClick={() => {}}
-                      aria-label="history"
-                      title="Lịch sử"
-                    >
-                      <FaHistory />
-                    </button>
-                    <button
                       className="vehicles-iconBtn vehicles-iconBtn--view"
                       type="button"
                       onClick={() => setViewVehicle(v)}
@@ -361,6 +352,12 @@ export default function Vehicles() {
           </table>
         </div>
       </div>
-    </div>
-  );
+    {viewVehicle ? (
+      <VehicleViewModal
+        vehicle={viewVehicle}
+        onClose={() => setViewVehicle(null)}
+      />
+    ) : null}
+  </div>
+);
 }
