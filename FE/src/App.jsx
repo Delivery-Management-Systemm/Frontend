@@ -12,17 +12,25 @@ import Maintenance from "./pages/Maintenance.jsx";
 import "./App.css";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  if (!currentUser) {
+    return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
   }
 
   return (
     <BrowserRouter>
       <Routes>
         {/* Dashboard layout */}
-        <Route path="/" element={<DashboardPage />}>
+        <Route
+          path="/"
+          element={
+            <DashboardPage
+              currentUser={currentUser}
+              onLogout={() => setCurrentUser(null)}
+            />
+          }
+        >
           {/* Trang chủ (Home) */}
           <Route index element={<Home />} />
 
@@ -48,3 +56,4 @@ function App() {
 }
 
 export default App;
+

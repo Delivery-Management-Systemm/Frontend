@@ -136,6 +136,18 @@
   font-weight: 600;
 }
 
+.role-badge.role-admin {
+  background: #ef4444;
+}
+
+.role-badge.role-user {
+  background: #2563eb;
+}
+
+.role-badge.role-driver {
+  background: #16a34a;
+}
+
 .dashboard-user-info {
   display: flex;
   flex-direction: column;

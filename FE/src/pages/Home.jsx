@@ -5,16 +5,15 @@ import {
   FaRoute,
   FaExclamationTriangle,
   FaWaveSquare,
+  FaCheckCircle,
 } from "react-icons/fa";
 import "./Home.css";
 
-// ====================== MOCK DATA =============================
-// Chỉ cần thay object này bằng data từ API sau này
+// Mock data for dashboard cards
 const homeMockData = {
   user: {
     name: "Trần Thị Bình",
   },
-
   topCards: [
     {
       key: "totalVehicles",
@@ -49,7 +48,6 @@ const homeMockData = {
       theme: "red",
     },
   ],
-
   vehicleStatus: {
     title: "Trạng thái phương tiện",
     items: [
@@ -59,7 +57,6 @@ const homeMockData = {
       { label: "Bảo trì", value: 1, color: "yellow" },
     ],
   },
-
   driverStatus: {
     title: "Trạng thái tài xế",
     items: [
@@ -69,7 +66,6 @@ const homeMockData = {
       { label: "Nghỉ phép", value: 1, color: "gray" },
     ],
   },
-
   recentActivities: {
     title: "Hoạt động gần đây",
     items: [
@@ -142,7 +138,6 @@ const homeMockData = {
     },
   ],
 };
-// ===============================================================
 
 function HomeProgressRow({ item, maxValue }) {
   const pct = maxValue > 0 ? Math.round((item.value / maxValue) * 100) : 0;
@@ -167,28 +162,27 @@ function HomeProgressRow({ item, maxValue }) {
   );
 }
 
-export default function Home() {
-  const { user, topCards, vehicleStatus, driverStatus, recentActivities } =
+export default function Home({ currentUser }) {
+  const { topCards, vehicleStatus, driverStatus, recentActivities } =
     homeMockData;
   const capabilityByType = homeMockData.capabilityByType || [];
+  const displayName = currentUser?.fullName || homeMockData.user.name;
 
   const vehicleMax = Math.max(...vehicleStatus.items.map((x) => x.value), 0);
   const driverMax = Math.max(...driverStatus.items.map((x) => x.value), 0);
 
   return (
     <div className="home-container">
-      {/* HEADER CARD */}
       <div className="home-header-card">
         <div className="home-header-icon">
           <FaWaveSquare />
         </div>
         <div className="home-header-text">
           <div className="home-header-title">Tổng quan hệ thống</div>
-          <div className="home-header-subtitle">Chào mừng, {user.name}</div>
+          <div className="home-header-subtitle">Chào mừng, {displayName}</div>
         </div>
       </div>
 
-      {/* TOP STAT CARDS */}
       <div className="home-stat-grid">
         {topCards.map((card) => (
           <div key={card.key} className="home-stat-card">
@@ -212,7 +206,6 @@ export default function Home() {
         ))}
       </div>
 
-      {/* STATUS ROW */}
       <div className="home-status-grid">
         <div className="home-panel-card">
           <div className="home-panel-title">{vehicleStatus.title}</div>
@@ -241,7 +234,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* RECENT ACTIVITIES */}
       <div className="home-panel-card">
         <div className="home-panel-title">{recentActivities.title}</div>
 
@@ -263,7 +255,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* CAPABILITY BY VEHICLE TYPE */}
       <div className="home-panel-card capability-panel">
         <div className="home-panel-title">Khả năng vận hành theo loại xe</div>
         <div className="capability-list">
@@ -271,9 +262,14 @@ export default function Home() {
             <div className="capability-item" key={item.key}>
               <div className="capability-left">
                 <div className="capability-title">
-                  {item.title} <span className="capability-ok">✔</span>
+                  {item.title}{" "}
+                  <span className="capability-ok">
+                    <FaCheckCircle />
+                  </span>
                 </div>
-                <div className="capability-sub">Bằng lái cần: {item.requiredLicenses}</div>
+                <div className="capability-sub">
+                  Bằng lái cần: {item.requiredLicenses}
+                </div>
 
                 <div className="capability-stats">
                   <div className="cap-stat">
@@ -283,12 +279,18 @@ export default function Home() {
 
                   <div className="cap-stat">
                     <div className="cap-stat-label">Tài xế có bằng</div>
-                    <div className="cap-stat-value">{item.driversWithLicense}</div>
+                    <div className="cap-stat-value">
+                      {item.driversWithLicense}
+                    </div>
                   </div>
 
                   <div className="cap-stat">
                     <div className="cap-stat-label">Tài xế sẵn sàng</div>
-                    <div className={`cap-stat-value ${item.driversReady === 0 ? "cap-zero" : ""}`}>
+                    <div
+                      className={`cap-stat-value ${
+                        item.driversReady === 0 ? "cap-zero" : ""
+                      }`}
+                    >
                       {item.driversReady}
                     </div>
                   </div>

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import "./TripCostModal.css";
 
-function formatVnd(n) {
-  if (!n && n !== 0) return "0đ";
-  return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "đ";
+function formatVnd(value) {
+  if (value === null || value === undefined) return "0đ";
+  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "đ";
 }
 
 export default function TripCostModal({ trip, onClose, onAddCharge }) {
@@ -26,7 +26,6 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
       date: new Date().toLocaleDateString(),
     };
     onAddCharge(trip.id, newCharge);
-    // reset form
     setType("Phạt nguội");
     setAmount(0);
     setDesc("");
@@ -47,14 +46,14 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
               {existing.length === 0 ? (
                 <div className="empty">Chưa có chi phí</div>
               ) : (
-                existing.map((c) => (
-                  <div key={c.id} className="existing-item">
+                existing.map((charge) => (
+                  <div key={charge.id} className="existing-item">
                     <div className="existing-left">
-                      <div className="existing-type">{c.type}</div>
-                      <div className="existing-desc">{c.desc}</div>
-                      <div className="existing-date">{c.date}</div>
+                      <div className="existing-type">{charge.type}</div>
+                      <div className="existing-desc">{charge.desc}</div>
+                      <div className="existing-date">{charge.date}</div>
                     </div>
-                    <div className="existing-amount">{c.amount}</div>
+                    <div className="existing-amount">{charge.amount}</div>
                   </div>
                 ))
               )}
@@ -66,8 +65,8 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
             <label>Loại chi phí</label>
             <select value={type} onChange={(e) => setType(e.target.value)}>
               <option>Phạt nguội</option>
-              <option>Phí cơm</option>
-              <option>Bảo trì phụ tùng</option>
+              <option>Phí cầu đường</option>
+              <option>Bảo trì phương tiện</option>
             </select>
 
             <label>Số tiền (VND)</label>
@@ -98,5 +97,3 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
     </div>
   );
 }
-
-
