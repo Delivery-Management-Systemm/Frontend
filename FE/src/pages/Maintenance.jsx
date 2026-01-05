@@ -4,7 +4,7 @@ import { MdBuild, MdCalendarToday } from "react-icons/md";
 import {
   getMaintenanceRecords,
   getMaintenanceStats,
-} from "../services/maintenanceService";
+} from "../services/maintenanceAPI";
 import "./Maintenance.css";
 import "./TripManagement.css";
 
