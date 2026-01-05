@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/Login.jsx";
 import DashboardPage from "./pages/Dashboard.jsx";
@@ -9,6 +9,12 @@ import Vehicles from "./pages/Vehicles.jsx";
 import Drivers from "./pages/Drivers.jsx";
 import TripManagement from "./pages/TripManagement.jsx";
 import Maintenance from "./pages/Maintenance.jsx";
+import AdminGuard from "./routes/AdminGuard.jsx";
+import AdminLayout from "./components/admin/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/Dashboard.jsx";
+import AdminVehicles from "./pages/admin/Vehicles.jsx";
+import AdminDrivers from "./pages/admin/Drivers.jsx";
+import AdminTrips from "./pages/admin/Trips.jsx";
 import "./App.css";
 
 function App() {
@@ -40,6 +46,16 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/admin" element={<AdminGuard user={currentUser} />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="vehicles" element={<AdminVehicles />} />
+            <Route path="drivers" element={<AdminDrivers />} />
+            <Route path="trips" element={<AdminTrips />} />
+          </Route>
+        </Route>
+
         {/* Dashboard layout */}
         <Route
           path="/"
