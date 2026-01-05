@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FiPlus, FiSearch } from "react-icons/fi";
 import { MdLocationOn } from "react-icons/md";
 import { FaBox, FaDollarSign, FaEye } from "react-icons/fa";
-import { getTrips, getTripStats } from "../services/tripService";
+import { getTrips, getTripStats } from "../services/tripAPI";
 import "./TripManagement.css";
 import TripCostModal from "../components/TripCostModal";
 
