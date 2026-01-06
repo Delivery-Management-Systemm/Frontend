@@ -5,6 +5,39 @@
   min-height: 100vh;
 }
 
+/* Loading and Error States */
+.drivers-loading,
+.drivers-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #666;
+}
+
+.drivers-spinner {
+  font-size: 32px;
+  color: #1d5bff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.drivers-error {
+  color: #dc3545;
+}
+
+.drivers-error svg {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
 /* Card style giống Vehicles */
 .drivers-card {
   background: #ffffff;

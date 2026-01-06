@@ -1,74 +1,12 @@
-import React, { useMemo, useState } from "react";
-import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye } from "react-icons/fa";
+import React, { useMemo, useState, useEffect } from "react";
+import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye, FaSpinner, FaExclamationTriangle } from "react-icons/fa";
 import "./Vehicles.css";
 import VehicleViewModal from "../components/VehicleViewModal";
+import { getVehicles } from "../services/vehicleAPI";
 
-// ====================== MOCK DATA =============================
+// ====================== CONFIG =============================
 
-const vehiclesMock = [
-  {
-    id: 1,
-    plate: "29A-12345",
-    year: 2022,
-    typeKey: "small_truck",
-    brand: "Hyundai",
-    model: "Porter H150",
-    payload: "1.5 tấn",
-    km: "45,000 km",
-    licenses: ["C"],
-    statusKey: "ready",
-  },
-  {
-    id: 2,
-    plate: "30B-67890",
-    year: 2021,
-    typeKey: "big_truck",
-    brand: "Hino",
-    model: "FC9JLSW",
-    payload: "6 tấn",
-    km: "78,000 km",
-    licenses: ["C", "E"],
-    statusKey: "in_use",
-  },
-  {
-    id: 3,
-    plate: "51C-11111",
-    year: 2020,
-    typeKey: "container",
-    brand: "Dongfeng",
-    model: "Hoàng Huy",
-    payload: "40 feet",
-    km: "120,000 km",
-    licenses: ["E"],
-    statusKey: "on_trip",
-  },
-  {
-    id: 4,
-    plate: "29D-22222",
-    year: 2023,
-    typeKey: "bus",
-    brand: "Thaco",
-    model: "Universe",
-    payload: "45 chỗ",
-    km: "25,000 km",
-    licenses: ["D"],
-    statusKey: "ready",
-  },
-  {
-    id: 5,
-    plate: "59E-33333",
-    year: 2022,
-    typeKey: "pickup",
-    brand: "Ford",
-    model: "Ranger XLS",
-    payload: "1 tấn",
-    km: "35,000 km",
-    licenses: ["B2", "C"],
-    statusKey: "maintenance",
-  },
-];
-
-const vehiclesUiMock = {
+const vehiclesConfig = {
   header: {
     title: "Quản lý phương tiện",
     totalPrefix: "Tổng số:",
@@ -77,7 +15,7 @@ const vehiclesUiMock = {
   },
   filterCard: {
     title: "Bộ lọc",
-    searchPlaceholder: "Tìm kiếm theo biển số, hãng, model...",
+    searchPlaceholder: "Tìm kiếm theo biển số, model...",
     typeAllLabel: "Tất cả loại xe",
     statusAllLabel: "Tất cả trạng thái",
   },
@@ -86,8 +24,8 @@ const vehiclesUiMock = {
       stt: "STT",
       plate: "BIỂN SỐ",
       type: "LOẠI XE",
-      brandModel: "HÃNG/MODEL",
-      payload: "TẢI TRỌNG",
+      brandModel: "MODEL",
+      year: "NĂM SX",
       km: "KM ĐÃ ĐI",
       status: "TRẠNG THÁI",
       actions: "THAO TÁC",
@@ -100,6 +38,7 @@ const vehiclesUiMock = {
     { key: "container", label: "Xe container" },
     { key: "bus", label: "Xe khách" },
     { key: "pickup", label: "Xe bán tải" },
+    { key: "car", label: "Xe con" },
   ],
   statuses: [
     { key: "all", label: "Tất cả trạng thái" },
@@ -107,6 +46,7 @@ const vehiclesUiMock = {
     { key: "in_use", label: "Đang sử dụng" },
     { key: "on_trip", label: "Đang công tác" },
     { key: "maintenance", label: "Bảo trì" },
+    { key: "available", label: "Có sẵn" },
   ],
 };
 
@@ -128,31 +68,112 @@ function vehiclesGetStatusBadgeClass(statusKey) {
 }
 
 export default function Vehicles() {
-  const [vehicles] = useState(vehiclesMock);
-
+  const [vehiclesData, setVehiclesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [search, setSearch] = useState("");
   const [typeKey, setTypeKey] = useState("all");
   const [statusKey, setStatusKey] = useState("all");
   const [viewVehicle, setViewVehicle] = useState(null);
 
-  const totalCount = vehicles.length;
+  // Fetch vehicles data on component mount
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getVehicles();
+
+        // Map backend data to frontend format
+        const mappedData = data.map(vehicle => ({
+          id: vehicle.vehicleID,
+          plate: vehicle.licensePlate,
+          year: vehicle.manufacturedYear || 0,
+          typeKey: mapVehicleType(vehicle.vehicleType),
+          brand: extractBrandFromModel(vehicle.vehicleModel),
+          model: vehicle.vehicleModel || "",
+          km: vehicle.currentKm ? `${vehicle.currentKm.toLocaleString()} km` : "0 km",
+          licenses: [vehicle.requiredLicenseCode],
+          statusKey: mapVehicleStatus(vehicle.vehicleStatus),
+        }));
+
+        setVehiclesData(mappedData);
+      } catch (err) {
+        console.error('Error loading vehicles:', err);
+        setError('Không thể tải dữ liệu phương tiện. Vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchVehicles();
+  }, []);
+
+  const mapVehicleType = (vehicleType) => {
+    if (!vehicleType) return "small_truck";
+
+    const typeLower = vehicleType.toLowerCase();
+    if (typeLower.includes("container")) return "container";
+    if (typeLower.includes("khách")) return "bus";
+    if (typeLower.includes("bán tải")) return "pickup";
+    if (typeLower.includes("tải lớn")) return "big_truck";
+    if (typeLower.includes("tải nhẹ")) return "small_truck";
+    if (typeLower.includes("con")) return "car";
+
+    return "small_truck"; // default
+  };
+
+  // Extract brand from model (simple heuristic)
+  const extractBrandFromModel = (vehicleModel) => {
+    if (!vehicleModel) return "Unknown";
+
+    const modelLower = vehicleModel.toLowerCase();
+    if (modelLower.includes("hyundai")) return "Hyundai";
+    if (modelLower.includes("hino")) return "Hino";
+    if (modelLower.includes("dongfeng")) return "Dongfeng";
+    if (modelLower.includes("thaco")) return "Thaco";
+    if (modelLower.includes("ford")) return "Ford";
+
+    // Return first word as brand
+    return vehicleModel.split(' ')[0];
+  };
+
+  // Map backend status to frontend status key
+  const mapVehicleStatus = (vehicleStatus) => {
+    if (!vehicleStatus) return "ready";
+
+    switch (vehicleStatus.toLowerCase()) {
+      case 'available':
+        return 'ready';
+      case 'on_trip':
+        return 'on_trip';
+      case 'maintenance':
+        return 'maintenance';
+      case 'in_use':
+        return 'in_use';
+      default:
+        return 'ready';
+    }
+  };
+
+  const totalCount = vehiclesData.length;
 
   const typeLabelMap = useMemo(() => {
     const map = new Map();
-    vehiclesUiMock.vehicleTypes.forEach((t) => map.set(t.key, t.label));
+    vehiclesConfig.vehicleTypes.forEach((t) => map.set(t.key, t.label));
     return map;
   }, []);
 
   const statusLabelMap = useMemo(() => {
     const map = new Map();
-    vehiclesUiMock.statuses.forEach((s) => map.set(s.key, s.label));
+    vehiclesConfig.statuses.forEach((s) => map.set(s.key, s.label));
     return map;
   }, []);
 
   const filteredVehicles = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return vehicles.filter((v) => {
+    return vehiclesData.filter((v) => {
       const matchesSearch =
         q.length === 0
           ? true
@@ -172,7 +193,7 @@ export default function Vehicles() {
 
       return matchesSearch && matchesType && matchesStatus;
     });
-  }, [vehicles, search, typeKey, statusKey, typeLabelMap, statusLabelMap]);
+  }, [vehiclesData, search, typeKey, statusKey, typeLabelMap, statusLabelMap]);
 
   const handleAdd = () => {
     // TODO: sau này thay bằng mở modal / route create
@@ -187,6 +208,37 @@ export default function Vehicles() {
     console.log("Delete", vehicle);
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="vehicles-page">
+        <div className="vehicles-loading">
+          <FaSpinner className="vehicles-spinner" />
+          <div>Đang tải dữ liệu phương tiện...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="vehicles-page">
+        <div className="vehicles-error">
+          <FaExclamationTriangle />
+          <div>{error}</div>
+          <button
+            type="button"
+            className="vehicles-primaryBtn"
+            onClick={() => window.location.reload()}
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="vehicles-page">
       {/* ===================== HEADER CARD ===================== */}
@@ -197,16 +249,16 @@ export default function Vehicles() {
           </div>
 
           <div className="vehicles-headerText">
-            <div className="vehicles-headerTitle">{vehiclesUiMock.header.title}</div>
+            <div className="vehicles-headerTitle">{vehiclesConfig.header.title}</div>
             <div className="vehicles-headerSub">
-              {vehiclesUiMock.header.totalPrefix} {totalCount} {vehiclesUiMock.header.totalSuffix}
+              {vehiclesConfig.header.totalPrefix} {totalCount} {vehiclesConfig.header.totalSuffix}
             </div>
           </div>
         </div>
 
         <button className="vehicles-primaryBtn" onClick={handleAdd} type="button">
           <FaPlus className="vehicles-btnIcon" />
-          {vehiclesUiMock.header.addButton}
+          {vehiclesConfig.header.addButton}
         </button>
       </div>
 
@@ -214,7 +266,7 @@ export default function Vehicles() {
       <div className="vehicles-card vehicles-filterCard">
         <div className="vehicles-filterTitleRow">
           <FaFilter className="vehicles-filterTitleIcon" />
-          <div className="vehicles-filterTitle">{vehiclesUiMock.filterCard.title}</div>
+          <div className="vehicles-filterTitle">{vehiclesConfig.filterCard.title}</div>
         </div>
 
         <div className="vehicles-filterRow">
@@ -225,7 +277,7 @@ export default function Vehicles() {
               className="vehicles-input"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder={vehiclesUiMock.filterCard.searchPlaceholder}
+              placeholder={vehiclesConfig.filterCard.searchPlaceholder}
               type="text"
             />
           </div>
@@ -237,7 +289,7 @@ export default function Vehicles() {
               value={typeKey}
               onChange={(e) => setTypeKey(e.target.value)}
             >
-              {vehiclesUiMock.vehicleTypes.map((t) => (
+              {vehiclesConfig.vehicleTypes.map((t) => (
                 <option key={t.key} value={t.key}>
                   {t.label}
                 </option>
@@ -252,7 +304,7 @@ export default function Vehicles() {
               value={statusKey}
               onChange={(e) => setStatusKey(e.target.value)}
             >
-              {vehiclesUiMock.statuses.map((s) => (
+              {vehiclesConfig.statuses.map((s) => (
                 <option key={s.key} value={s.key}>
                   {s.label}
                 </option>
@@ -268,15 +320,14 @@ export default function Vehicles() {
           <table className="vehicles-table">
             <thead>
               <tr>
-                <th className="vehicles-th vehicles-th--stt">{vehiclesUiMock.table.columns.stt}</th>
-                <th className="vehicles-th">{vehiclesUiMock.table.columns.plate}</th>
-                <th className="vehicles-th">{vehiclesUiMock.table.columns.type}</th>
-                <th className="vehicles-th">{vehiclesUiMock.table.columns.brandModel}</th>
-                <th className="vehicles-th">NĂM SX</th>
-                <th className="vehicles-th">{vehiclesUiMock.table.columns.payload}</th>
-                <th className="vehicles-th">{vehiclesUiMock.table.columns.km}</th>
-                <th className="vehicles-th">{vehiclesUiMock.table.columns.status}</th>
-                <th className="vehicles-th vehicles-th--actions">{vehiclesUiMock.table.columns.actions}</th>
+                <th className="vehicles-th vehicles-th--stt">{vehiclesConfig.table.columns.stt}</th>
+                <th className="vehicles-th">{vehiclesConfig.table.columns.plate}</th>
+                <th className="vehicles-th">{vehiclesConfig.table.columns.type}</th>
+                <th className="vehicles-th">{vehiclesConfig.table.columns.brandModel}</th>
+                <th className="vehicles-th">{vehiclesConfig.table.columns.year}</th>
+                <th className="vehicles-th">{vehiclesConfig.table.columns.km}</th>
+                <th className="vehicles-th">{vehiclesConfig.table.columns.status}</th>
+                <th className="vehicles-th vehicles-th--actions">{vehiclesConfig.table.columns.actions}</th>
               </tr>
             </thead>
 
@@ -300,7 +351,6 @@ export default function Vehicles() {
 
                   <td className="vehicles-td">{v.year}</td>
 
-                  <td className="vehicles-td">{v.payload}</td>
                   <td className="vehicles-td">{v.km}</td>
 
                   <td className="vehicles-td">
@@ -343,7 +393,7 @@ export default function Vehicles() {
 
               {filteredVehicles.length === 0 && (
                 <tr>
-                  <td className="vehicles-empty" colSpan={9}>
+                  <td className="vehicles-empty" colSpan={8}>
                     Không có dữ liệu phù hợp bộ lọc.
                   </td>
                 </tr>

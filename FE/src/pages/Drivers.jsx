@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   FaPlus,
   FaSearch,
@@ -8,15 +8,18 @@ import {
   FaFilter,
   FaStar,
   FaUsers,
+  FaSpinner,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 
 import DriverAddModal from "../components/DriverAddModal";
 import DriverViewModal from "../components/DriverViewModal";
+import { getDrivers } from "../services/driverAPI";
 import "./Drivers.css";
 
-// ========================= MOCK CONFIG + DATA =========================
+// ========================= CONFIG =========================
 
-const driversMockConfig = {
+const driversConfig = {
   page: {
     title: "Quản lý tài xế",
     subtitlePrefix: "Tổng số:",
@@ -24,15 +27,14 @@ const driversMockConfig = {
     filtersTitle: "Bộ lọc",
     searchPlaceholder: "Tìm kiếm tên, SĐT, GPLX...",
   },
-  shifts: {
-    // removed shift options (work shift UI deleted)
-  },
   statuses: {
     all: "Tất cả trạng thái",
     driving: { label: "Đang lái" },
     ready: { label: "Sẵn sàng" },
     duty: { label: "Đang công tác" },
     leave: { label: "Nghỉ phép" },
+    available: { label: "Có sẵn" },
+    on_trip: { label: "Đang chạy" },
   },
   licenseTypes: {
     all: "Tất cả loại bằng",
@@ -46,74 +48,6 @@ const driversMockConfig = {
     FD: "FD",
   },
 };
-
-const driversMockData = [
-  {
-    id: "d1",
-    name: "Phạm Văn Đức",
-    phone: "0911111111",
-    email: "phamduc@fms.vn",
-    licenses: ["C", "D"],
-    vehicle: { plate: "30B-67890", desc: "Xe tải lớn" },
-    shift: "morning",
-    expYears: 8,
-    rating: 4.5,
-    status: "driving",
-    statusSub: null,
-  },
-  {
-    id: "d2",
-    name: "Nguyễn Thị Hoa",
-    phone: "0922222222",
-    email: "nguyenhoa@fms.vn",
-    licenses: ["B2", "C"],
-    vehicle: null,
-    shift: "afternoon",
-    expYears: 5,
-    rating: 4.8,
-    status: "ready",
-    statusSub: null,
-  },
-  {
-    id: "d3",
-    name: "Trần Văn Kiên",
-    phone: "0933333333",
-    email: "trankien@fms.vn",
-    licenses: ["E", "FE"],
-    vehicle: { plate: "51C-11111", desc: "Xe container" },
-    shift: "long",
-    expYears: 12,
-    rating: 4.9,
-    status: "duty",
-    statusSub: "Về: 20/12/2024",
-  },
-  {
-    id: "d4",
-    name: "Lê Thị Mai",
-    phone: "0944444444",
-    email: "lemai@fms.vn",
-    licenses: ["B2", "C"],
-    vehicle: null,
-    shift: "night",
-    expYears: 6,
-    rating: 4.6,
-    status: "ready",
-    statusSub: null,
-  },
-  {
-    id: "d5",
-    name: "Hoàng Văn Nam",
-    phone: "0955555555",
-    email: "hoangnam@fms.vn",
-    licenses: ["D", "FD"],
-    vehicle: null,
-    shift: "morning",
-    expYears: 10,
-    rating: 4.7,
-    status: "leave",
-    statusSub: null,
-  },
-];
 
 // ============================== HELPERS ==============================
 
@@ -141,16 +75,69 @@ function driversGetStatusPillClass(status) {
 // ====================================================================
 
 export default function Drivers() {
+  const [driversData, setDriversData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [driversSearch, setDriversSearch] = useState("");
   const [driversFilterStatus, setDriversFilterStatus] = useState("all");
   const [driversFilterLicense, setDriversFilterLicense] = useState("all");
   const [driversShowAddModal, setDriversShowAddModal] = useState(false);
   const [driversViewDriver, setDriversViewDriver] = useState(null);
 
+  // Fetch drivers data on component mount
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await getDrivers();
+
+        // Map backend data to frontend format
+        const mappedData = data.map(driver => ({
+          id: driver.driverID,
+          name: driver.name,
+          phone: driver.phone,
+          email: driver.email || "",
+          licenses: driver.licenses || [],
+          vehicle: driver.assignedVehicle && driver.assignedVehicle !== "Đang rảnh"
+            ? { plate: driver.assignedVehicle, desc: "Đang chạy" }
+            : null,
+          expYears: driver.experienceYears || 0,
+          rating: driver.rating || 0,
+          status: mapDriverStatus(driver.status),
+          statusSub: null,
+        }));
+
+        setDriversData(mappedData);
+      } catch (err) {
+        console.error('Error loading drivers:', err);
+        setError('Không thể tải dữ liệu tài xế. Vui lòng thử lại.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDrivers();
+  }, []);
+
+  // Map backend status to frontend status
+  const mapDriverStatus = (backendStatus) => {
+    switch (backendStatus?.toLowerCase()) {
+      case 'on_trip':
+        return 'driving';
+      case 'available':
+        return 'ready';
+      case 'active':
+        return 'ready';
+      default:
+        return backendStatus?.toLowerCase() || 'ready';
+    }
+  };
+
   const driversFiltered = useMemo(() => {
     const q = driversSearch.trim().toLowerCase();
 
-    return driversMockData.filter((d) => {
+    return driversData.filter((d) => {
       const driversMatchesSearch =
         !q ||
         d.name.toLowerCase().includes(q) ||
@@ -170,9 +157,40 @@ export default function Drivers() {
         driversMatchesLicense
       );
     });
-  }, [driversSearch, driversFilterStatus, driversFilterLicense]);
+  }, [driversSearch, driversFilterStatus, driversFilterLicense, driversData]);
 
-  const driversTotal = driversMockData.length;
+  const driversTotal = driversData.length;
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="drivers-page">
+        <div className="drivers-loading">
+          <FaSpinner className="drivers-spinner" />
+          <div>Đang tải dữ liệu tài xế...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="drivers-page">
+        <div className="drivers-error">
+          <FaExclamationTriangle />
+          <div>{error}</div>
+          <button
+            type="button"
+            className="drivers-primary-btn"
+            onClick={() => window.location.reload()}
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="drivers-page">
@@ -185,9 +203,9 @@ export default function Drivers() {
           </div>
 
           <div>
-            <div className="drivers-header-title">{driversMockConfig.page.title}</div>
+            <div className="drivers-header-title">{driversConfig.page.title}</div>
             <div className="drivers-header-sub">
-              {driversMockConfig.page.subtitlePrefix} {driversTotal} tài xế
+              {driversConfig.page.subtitlePrefix} {driversTotal} tài xế
             </div>
           </div>
         </div>
@@ -198,7 +216,7 @@ export default function Drivers() {
           onClick={() => setDriversShowAddModal(true)}
         >
           <FaPlus />
-          {driversMockConfig.page.addBtn}
+          {driversConfig.page.addBtn}
         </button>
       </div>
 
@@ -206,7 +224,7 @@ export default function Drivers() {
       <div className="drivers-card drivers-filters">
         <div className="drivers-filters-title">
           <FaFilter />
-          {driversMockConfig.page.filtersTitle}
+          {driversConfig.page.filtersTitle}
         </div>
 
         <div className="drivers-filters-row">
@@ -217,11 +235,9 @@ export default function Drivers() {
               className="drivers-input"
               value={driversSearch}
               onChange={(e) => setDriversSearch(e.target.value)}
-              placeholder={driversMockConfig.page.searchPlaceholder}
+              placeholder={driversConfig.page.searchPlaceholder}
             />
           </div>
-
-          {/* Shift filter removed */}
 
           {/* Status */}
           <select
@@ -229,8 +245,8 @@ export default function Drivers() {
             value={driversFilterStatus}
             onChange={(e) => setDriversFilterStatus(e.target.value)}
           >
-            <option value="all">{driversMockConfig.statuses.all}</option>
-            {Object.entries(driversMockConfig.statuses)
+            <option value="all">{driversConfig.statuses.all}</option>
+            {Object.entries(driversConfig.statuses)
               .filter(([k]) => k !== "all")
               .map(([key, v]) => (
                 <option key={key} value={key}>
@@ -245,7 +261,7 @@ export default function Drivers() {
             value={driversFilterLicense}
             onChange={(e) => setDriversFilterLicense(e.target.value)}
           >
-            {Object.entries(driversMockConfig.licenseTypes).map(([key, label]) => (
+            {Object.entries(driversConfig.licenseTypes).map(([key, label]) => (
               <option key={key} value={key}>
                 {label}
               </option>
@@ -348,7 +364,7 @@ export default function Drivers() {
                             "drivers-pill " + driversGetStatusPillClass(d.status)
                           }
                         >
-                          {driversMockConfig.statuses[d.status].label}
+                          {driversConfig.statuses[d.status]?.label || d.status}
                         </span>
 
                         {d.statusSub ? (
