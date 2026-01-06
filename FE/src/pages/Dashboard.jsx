@@ -10,6 +10,7 @@ import {
   FaTruck,
   FaTruckMoving,
   FaUserAlt,
+  FaUserCircle,
   FaUserFriends,
 } from "react-icons/fa";
 import "./Dashboard.css";
@@ -23,6 +24,7 @@ import Bookings from "./Bookings";
 import Orders from "./Orders";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
+import AccountManagement from "./admin/AccountManagement";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
@@ -91,6 +93,12 @@ const MENU_ITEMS = [
     icon: <FaUserFriends />,
     roles: ["admin", "user"],
   },
+  {
+    key: "account-management",
+    label: "Quản lý tài khoản",
+    icon: <FaUserCircle />,
+    roles: ["admin"],
+  },
 ];
 
 const Dashboard = ({ currentUser, onLogout }) => {
@@ -132,6 +140,7 @@ const Dashboard = ({ currentUser, onLogout }) => {
     emergency: <Emergency />,
     maintenance: <Maintenance />,
     account: <Account />,
+    "account-management": <AccountManagement />,
   };
 
   return (
