@@ -15,6 +15,7 @@ import AdminDashboard from "./pages/admin/Dashboard.jsx";
 import AdminVehicles from "./pages/admin/Vehicles.jsx";
 import AdminDrivers from "./pages/admin/Drivers.jsx";
 import AdminTrips from "./pages/admin/Trips.jsx";
+import AdminAccountManagement from "./pages/admin/AccountManagement.jsx";
 import "./App.css";
 
 function App() {
@@ -53,6 +54,7 @@ function App() {
             <Route path="vehicles" element={<AdminVehicles />} />
             <Route path="drivers" element={<AdminDrivers />} />
             <Route path="trips" element={<AdminTrips />} />
+            <Route path="accounts" element={<AdminAccountManagement />} />
           </Route>
         </Route>
 
