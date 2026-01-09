@@ -1,142 +1,202 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  FaBox,
+  FaCalendarAlt,
+  FaExclamationTriangle,
+  FaRoute,
+  FaSignOutAlt,
+  FaThLarge,
+  FaTools,
+  FaTruck,
+  FaTruckMoving,
+  FaUserAlt,
+  FaUserCircle,
+  FaUserFriends,
+} from "react-icons/fa";
 import "./Dashboard.css";
-import ReportsDashboard from "./ReportsDashboard";
 import Account from "./Account";
 import Home from "./Home";
 import Vehicles from "./Vehicles";
 import Drivers from "./Drivers";
 import TripManagement from "./TripManagement";
-import FuelManagement from "./FuelManagement";
+import DriverAssignment from "./DriverAssignment";
+import Bookings from "./Bookings";
+import Orders from "./Orders";
+import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
-import GPSTracking from "./GPSTracking";
+import AccountManagement from "./admin/AccountManagement";
 
-const Dashboard = () => {
-  const [activeMenu, setActiveMenu] = useState("home"); // 👈 state chọn menu
+const ROLE_LABELS = {
+  admin: "Quản trị",
+  user: "Quản lý",
+  driver: "Tài xế",
+};
+
+const ROLE_BADGE_CLASSES = {
+  admin: "role-admin",
+  user: "role-user",
+  driver: "role-driver",
+};
+
+const MENU_ITEMS = [
+  {
+    key: "home",
+    label: "Tổng quan",
+    icon: <FaThLarge />,
+    roles: ["admin", "user", "driver"],
+  },
+  {
+    key: "vehicles",
+    label: "Quản lý phương tiện",
+    icon: <FaTruckMoving />,
+    roles: ["admin", "user"],
+  },
+  {
+    key: "drivers",
+    label: "Quản lý tài xế",
+    icon: <FaUserAlt />,
+    roles: ["admin", "user"],
+  },
+  {
+    key: "trips",
+    label: "Quản lý chuyến đi",
+    icon: <FaRoute />,
+    roles: ["admin", "user", "driver"],
+  },
+  {
+    key: "bookings",
+    label: "Lịch đặt trước",
+    icon: <FaCalendarAlt />,
+    roles: ["admin", "user"],
+  },
+  {
+    key: "orders",
+    label: "Quản lý đơn hàng",
+    icon: <FaBox />,
+    roles: ["admin"],
+  },
+  {
+    key: "emergency",
+    label: "Báo cáo khẩn cấp",
+    icon: <FaExclamationTriangle />,
+    roles: ["admin", "user", "driver"],
+  },
+  {
+    key: "maintenance",
+    label: "Bảo trì & Sửa chữa",
+    icon: <FaTools />,
+    roles: ["admin", "user"],
+  },
+  {
+    key: "assignments",
+    label: "Phân công tài xế",
+    icon: <FaUserFriends />,
+    roles: ["admin", "user"],
+  },
+  {
+    key: "account-management",
+    label: "Quản lý tài khoản",
+    icon: <FaUserCircle />,
+    roles: ["admin"],
+  },
+];
+
+const Dashboard = ({ currentUser, onLogout }) => {
+  const role = currentUser?.role || "admin";
+  const [activeMenu, setActiveMenu] = useState("home");
+
+  const menuItems = useMemo(
+    () => MENU_ITEMS.filter((item) => item.roles.includes(role)),
+    [role]
+  );
+
+  useEffect(() => {
+    if (!menuItems.length) {
+      return;
+    }
+    const isAllowed = menuItems.some((item) => item.key === activeMenu);
+    if (!isAllowed) {
+      setActiveMenu(menuItems[0].key);
+    }
+  }, [activeMenu, menuItems]);
 
   const getNavItemClass = (key) =>
     "dashboard-nav-item" + (activeMenu === key ? " is-active" : "");
+
+  const initials = useMemo(() => {
+    if (!currentUser?.fullName) return "U";
+    const parts = currentUser.fullName.trim().split(/\s+/);
+    return parts[0].slice(0, 1).toUpperCase();
+  }, [currentUser]);
+
+  const contentMap = {
+    home: <Home currentUser={currentUser} />,
+    vehicles: <Vehicles />,
+    drivers: <Drivers />,
+    trips: <TripManagement />,
+    assignments: <DriverAssignment />,
+    bookings: <Bookings />,
+    orders: <Orders />,
+    emergency: <Emergency />,
+    maintenance: <Maintenance />,
+    account: <Account />,
+    "account-management": <AccountManagement />,
+  };
 
   return (
     <div className="dashboard-root">
       <aside className="dashboard-sidebar">
         <div className="dashboard-logo">
-          <div className="dashboard-logo-icon">🚚</div>
+          <div className="dashboard-logo-icon">
+            <FaTruck />
+          </div>
           <div className="dashboard-logo-text">
             <span className="dashboard-logo-title">FMS</span>
-            <span className="dashboard-logo-subtitle">Fleet Manager</span>
+            <span className="dashboard-logo-subtitle">Fleet Management</span>
           </div>
         </div>
 
         <nav className="dashboard-nav">
-          <button
-            className={getNavItemClass("home")}
-            onClick={() => setActiveMenu("home")}
-          >
-            <span className="dashboard-nav-icon">🏠</span>
-            <span className="dashboard-nav-label">Trang chủ</span>
-          </button>
-
-          <button
-            className={getNavItemClass("vehicles")}
-            onClick={() => setActiveMenu("vehicles")}
-          >
-            <span className="dashboard-nav-icon">🚛</span>
-            <span className="dashboard-nav-label">Quản lý phương tiện</span>
-          </button>
-
-          <button
-            className={getNavItemClass("drivers")}
-            onClick={() => setActiveMenu("drivers")}
-          >
-            <span className="dashboard-nav-icon">👨‍✈️</span>
-            <span className="dashboard-nav-label">Quản lý tài xế</span>
-          </button>
-
-          <button
-            className={getNavItemClass("trips")}
-            onClick={() => setActiveMenu("trips")}
-          >
-            <span className="dashboard-nav-icon">🧭</span>
-            <span className="dashboard-nav-label">Quản lý chuyến đi</span>
-          </button>
-
-          <button
-            className={getNavItemClass("fuel")}
-            onClick={() => setActiveMenu("fuel")}
-          >
-            <span className="dashboard-nav-icon">⛽</span>
-            <span className="dashboard-nav-label">Quản lý nhiên liệu</span>
-          </button>
-
-          <button
-            className={getNavItemClass("maintenance")}
-            onClick={() => setActiveMenu("maintenance")}
-          >
-            <span className="dashboard-nav-icon">🛠️</span>
-            <span className="dashboard-nav-label">Bảo dưỡng</span>
-          </button>
-
-          <button
-            className={getNavItemClass("gps")}
-            onClick={() => setActiveMenu("gps")}
-          >
-            <span className="dashboard-nav-icon">📡</span>
-            <span className="dashboard-nav-label">GPS / Tracking</span>
-          </button>
-
-          <button
-            className={getNavItemClass("reports")}
-            onClick={() => setActiveMenu("reports")}
-          >
-            <span className="dashboard-nav-icon">📊</span>
-            <span className="dashboard-nav-label">Báo cáo &amp; Thống kê</span>
-          </button>
-
-          <button
-            className={getNavItemClass("account")}
-            onClick={() => setActiveMenu("account")}
-          >
-            <span className="dashboard-nav-icon">⚙️</span>
-            <span className="dashboard-nav-label">Tài khoản</span>
-          </button>
+          {menuItems.map((item) => (
+            <button
+              key={item.key}
+              className={getNavItemClass(item.key)}
+              onClick={() => setActiveMenu(item.key)}
+            >
+              <span className="dashboard-nav-icon">{item.icon}</span>
+              <span className="dashboard-nav-label">{item.label}</span>
+            </button>
+          ))}
         </nav>
 
         <div className="dashboard-sidebar-footer">
           <div className="dashboard-user">
-            <div className="dashboard-user-avatar">A</div>
+            <div className="dashboard-user-avatar">{initials}</div>
             <div className="dashboard-user-info">
-              <span className="dashboard-user-name">Admin User</span>
-              <span className="dashboard-user-email">admin@example.com</span>
+              <span className="dashboard-user-name">
+                {currentUser?.fullName || "Người dùng"}
+              </span>
+              <span
+                className={`role-badge ${
+                  ROLE_BADGE_CLASSES[role] || "role-user"
+                }`}
+              >
+                {ROLE_LABELS[role] || "Người dùng"}
+              </span>
             </div>
           </div>
 
-          <button className="dashboard-logout">
-            <span className="dashboard-logout-icon">↩</span>
+          <button className="dashboard-logout" onClick={onLogout}>
+            <span className="dashboard-logout-icon">
+              <FaSignOutAlt />
+            </span>
             <span>Đăng xuất</span>
           </button>
         </div>
       </aside>
 
       <main className="dashboard-main">
-        {activeMenu === "home" ? (
-          <Home />
-        ) : activeMenu === "vehicles" ? (
-          <Vehicles />
-        ) : activeMenu === "drivers" ? (
-          <Drivers />
-        ) : activeMenu === "trips" ? (
-          <TripManagement />
-        ) : activeMenu === "fuel" ? (
-          <FuelManagement />
-        ) : activeMenu === "maintenance" ? (
-          <Maintenance />
-        ) : activeMenu === "gps" ? (
-          <GPSTracking />
-        ) : activeMenu === "reports" ? (
-          <ReportsDashboard />
-        ) : activeMenu === "account" ? (
-          <Account />
-        ) : (
+        {contentMap[activeMenu] || (
           <div className="dashboard-empty-state">
             <h2>Chọn menu để bắt đầu</h2>
           </div>

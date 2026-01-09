@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/Login.jsx";
 import DashboardPage from "./pages/Dashboard.jsx";
@@ -8,23 +8,66 @@ import Home from "./pages/Home.jsx";
 import Vehicles from "./pages/Vehicles.jsx";
 import Drivers from "./pages/Drivers.jsx";
 import TripManagement from "./pages/TripManagement.jsx";
-import FuelManagement from "./pages/FuelManagement.jsx";
 import Maintenance from "./pages/Maintenance.jsx";
-import GPSTracking from "./pages/GPSTracking.jsx";
+import AdminGuard from "./routes/AdminGuard.jsx";
+import AdminLayout from "./components/admin/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/Dashboard.jsx";
+import AdminVehicles from "./pages/admin/Vehicles.jsx";
+import AdminDrivers from "./pages/admin/Drivers.jsx";
+import AdminTrips from "./pages/admin/Trips.jsx";
+import AdminAccountManagement from "./pages/admin/AccountManagement.jsx";
 import "./App.css";
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem("fms.currentUser");
+      return stored ? JSON.parse(stored) : null;
+    } catch (error) {
+      return null;
+    }
+  });
 
-  if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem("fms.currentUser", JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem("fms.currentUser");
+      }
+    } catch (error) {
+      // ignore storage errors (private mode, quota, etc.)
+    }
+  }, [currentUser]);
+
+  if (!currentUser) {
+    return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
   }
 
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/admin" element={<AdminGuard user={currentUser} />}>
+          <Route element={<AdminLayout />}>
+            <Route index element={<Navigate to="/admin/dashboard" replace />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="vehicles" element={<AdminVehicles />} />
+            <Route path="drivers" element={<AdminDrivers />} />
+            <Route path="trips" element={<AdminTrips />} />
+            <Route path="accounts" element={<AdminAccountManagement />} />
+          </Route>
+        </Route>
+
         {/* Dashboard layout */}
-        <Route path="/" element={<DashboardPage />}>
+        <Route
+          path="/"
+          element={
+            <DashboardPage
+              currentUser={currentUser}
+              onLogout={() => setCurrentUser(null)}
+            />
+          }
+        >
           {/* Trang chủ (Home) */}
           <Route index element={<Home />} />
 
@@ -37,14 +80,9 @@ function App() {
           {/* Trip Management */}
           <Route path="trips" element={<TripManagement />} />
 
-          {/* Fuel Management */}
-          <Route path="fuel" element={<FuelManagement />} />
-
           {/* Maintenance */}
           <Route path="maintenance" element={<Maintenance />} />
-
-          {/* GPS Tracking */}
-          <Route path="gps" element={<GPSTracking />} />
+          {/* GPS Tracking (removed) */}
 
           {/* Account page */}
           <Route path="account" element={<Account />} />
@@ -55,3 +93,4 @@ function App() {
 }
 
 export default App;
+

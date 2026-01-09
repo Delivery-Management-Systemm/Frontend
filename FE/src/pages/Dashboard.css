@@ -58,38 +58,41 @@
   flex-direction: column;
   margin-top: 12px;
   flex: 1;
-  justify-content: space-between; /* distribute items evenly */
+  justify-content: flex-start; /* stack items from top, footer will sit at bottom */
 }
 
 .dashboard-nav-item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 10px;
-  border-radius: 10px;
+  gap: 12px;
+  padding: 10px 14px;
+  height: 44px;
+  border-radius: 12px;
   border: none;
   background: transparent;
-  color: #e5e7eb;
-  font-size: 19px; /* match reference sidebar size */
+  color: #cfe3ff;
+  font-size: 15px;
   cursor: pointer;
   text-align: left;
-  transition: background-color 160ms ease, color 160ms ease, transform 120ms ease;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
 }
 
 .dashboard-nav-item:hover {
-  background-color: rgba(55, 65, 81, 0.8);
-  transform: translateY(-1px);
+  background-color: rgba(255,255,255,0.03);
+  transform: none;
 }
 
 .dashboard-nav-item.is-active {
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  background: #1e6fff;
   color: #ffffff;
+  box-shadow: 0 8px 20px rgba(30,111,255,0.16);
 }
 
 .dashboard-nav-icon {
-  width: 20px;
+  width: 28px;
   display: inline-flex;
   justify-content: center;
+  font-size: 18px;
 }
 
 .dashboard-nav-label {
@@ -97,9 +100,9 @@
 }
 
 .dashboard-sidebar-footer {
-  margin-top: 16px;
-  border-top: 1px solid rgba(15, 23, 42, 0.8);
-  padding-top: 12px;
+  margin-top: auto;
+  border-top: 1px solid rgba(15, 23, 42, 0.6);
+  padding-top: 16px;
 }
 
 .dashboard-user {
@@ -120,6 +123,29 @@
   font-size: 16px;
   font-weight: 600;
   color: #ffffff;
+}
+
+.role-badge {
+  display: inline-block;
+  margin-top: 4px;
+  background: #0ea5e9;
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-badge.role-admin {
+  background: #ef4444;
+}
+
+.role-badge.role-user {
+  background: #2563eb;
+}
+
+.role-badge.role-driver {
+  background: #16a34a;
 }
 
 .dashboard-user-info {

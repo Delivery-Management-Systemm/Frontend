@@ -1,196 +1,541 @@
-.drivers-container {
-  padding: 25px;
+/* Page background giống Vehicles */
+.drivers-page {
+  padding: 22px;
+  background: #f5f7fb;
+  min-height: 100vh;
 }
 
-.drivers-title {
+/* Loading and Error States */
+.drivers-loading,
+.drivers-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #666;
+}
+
+.drivers-spinner {
+  font-size: 32px;
+  color: #1d5bff;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.drivers-error {
+  color: #dc3545;
+}
+
+.drivers-error svg {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+
+/* Card style giống Vehicles */
+.drivers-card {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 18px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+  padding: 22px;
+  margin-bottom: 18px;
+}
+
+/* ================= HEADER CARD ================= */
+
+.drivers-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drivers-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.drivers-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eaf2ff;
+  color: #1d5bff;
+  font-size: 22px;
+}
+
+.drivers-header-title {
   font-size: 28px;
+  font-weight: 750;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.drivers-header-sub {
+  margin-top: 4px;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.drivers-primary-btn {
+  background: #1d5bff;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.drivers-primary-btn:hover {
+  background: #174fe0;
+}
+
+/* ================= FILTER CARD ================= */
+
+.drivers-filters {
+  padding: 20px 22px;
+}
+
+.drivers-filters-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 14px;
+}
+
+.drivers-filters-row {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr 1fr;
+  gap: 16px;
+}
+
+.drivers-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.drivers-input-icon {
+  position: absolute;
+  left: 14px;
+  color: #9ca3af;
+  font-size: 16px;
+}
+
+.drivers-input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0 14px 0 42px;
+  outline: none;
+  font-size: 14px;
+  background: #fff;
+}
+
+.drivers-input:focus {
+  border-color: #1d5bff;
+  box-shadow: 0 0 0 3px rgba(29, 91, 255, 0.14);
+}
+
+.drivers-select {
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 12px;
+  padding: 0 14px;
+  outline: none;
+  background: #fff;
+  font-size: 14px;
+  color: #111827;
+  cursor: pointer;
+}
+
+.drivers-select:focus {
+  border-color: #1d5bff;
+  box-shadow: 0 0 0 3px rgba(29, 91, 255, 0.14);
+}
+
+/* ================= TABLE CARD ================= */
+
+.drivers-table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.drivers-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.drivers-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.drivers-th {
+  background: #f7f9fc;
+  text-align: left;
+  padding: 16px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #1f2937;
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid #eef2f7;
+  white-space: nowrap;
+}
+
+.drivers-td {
+  padding: 18px;
+  border-bottom: 1px solid #eef2f7;
+  color: #111827;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.drivers-tr {
+  background: #ffffff;
+}
+
+.drivers-tr:hover .drivers-td {
+  background: #fbfdff;
+}
+
+.drivers-col-driver {
+  width: 320px;
+}
+
+.drivers-col-actions {
+  width: 140px;
+  text-align: center;
+}
+
+.drivers-td-actions {
+  text-align: center;
+}
+
+/* ================= DRIVER CELL ================= */
+
+.drivers-driver-cell {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.drivers-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  background: #3b82f6;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+}
+
+.drivers-driver-name {
+  font-weight: 400;
+}
+
+.drivers-driver-id {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ================= CONTACT CELL ================= */
+
+.drivers-contact-phone {
+  font-weight: 400;
+}
+
+.drivers-contact-email {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ================= VEHICLE CELL ================= */
+
+.drivers-vehicle-plate {
+  font-weight: 600;
+}
+
+.drivers-vehicle-sub {
+  margin-top: 4px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ================= DRIVER HISTORY LAYOUT ================= */
+.drivers-history-page {
+  padding: 22px 0 0 0;
+}
+.drivers-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+.drivers-history-left {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.drivers-history-avatar {
+  width: 56px;
+  height: 56px;
+  font-size: 18px;
+}
+.drivers-history-name {
+  font-size: 18px;
   font-weight: 700;
 }
-
-.drivers-subtitle {
-  color: #666;
-  margin-bottom: 20px;
+.drivers-history-contact {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 14px;
 }
-
-/* ---------- TOP CARDS ---------- */
-
-.drivers-stat-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+.drivers-history-email {
+  margin-top: 4px;
+  color: #64748b;
+  font-size: 13px;
+}
+.drivers-history-licenses {
+  margin-top: 8px;
+}
+.drivers-chip--small {
+  padding: 6px 8px;
+  font-size: 13px;
+}
+.drivers-history-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.drivers-history-back {
+  background: transparent;
+  color: #1d5bff;
+  padding: 8px 12px;
+}
+.drivers-history-overview {
+  display: flex;
   gap: 18px;
-  margin-bottom: 25px;
+  margin-bottom: 18px;
+}
+.drivers-overview-item {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: center;
+  min-width: 140px;
+}
+.drivers-overview-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+.drivers-overview-label {
+  margin-top: 6px;
+  color: #6b7280;
+  font-size: 13px;
+}
+.drivers-history-table-wrap {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  padding: 12px;
+}
+.drivers-history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.drivers-history-table th {
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 13px;
+  color: #6b7280;
+  border-bottom: 1px solid #eef2f7;
+}
+.drivers-history-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #f3f5f8;
+  color: #111827;
+  vertical-align: middle;
+}
+.drivers-right {
+  text-align: right;
 }
 
-.drivers-stat-card {
-  background: white;
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+/* ================= LICENSE CHIPS ================= */
+
+.drivers-license-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.drivers-chip {
+  display: inline-flex;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #e9f0ff;
+  color: #1d4ed8;
+  font-size: 13.5px;
+  line-height: 1;
+}
+
+/* ================= PILLS (SHIFT + STATUS) ================= */
+
+.drivers-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Shift colors giống ảnh */
+/* Shift pill styles removed (work shift UI deleted) */
+
+/* Status colors giống ảnh */
+.drivers-pill-status-driving {
+  background: #e7efff;
+  color: #1d4ed8;
+}
+
+.drivers-pill-status-ready {
+  background: #dff7e7;
+  color: #0f7a2f;
+}
+
+.drivers-pill-status-duty {
+  background: #efe7ff;
+  color: #7c3aed;
+}
+
+.drivers-pill-status-leave {
+  background: #eef2f7;
+  color: #0f172a;
+}
+
+.drivers-status-stack {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.drivers-stat-label {
-  color: #666;
+.drivers-status-sub {
+  font-size: 14px;
+  color: #64748b;
 }
 
-.drivers-stat-value {
-  font-size: 26px;
-  font-weight: 700;
-}
-
-.drivers-green { color: #16a34a; }
-.drivers-blue { color: #2563eb; }
-.drivers-red { color: #dc2626; }
-
-/* ---------- SEARCH & BUTTON ---------- */
-
-.drivers-controls {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.drivers-search-box {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  background: #fff;
-  border: 1px solid #dcdfe6;
-  border-radius: 10px;
-  padding: 10px 14px;
-}
-
-.drivers-search-box input {
-  border: none;
-  outline: none;
-  width: 100%;
-}
-
-.drivers-search-icon {
-  color: #888;
-}
-
-.drivers-add-btn {
-  background: #2563eb;
-  color: white;
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: none;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
-
-.drivers-add-btn:hover {
-  background: #1d4ed8;
-}
-
-/* ---------- TABLE ---------- */
-
-.drivers-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.drivers-table th {
-  background: #f8fafc;
-  padding: 12px;
-  text-align: left;
-  color: #555;
-  font-weight: 600;
-}
-
-.drivers-table td {
-  padding: 14px;
-  border-top: 1px solid #ececec;
-}
-
-/* ---------- AVATAR ---------- */
-
-.drivers-avatar-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.drivers-avatar {
-  width: 36px;
-  height: 36px;
-  background: #e3ecff;
-  color: #3b82f6;
-  font-size: 20px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* ---------- EXPIRY ALERT ---------- */
-
-.drivers-expiry-alert {
-  color: #e85c41;
-  font-weight: 600;
-}
-
-/* ---------- RATING ---------- */
+/* ================= RATING ================= */
 
 .drivers-rating {
-  color: #fbbf24;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 400;
 }
 
 .drivers-star {
   color: #fbbf24;
-  margin-right: 4px;
 }
 
-/* ---------- STATUS BADGE ---------- */
-
-.drivers-status {
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.drivers-status-working {
-  background: #d4fbe2;
-  color: #2e9d57;
-}
-
-.drivers-status-leave {
-  background: #e5e7eb;
-  color: #555;
-}
-
-/* ---------- ACTION ICONS ---------- */
+/* ================= ACTIONS ================= */
 
 .drivers-actions {
-  display: flex;
-  gap: 10px;
+  display: inline-flex;
+  gap: 12px;
 }
 
-.drivers-edit {
-  color: #2563eb;
+.drivers-icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
 }
 
-.drivers-edit:hover {
-  color: #1e3a8a;
+.drivers-icon-edit {
+  color: #1d5bff;
 }
 
-.drivers-delete {
-  color: #dc2626;
-  cursor: pointer;
+.drivers-icon-edit:hover {
+  background: rgba(29, 91, 255, 0.08);
 }
 
-.drivers-delete:hover {
-  color: #991b1b;
+.drivers-icon-del {
+  color: #ef4444;
+}
+
+.drivers-icon-del:hover {
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.drivers-icon-view {
+  color: #6b7280;
+}
+
+.drivers-icon-view:hover {
+  background: rgba(107, 114, 128, 0.08);
+}
+
+.drivers-icon-history {
+  color: #6b7280;
+}
+
+.drivers-icon-history:hover {
+  background: rgba(107, 114, 128, 0.06);
+}
+
+.drivers-empty {
+  padding: 22px;
+  text-align: center;
+  color: #6b7280;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1100px) {
+  .drivers-header {
+    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .drivers-filters-row {
+    grid-template-columns: 1fr;
+  }
 }
