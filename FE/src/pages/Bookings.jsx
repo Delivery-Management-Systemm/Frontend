@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaCalendarAlt, FaSearch, FaPlus, FaEye, FaMapMarkerAlt, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import "./Bookings.css";
+import AddBookingModal from "../components/AddBookingModal";
 
 const mockBookings = [
   {
@@ -48,8 +49,10 @@ const mockBookings = [
 
 export default function Bookings() {
   const [search, setSearch] = useState("");
+  const [bookings, setBookings] = useState(mockBookings);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  const filtered = mockBookings.filter((b) =>
+  const filtered = bookings.filter((b) =>
     [b.customer, b.contact, b.email, b.route, b.vehicleType]
       .join(" ")
       .toLowerCase()
@@ -76,7 +79,7 @@ export default function Bookings() {
           </div>
         </div>
 
-        <button className="bookings-add">
+        <button className="bookings-add" onClick={() => setShowAddModal(true)}>
           <FaPlus /> Đặt lịch mới
         </button>
       </div>
@@ -166,12 +169,16 @@ export default function Bookings() {
                     <button className="btn-icon btn-icon--view" title="Xem">
                       <FaEye />
                     </button>
-                    <button className="btn-icon btn-icon--confirm" title="Xác nhận">
-                      <FaCheckCircle />
-                    </button>
-                    <button className="btn-icon btn-icon--reject" title="Từ chối">
-                      <FaTimesCircle />
-                    </button>
+                    {b.status === "pending" && (
+                      <>
+                        <button className="btn-icon btn-icon--confirm" title="Xác nhận">
+                          <FaCheckCircle />
+                        </button>
+                        <button className="btn-icon btn-icon--reject" title="Từ chối">
+                          <FaTimesCircle />
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -179,6 +186,15 @@ export default function Bookings() {
           </table>
         </div>
       </div>
+      {showAddModal && (
+        <AddBookingModal
+          onClose={() => setShowAddModal(false)}
+          onSave={(booking) => {
+            setBookings((prev) => [booking, ...prev]);
+            setShowAddModal(false);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -7,12 +7,14 @@ import {
 } from "../services/maintenanceAPI";
 import "./Maintenance.css";
 import "./TripManagement.css";
+import MaintenanceAddModal from "../components/MaintenanceAddModal";
 
 const Maintenance = () => {
   const [records, setRecords] = useState([]);
   const [stats, setStats] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -60,7 +62,7 @@ const Maintenance = () => {
             <div className="maintenance-header-sub">Quản lý bảo dưỡng và hóa đơn</div>
           </div>
         </div>
-        <button className="maintenance-add">
+        <button className="maintenance-add" onClick={() => setShowAddModal(true)}>
           <FiPlus /> Tạo hóa đơn mới
         </button>
       </div>
@@ -156,6 +158,16 @@ const Maintenance = () => {
               })
             )}
           </div>
+          {showAddModal && (
+            <MaintenanceAddModal
+              onClose={() => setShowAddModal(false)}
+              onSave={(rec) => {
+                setRecords((prev) => [rec, ...prev]);
+                setShowAddModal(false);
+              }}
+              vehicles={records.map((r) => r.vehicle).filter(Boolean)}
+            />
+          )}
         </div>
 
         <aside className="maintenance-right">

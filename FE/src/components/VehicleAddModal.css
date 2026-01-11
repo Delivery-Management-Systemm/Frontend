@@ -12,48 +12,67 @@
 }
 
 .vehicle-modal-container {
-  width: 720px;
-  background: white;
+  width: 820px;
+  max-width: calc(100% - 48px);
+  background: #ffffff;
   border-radius: 14px;
   padding: 22px 26px;
-  animation: fadeIn .2s ease;
+  box-shadow: 0 10px 30px rgba(11, 15, 27, 0.08);
+  animation: fadeIn .18s ease;
 }
 
 .vehicle-modal-title {
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 18px;
+  margin: 0 0 12px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eef2f7;
 }
 
 .vehicle-modal-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-bottom: 28px;
+  gap: 16px 20px;
+  margin: 18px 0 24px 0;
+  align-items: start;
+}
+
+.vehicle-modal-field--full {
+  grid-column: 1 / -1;
 }
 
 .vehicle-modal-field {
   display: flex;
   flex-direction: column;
+  gap: 6px;
 }
 
 .vehicle-modal-field label {
   margin-bottom: 6px;
   font-weight: 600;
+  font-size: 13px;
+  color: #374151;
 }
 
 .vehicle-modal-field input,
 .vehicle-modal-field select {
-  padding: 10px 12px;
-  border: 1px solid #d6d6d6;
+  padding: 10px 14px;
+  border: 1px solid #e6e7ea;
   border-radius: 10px;
-  font-size: 15px;
+  font-size: 14px;
+  height: 44px;
+  box-sizing: border-box;
+  color: #111827;
+  background: #ffffff;
 }
 
 .vehicle-modal-actions {
   display: flex;
   justify-content: flex-end;
   gap: 14px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid #f3f5f8;
 }
 
 .vehicle-modal-cancel {
@@ -62,17 +81,69 @@
   padding: 10px 18px;
   border-radius: 10px;
   cursor: pointer;
+  color: #374151;
+  min-width: 88px;
 }
 
 .vehicle-modal-submit {
   background: #2563eb;
-  color: white;
+  color: #ffffff;
   padding: 10px 18px;
   border-radius: 10px;
   border: none;
   cursor: pointer;
+  min-width: 96px;
 }
 
 .vehicle-modal-submit:hover {
   background: #1d4ed8;
+}
+
+.vehicle-modal-error {
+  color: #b91c1c;
+  background: rgba(185,28,28,0.04);
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+/* Placeholders muted */
+.vehicle-modal-field input::placeholder,
+.vehicle-modal-field textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Focus ring for inputs/selects */
+.vehicle-modal-field input:focus,
+.vehicle-modal-field select:focus,
+.vehicle-modal-field textarea:focus {
+  outline: none;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.12);
+  border-color: transparent;
+}
+
+/* Select cursor */
+.vehicle-modal-field select {
+  cursor: pointer;
+}
+
+/* Responsive adjustments */
+@media (max-width: 880px) {
+  .vehicle-modal-container {
+    width: auto;
+    padding: 18px;
+    border-radius: 10px;
+    margin: 12px;
+  }
+
+  .vehicle-modal-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .vehicle-modal-actions {
+    gap: 10px;
+    flex-wrap: wrap;
+  }
 }

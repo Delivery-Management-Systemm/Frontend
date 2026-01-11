@@ -31,7 +31,20 @@
 
 .trip-cost-section .section-title {
   font-weight: 700;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  position: relative;
+  font-size: 15px;
+}
+.trip-cost-section .section-title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: #eef2f7;
+  display: block;
 }
 
 .existing-list {

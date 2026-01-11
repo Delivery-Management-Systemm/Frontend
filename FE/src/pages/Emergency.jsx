@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaExclamationTriangle, FaMapMarkerAlt, FaPhone, FaUser, FaTruck } from "react-icons/fa";
 import "./Emergency.css";
+import EmergencyAddModal from "../components/EmergencyAddModal";
 
 const initialReports = [
   {
@@ -37,6 +38,7 @@ const initialReports = [
 
 export default function Emergency() {
   const [reports, setReports] = useState(initialReports);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const stats = {
     newReports: reports.filter((r) => !r.respondedAt).length,
@@ -56,7 +58,9 @@ export default function Emergency() {
           </div>
         </div>
 
-        <button className="emergency-new-btn">+ Báo cáo mới</button>
+        <button className="emergency-new-btn" onClick={() => setShowAddModal(true)}>
+          + Báo cáo mới
+        </button>
       </div>
 
       <div className="emergency-stats-row">
@@ -113,6 +117,16 @@ export default function Emergency() {
           </div>
         ))}
       </div>
+      {showAddModal && (
+        <EmergencyAddModal
+          onClose={() => setShowAddModal(false)}
+          onSave={(report) => {
+            setReports((prev) => [report, ...prev]);
+            setShowAddModal(false);
+          }}
+          vehicles={reports.map((x) => x.vehicle).filter(Boolean)}
+        />
+      )}
     </div>
   );
 }

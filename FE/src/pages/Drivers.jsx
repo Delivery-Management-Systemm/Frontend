@@ -14,6 +14,7 @@ import {
 
 import DriverAddModal from "../components/DriverAddModal";
 import DriverViewModal from "../components/DriverViewModal";
+import ConfirmModal from "../components/ConfirmModal";
 import { getDrivers } from "../services/driverAPI";
 import "./Drivers.css";
 
@@ -38,15 +39,26 @@ const driversConfig = {
   },
   licenseTypes: {
     all: "Tất cả loại bằng",
-    B2: "B2",
-    C: "C",
-    D: "D",
-    E: "E",
-    F: "F",
-    FC: "FC",
-    FE: "FE",
-    FD: "FD",
+    "Bằng B1": "Bằng B1",
+    "Bằng B": "Bằng B",
+    "Bằng C1": "Bằng C1",
+    "Bằng C": "Bằng C",
+    "Bằng D1": "Bằng D1",
+    "Bằng D2": "Bằng D2",
+    "Bằng D": "Bằng D",
+    "Bằng BE": "Bằng BE",
+    "Bằng C1E": "Bằng C1E",
+    "Bằng CE": "Bằng CE",
+    "Bằng D1E": "Bằng D1E",
+    "Bằng D2E": "Bằng D2E",
+    "Bằng DE": "Bằng DE",
   },
+  shifts: [
+    { key: "all", label: "Tất cả ca làm việc" },
+    { key: "morning", label: "Ca sáng" },
+    { key: "afternoon", label: "Ca chiều" },
+    { key: "night", label: "Ca đêm" },
+  ],
 };
 
 // ============================== HELPERS ==============================
@@ -81,8 +93,12 @@ export default function Drivers() {
   const [driversSearch, setDriversSearch] = useState("");
   const [driversFilterStatus, setDriversFilterStatus] = useState("all");
   const [driversFilterLicense, setDriversFilterLicense] = useState("all");
+  const [driversFilterShift, setDriversFilterShift] = useState("all");
   const [driversShowAddModal, setDriversShowAddModal] = useState(false);
   const [driversViewDriver, setDriversViewDriver] = useState(null);
+  const [editingDriver, setEditingDriver] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
 
   // Fetch drivers data on component mount
   useEffect(() => {
@@ -161,6 +177,39 @@ export default function Drivers() {
 
   const driversTotal = driversData.length;
 
+  const handleModalSubmit = (data) => {
+    // update existing or insert new
+    if (data.id) {
+      setDriversData((prev) => prev.map((x) => (x.id === data.id ? { ...x, ...data } : x)));
+    } else {
+      const newDriver = {
+        id: `tmp-${Date.now()}`,
+        name: data.name,
+        phone: data.phone,
+        email: data.email || "",
+        licenses: data.licenseTypes || [],
+        vehicle: null,
+        expYears: data.expYears || 0,
+        rating: data.rating || 0,
+        status: data.status || "ready",
+        statusSub: null,
+      };
+      setDriversData((prev) => [newDriver, ...prev]);
+    }
+    setDriversShowAddModal(false);
+    setEditingDriver(null);
+  };
+
+  const performDeleteConfirmed = () => {
+    if (!confirmTarget) {
+      setConfirmOpen(false);
+      return;
+    }
+    setDriversData((prev) => prev.filter((v) => v.id !== confirmTarget.id));
+    setConfirmTarget(null);
+    setConfirmOpen(false);
+  };
+
   // Show loading state
   if (loading) {
     return (
@@ -213,7 +262,7 @@ export default function Drivers() {
         <button
           type="button"
           className="drivers-primary-btn"
-          onClick={() => setDriversShowAddModal(true)}
+          onClick={() => { setEditingDriver(null); setDriversShowAddModal(true); }}
         >
           <FaPlus />
           {driversConfig.page.addBtn}
@@ -238,6 +287,18 @@ export default function Drivers() {
               placeholder={driversConfig.page.searchPlaceholder}
             />
           </div>
+          {/* Shift */}
+          <select
+            className="drivers-select"
+            value={driversFilterShift}
+            onChange={(e) => setDriversFilterShift(e.target.value)}
+          >
+            {driversConfig.shifts.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
 
           {/* Status */}
           <select
@@ -380,7 +441,7 @@ export default function Drivers() {
                           type="button"
                           className="drivers-icon-btn drivers-icon-edit"
                           aria-label="Sửa"
-                          onClick={() => {}}
+                          onClick={() => { setEditingDriver(d); setDriversShowAddModal(true); }}
                         >
                           <FaPen />
                         </button>
@@ -389,7 +450,7 @@ export default function Drivers() {
                           type="button"
                           className="drivers-icon-btn drivers-icon-del"
                           aria-label="Xóa"
-                          onClick={() => {}}
+                          onClick={() => { setConfirmTarget(d); setConfirmOpen(true); }}
                         >
                           <FaTrash />
                         </button>
@@ -415,11 +476,9 @@ export default function Drivers() {
 
       {driversShowAddModal && (
         <DriverAddModal
-          onClose={() => setDriversShowAddModal(false)}
-          onSubmit={(data) => {
-            console.log("👤 Tài xế mới:", data);
-            setDriversShowAddModal(false);
-          }}
+          driver={editingDriver}
+          onClose={() => { setDriversShowAddModal(false); setEditingDriver(null); }}
+          onSubmit={handleModalSubmit}
         />
       )}
       {driversViewDriver && (
@@ -428,6 +487,13 @@ export default function Drivers() {
           onClose={() => setDriversViewDriver(null)}
         />
       )}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Xóa tài xế"
+        message={`Bạn có chắc muốn xóa tài xế ${confirmTarget?.name ?? ""}?`}
+        onConfirm={performDeleteConfirmed}
+        onCancel={() => { setConfirmTarget(null); setConfirmOpen(false); }}
+      />
     </div>
   );
 }

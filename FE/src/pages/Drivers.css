@@ -122,7 +122,7 @@
 
 .drivers-filters-row {
   display: grid;
-  grid-template-columns: 1.35fr 1fr 1fr;
+  grid-template-columns: 1.1fr 1fr 1fr 1fr;
   gap: 16px;
 }
 

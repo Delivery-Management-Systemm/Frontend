@@ -2,6 +2,8 @@ import React, { useMemo, useState, useEffect } from "react";
 import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye, FaSpinner, FaExclamationTriangle } from "react-icons/fa";
 import "./Vehicles.css";
 import VehicleViewModal from "../components/VehicleViewModal";
+import VehicleAddModal from "../components/VehicleAddModal";
+import ConfirmModal from "../components/ConfirmModal";
 import { getVehicles } from "../services/vehicleAPI";
 
 // ====================== CONFIG =============================
@@ -75,6 +77,10 @@ export default function Vehicles() {
   const [typeKey, setTypeKey] = useState("all");
   const [statusKey, setStatusKey] = useState("all");
   const [viewVehicle, setViewVehicle] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingVehicle, setEditingVehicle] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
 
   // Fetch vehicles data on component mount
   useEffect(() => {
@@ -196,16 +202,58 @@ export default function Vehicles() {
   }, [vehiclesData, search, typeKey, statusKey, typeLabelMap, statusLabelMap]);
 
   const handleAdd = () => {
-    // TODO: sau này thay bằng mở modal / route create
-    console.log("Add vehicle clicked");
+    // Open add modal for creating
+    setEditingVehicle(null);
+    setShowAddModal(true);
   };
 
   const handleEdit = (vehicle) => {
-    console.log("Edit", vehicle);
+    setEditingVehicle(vehicle);
+    setShowAddModal(true);
   };
 
   const handleDelete = (vehicle) => {
-    console.log("Delete", vehicle);
+    setConfirmTarget(vehicle);
+    setConfirmOpen(true);
+  };
+
+  const performDeleteConfirmed = () => {
+    if (!confirmTarget) {
+      setConfirmOpen(false);
+      return;
+    }
+    setVehiclesData((prev) => prev.filter((v) => v.id !== confirmTarget.id));
+    setConfirmTarget(null);
+    setConfirmOpen(false);
+  };
+
+  const handleModalClose = () => {
+    setShowAddModal(false);
+  };
+
+  const handleModalSubmit = (data) => {
+    // Map incoming payload to UI format used by the table
+    const mapped = {
+      id: data.id || `tmp-${Date.now()}`,
+      plate: data.plate || data.plateNumber || "",
+      year: data.year || new Date().getFullYear(),
+      typeKey: mapVehicleType(data.type || ""),
+      brand: data.brand || extractBrandFromModel(data.model || ""),
+      model: data.model || "",
+      km: typeof data.km === "number" ? `${Number(data.km).toLocaleString()} km` : (data.km ? `${String(data.km).replace(/\s*km$/i, "")} km` : "0 km"),
+      licenses: [],
+      statusKey: mapVehicleStatus(data.status || ""),
+    };
+
+    if (data.id) {
+      // update existing
+      setVehiclesData((prev) => prev.map((v) => (v.id === data.id ? mapped : v)));
+    } else {
+      // insert new at top
+      setVehiclesData((prev) => [mapped, ...prev]);
+    }
+    setEditingVehicle(null);
+    setShowAddModal(false);
   };
 
   // Show loading state
@@ -408,6 +456,20 @@ export default function Vehicles() {
         onClose={() => setViewVehicle(null)}
       />
     ) : null}
+    {showAddModal ? (
+      <VehicleAddModal
+        vehicle={editingVehicle}
+        onClose={handleModalClose}
+        onSubmit={handleModalSubmit}
+      />
+    ) : null}
+    <ConfirmModal
+      open={confirmOpen}
+      title="Xóa phương tiện"
+      message={`Bạn có chắc muốn xóa phương tiện ${confirmTarget?.plate ?? ""}?`}
+      onConfirm={performDeleteConfirmed}
+      onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
+    />
   </div>
 );
 }
