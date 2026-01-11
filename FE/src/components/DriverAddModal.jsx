@@ -1,25 +1,103 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./DriverAddModal.css";
 
-export default function DriverAddModal({ onClose, onSubmit }) {
+const LICENSE_OPTIONS = [
+  "Bằng B1",
+  "Bằng B",
+  "Bằng C1",
+  "Bằng C",
+  "Bằng D1",
+  "Bằng D2",
+  "Bằng D",
+  "Bằng BE",
+  "Bằng C1E",
+  "Bằng CE",
+  "Bằng D1E",
+  "Bằng D2E",
+  "Bằng DE",
+];
+
+export default function DriverAddModal({ onClose, onSubmit, driver = null }) {
   const [form, setForm] = useState({
     name: "",
     phone: "",
-    license: "",
-    expiry: "",
-    car: "Chưa gán",
-    status: "working",
+    email: "",
+    gplx: "",
+    licenseTypes: [],
+    shift: "Ca sáng",
+    expYears: 0,
+    rating: 5,
+    status: "Sẵn sàng",
   });
+  const [error, setError] = useState("");
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  useEffect(() => {
+    if (driver) {
+      setForm({
+        name: driver.name || "",
+        phone: driver.phone || "",
+        email: driver.email || "",
+        gplx: driver.gplx || driver.license || "",
+        licenseTypes: driver.licenses || [],
+        shift: driver.shift || "Ca sáng",
+        expYears: driver.expYears || 0,
+        rating: driver.rating || 5,
+        status: driver.status || "Sẵn sàng",
+      });
+    } else {
+      // reset
+      setForm({
+        name: "",
+        phone: "",
+        email: "",
+        gplx: "",
+        licenseTypes: [],
+        shift: "Ca sáng",
+        expYears: 0,
+        rating: 5,
+        status: "Sẵn sàng",
+      });
+    }
+  }, [driver]);
+
+  const toggleLicense = (label) => {
+    setForm((prev) => {
+      const has = prev.licenseTypes.includes(label);
+      return {
+        ...prev,
+        licenseTypes: has
+          ? prev.licenseTypes.filter((l) => l !== label)
+          : [...prev.licenseTypes, label],
+      };
+    });
+  };
+
+  const handleSubmit = () => {
+    setError("");
+    // required: name, phone, gplx, at least one license
+    if (!form.name.trim() || !form.phone.trim() || !form.gplx.trim()) {
+      setError("Vui lòng điền Họ và tên, Số điện thoại và Số GPLX.");
+      return;
+    }
+    if (form.licenseTypes.length === 0) {
+      setError("Vui lòng chọn ít nhất một loại bằng lái.");
+      return;
+    }
+
+    const payload = { ...form };
+    if (driver && driver.id) payload.id = driver.id;
+    if (onSubmit) onSubmit(payload);
   };
 
   return (
     <div className="driver-modal-overlay">
       <div className="driver-modal-container">
 
-        <h2 className="driver-modal-title">Thêm tài xế mới</h2>
+        <h2 className="driver-modal-title">{driver ? "Cập nhật tài xế" : "Thêm tài xế mới"}</h2>
 
         <div className="driver-modal-grid">
 
@@ -37,38 +115,78 @@ export default function DriverAddModal({ onClose, onSubmit }) {
             <input
               value={form.phone}
               onChange={(e) => update("phone", e.target.value)}
-              placeholder="0901234567"
+              placeholder="0123456789"
+            />
+          </div>
+
+          <div className="driver-modal-field">
+            <label>Email</label>
+            <input
+              value={form.email}
+              onChange={(e) => update("email", e.target.value)}
+              placeholder="email@example.com"
             />
           </div>
 
           <div className="driver-modal-field">
             <label>Số GPLX</label>
             <input
-              value={form.license}
-              onChange={(e) => update("license", e.target.value)}
-              placeholder="B2-123456"
+              value={form.gplx}
+              onChange={(e) => update("gplx", e.target.value)}
+              placeholder="VD: 012345678"
             />
           </div>
 
-          <div className="driver-modal-field">
-            <label>Hạn GPLX</label>
-            <input
-              type="date"
-              value={form.expiry}
-              onChange={(e) => update("expiry", e.target.value)}
-            />
+          <div className="driver-modal-field driver-modal-field--full">
+            <label>Loại bằng lái</label>
+            <div className="driver-license-list">
+              {LICENSE_OPTIONS.map((lbl) => {
+                const active = form.licenseTypes.includes(lbl);
+                return (
+                  <button
+                    key={lbl}
+                    type="button"
+                    className={"driver-license-chip " + (active ? "active" : "")}
+                    onClick={() => toggleLicense(lbl)}
+                  >
+                    {lbl}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="driver-modal-field">
-            <label>Gán xe</label>
+            <label>Ca làm việc</label>
             <select
-              value={form.car}
-              onChange={(e) => update("car", e.target.value)}
+              value={form.shift}
+              onChange={(e) => update("shift", e.target.value)}
             >
-              <option>Chưa gán</option>
-              <option>29A-12345</option>
-              <option>30B-98765</option>
+              <option>Ca sáng</option>
+              <option>Ca chiều</option>
+              <option>Ca đêm</option>
             </select>
+          </div>
+
+          <div className="driver-modal-field">
+            <label>Kinh nghiệm (năm)</label>
+            <input
+              type="number"
+              min="0"
+              value={form.expYears}
+              onChange={(e) => update("expYears", Number(e.target.value) || 0)}
+            />
+          </div>
+
+          <div className="driver-modal-field">
+            <label>Đánh giá (1-5)</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={form.rating}
+              onChange={(e) => update("rating", Number(e.target.value) || 0)}
+            />
           </div>
 
           <div className="driver-modal-field">
@@ -77,12 +195,16 @@ export default function DriverAddModal({ onClose, onSubmit }) {
               value={form.status}
               onChange={(e) => update("status", e.target.value)}
             >
-              <option value="working">Đang làm việc</option>
-              <option value="leave">Nghỉ phép</option>
+              <option>Sẵn sàng</option>
+              <option>Đang lái</option>
+              <option>Đang công tác</option>
+              <option>Nghỉ phép</option>
             </select>
           </div>
 
         </div>
+
+        {error ? <div className="driver-modal-error" role="alert">{error}</div> : null}
 
         <div className="driver-modal-actions">
           <button className="driver-modal-cancel" onClick={onClose}>
@@ -91,9 +213,9 @@ export default function DriverAddModal({ onClose, onSubmit }) {
 
           <button
             className="driver-modal-submit"
-            onClick={() => onSubmit(form)}
+            onClick={handleSubmit}
           >
-            Thêm tài xế
+            {driver ? "Cập nhật" : "Thêm tài xế"}
           </button>
         </div>
 
