@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { FiPlus, FiSearch } from "react-icons/fi";
 import { MdLocationOn } from "react-icons/md";
-import { FaBox, FaDollarSign, FaEye } from "react-icons/fa";
+import { FaBox, FaCheckCircle, FaClock, FaDollarSign, FaEye, FaPhone } from "react-icons/fa";
 import { getTrips, getTripStats } from "../services/tripAPI";
+import { confirmOrderStep, getOrders } from "../services/ordersAPI";
 import "./TripManagement.css";
+import "./Orders.css";
 import TripCostModal from "../components/TripCostModal";
 
 const TripManagement = () => {
@@ -13,10 +15,24 @@ const TripManagement = () => {
   const [loading, setLoading] = useState(true);
   const [payTrip, setPayTrip] = useState(null);
   const [orderTrip, setOrderTrip] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
 
   useEffect(() => {
     loadData();
   }, []);
+
+  const handleOpenOrders = (trip) => {
+    setOrderTrip(trip);
+    setLoadingOrders(true);
+    getOrders()
+      .then((data) => {
+        setOrders(data || []);
+      })
+      .finally(() => {
+        setLoadingOrders(false);
+      });
+  };
 
   const loadData = async () => {
     setLoading(true);
@@ -63,10 +79,24 @@ const TripManagement = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      completed: { text: "Hoàn thành", class: "status-completed" },
-      "in-progress": { text: "Đang thực hiện", class: "status-in-progress" },
+      completed: { text: "HoA�n thA�nh", class: "status-completed" },
+      "in-progress": { text: "�?ang th���c hi���n", class: "status-in-progress" },
     };
     return badges[status] || badges.completed;
+  };
+
+  const orderStats = {
+    waiting: orders.filter((o) => o.status === "waiting").length,
+    in_transit: orders.filter((o) => o.status === "in_transit").length,
+    delivered: orders.filter((o) => o.status === "delivered").length,
+    gps_confirm: orders.filter((o) => o.steps.some((s) => s.key === "gps" && s.done)).length,
+    phone_confirm: orders.filter((o) => o.steps.some((s) => s.key === "phone" && s.done)).length,
+  };
+
+  const handleConfirmOrderStep = async (orderId, stepKey) => {
+    const updated = await confirmOrderStep(orderId, stepKey);
+    if (!updated) return;
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
   };
 
   return (
@@ -126,7 +156,7 @@ const TripManagement = () => {
             className="trip-orders-back"
             onClick={() => setOrderTrip(null)}
           >
-            ← Quay lại danh sách chuyến đi
+            {"<- Quay lai danh sach chuyen di"}
           </button>
 
           <div className="trip-orders-header">
@@ -135,7 +165,7 @@ const TripManagement = () => {
                 <FaBox />
               </span>
               <div>
-                <h2>Quản lý đơn hàng - Chuyến {orderTrip.id}</h2>
+                <h2>Quan ly don hang - Chuyen {orderTrip.id}</h2>
                 <p>
                   {orderTrip.route} | {orderTrip.date}
                 </p>
@@ -145,21 +175,117 @@ const TripManagement = () => {
 
           <div className="trip-orders-stats">
             <div className="trip-orders-stat">
-              <div className="trip-orders-stat-label">Tổng đơn hàng</div>
-              <div className="trip-orders-stat-value">0</div>
+              <div className="trip-orders-stat-label">Tong don hang</div>
+              <div className="trip-orders-stat-value">{orders.length}</div>
             </div>
             <div className="trip-orders-stat">
-              <div className="trip-orders-stat-label">Đang vận chuyển</div>
-              <div className="trip-orders-stat-value">0</div>
+              <div className="trip-orders-stat-label">Dang van chuyen</div>
+              <div className="trip-orders-stat-value">{orderStats.in_transit}</div>
             </div>
             <div className="trip-orders-stat">
-              <div className="trip-orders-stat-label">Đã giao</div>
-              <div className="trip-orders-stat-value">0</div>
+              <div className="trip-orders-stat-label">Da giao</div>
+              <div className="trip-orders-stat-value">{orderStats.delivered}</div>
             </div>
             <div className="trip-orders-stat">
-              <div className="trip-orders-stat-label">Chờ xử lý</div>
-              <div className="trip-orders-stat-value">0</div>
+              <div className="trip-orders-stat-label">Cho xu ly</div>
+              <div className="trip-orders-stat-value">{orderStats.waiting}</div>
             </div>
+          </div>
+
+          <div className="orders-list">
+            {loadingOrders ? (
+              <div className="order-card">Dang tai...</div>
+            ) : orders.length === 0 ? (
+              <div className="order-card">Chua co don hang nao.</div>
+            ) : (
+              orders.map((o) => (
+                <div className="order-card" key={o.id}>
+                  <div className="order-card-top">
+                    <div>
+                      <div className="order-id">
+                        {o.id}{" "}
+                        <span className={`order-badge order-${o.status}`}>
+                          {o.status === "in_transit"
+                            ? "Dang van chuyen"
+                            : o.status === "delivered"
+                              ? "Da giao"
+                              : "Dang cho"}
+                        </span>
+                      </div>
+                      <div className="order-customer">{o.customer}</div>
+                      <div className="order-contact">{o.contact}</div>
+                    </div>
+                    <div className="order-vehicle">
+                      <div className="ov-label">Phuong tien / Tai xe</div>
+                      <div className="ov-main">{o.vehicle}</div>
+                      <div className="ov-sub">{o.driver}</div>
+                    </div>
+                  </div>
+
+                  <div className="order-locations">
+                    <div className="loc">
+                      <MdLocationOn className="loc-icon" />
+                      <div>
+                        <div className="loc-title">Diem lay hang</div>
+                        <div className="loc-text">{o.pickup}</div>
+                      </div>
+                    </div>
+                    <div className="loc">
+                      <MdLocationOn className="loc-icon loc-dest" />
+                      <div>
+                        <div className="loc-title">Diem giao hang</div>
+                        <div className="loc-text">{o.dropoff}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="order-steps">
+                    <div className="steps-track">
+                      {o.steps.map((s, idx) => (
+                        <div className={`step ${s.key === "delivered" ? "deliver-step" : ""}`} key={s.key}>
+                          <div
+                            className={`step-node ${s.done ? "done" : ""} ${
+                              s.key === "delivered" && !s.done ? "pending-delivered" : ""
+                            } ${s.key === "delivered" && s.done ? "done-delivered" : ""}`}
+                          >
+                            {s.done ? <FaCheckCircle /> : s.key === "phone" ? <FaPhone /> : <FaClock />}
+                          </div>
+
+                          {idx < o.steps.length - 1 && (
+                            <div className={`connector ${s.done ? "done" : ""}`} />
+                          )}
+
+                          <div className="step-label">{s.label}</div>
+                          {s.time ? <div className="step-time">{s.time}</div> : null}
+
+                          {s.key === "phone" && !s.done && (
+                            <div className="step-action">
+                              <button
+                                className="btn btn-primary"
+                                onClick={() => handleConfirmOrderStep(o.id, s.key)}
+                              >
+                                Xac nhan
+                              </button>
+                            </div>
+                          )}
+
+                          {s.key === "delivered" && !s.done && (
+                            <div className="step-action">
+                              <button
+                                className="btn-complete"
+                                onClick={() => handleConfirmOrderStep(o.id, s.key)}
+                              >
+                                Hoan thanh
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       ) : null}
@@ -256,7 +382,7 @@ const TripManagement = () => {
                           <button
                             className="action-btn action-btn--box"
                             title="Đơn hàng"
-                            onClick={() => setOrderTrip(trip)}
+                            onClick={() => handleOpenOrders(trip)}
                           >
                             <FaBox />
                           </button>
@@ -283,3 +409,9 @@ const TripManagement = () => {
 };
 
 export default TripManagement;
+
+
+
+
+
+

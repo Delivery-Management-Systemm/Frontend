@@ -1,71 +1,37 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaBox, FaMapMarkerAlt, FaTruck, FaCheckCircle, FaPhone, FaClock } from "react-icons/fa";
 import "./Orders.css";
-
-const mockOrders = [
-  {
-    id: "ORD-2024-001",
-    customer: "Công ty TNHH ABC",
-    contact: "0241234567",
-    pickup: "Kho ABC, Q. Long Biên, Hà Nội",
-    dropoff: "Cửa hàng XYZ, Q.1, TP.HCM",
-    vehicle: "30B-67890",
-    driver: "Phạm Văn Đức",
-    status: "in_transit",
-    steps: [
-      { key: "gps", label: "Xác nhận GPS", done: true, time: "08:15:00 16/12/2024" },
-      { key: "phone", label: "Xác nhận SĐT", done: false },
-      { key: "delivered", label: "Đã giao hàng", done: false },
-    ],
-    cost: "800,000đ",
-  },
-  {
-    id: "ORD-2024-002",
-    customer: "Trần Văn Bình",
-    contact: "0912345678",
-    pickup: "Nhà hàng Sông Hồng, Hà Nội",
-    dropoff: "Khách sạn Mường Thanh, Hải Phòng",
-    vehicle: "59E-33333",
-    driver: "Nguyễn Thị Hoa",
-    status: "delivered",
-    steps: [
-      { key: "gps", label: "Xác nhận GPS", done: true, time: "07:30:00 14/12/2024" },
-      { key: "phone", label: "Xác nhận SĐT", done: true, time: "07:45:00 14/12/2024" },
-      { key: "delivered", label: "Đã giao hàng", done: true, time: "10:30:00 14/12/2024" },
-    ],
-    cost: "0đ",
-  },
-];
+import { confirmOrderStep, getOrders } from "../services/ordersAPI";
 
 export default function Orders() {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState([]);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    getOrders().then((data) => {
+      if (active) setOrders(data || []);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const selectedOrder = orders.find((o) => o.id === selectedOrderId) || null;
+  const visibleOrders = selectedOrder ? [selectedOrder] : orders;
 
   const stats = {
-    waiting: orders.filter((o) => o.status === "waiting").length,
-    in_transit: orders.filter((o) => o.status === "in_transit").length,
-    delivered: orders.filter((o) => o.status === "delivered").length,
-    gps_confirm: orders.filter((o) => o.steps.some((s) => s.key === "gps" && s.done)).length,
-    phone_confirm: orders.filter((o) => o.steps.some((s) => s.key === "phone" && s.done)).length,
+    waiting: visibleOrders.filter((o) => o.status === "waiting").length,
+    in_transit: visibleOrders.filter((o) => o.status === "in_transit").length,
+    delivered: visibleOrders.filter((o) => o.status === "delivered").length,
+    gps_confirm: visibleOrders.filter((o) => o.steps.some((s) => s.key === "gps" && s.done)).length,
+    phone_confirm: visibleOrders.filter((o) => o.steps.some((s) => s.key === "phone" && s.done)).length,
   };
 
-  function formatNow() {
-    const now = new Date();
-    const time = now.toLocaleTimeString("en-GB", { hour12: false });
-    const date = now.toLocaleDateString("en-GB");
-    return `${time} ${date}`;
-  }
-
-  const handleConfirmStep = (orderId, stepKey) => {
-    setOrders((prev) =>
-      prev.map((o) => {
-        if (o.id !== orderId) return o;
-        const newSteps = o.steps.map((s) =>
-          s.key === stepKey ? { ...s, done: true, time: s.time || formatNow() } : s
-        );
-        const newStatus = stepKey === "delivered" ? "delivered" : o.status;
-        return { ...o, steps: newSteps, status: newStatus };
-      })
-    );
+  const handleConfirmStep = async (orderId, stepKey) => {
+    const updated = await confirmOrderStep(orderId, stepKey);
+    if (!updated) return;
+    setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
   };
 
   return (
@@ -81,31 +47,77 @@ export default function Orders() {
         <button className="orders-add">Tạo đơn mới</button>
       </div>
 
+
+      {selectedOrder && (
+        <div className="orders-detail-head">
+          <button
+            type="button"
+            className="orders-back"
+            onClick={() => setSelectedOrderId(null)}
+          >
+            Quay lai danh sach don hang
+          </button>
+          <div className="orders-detail-title">
+            <span className="orders-detail-icon">
+              <FaBox />
+            </span>
+            <div>
+              <h2>Quan ly don hang - {selectedOrder.id}</h2>
+              <p>
+                {selectedOrder.pickup} {" -> "} {selectedOrder.dropoff}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="orders-stats">
-        <div className="stat-card">
-          <div className="stat-label">Đang chờ</div>
-          <div className="stat-value">{stats.waiting}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Đang vận chuyển</div>
-          <div className="stat-value">{stats.in_transit}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Đã giao</div>
-          <div className="stat-value">{stats.delivered}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Chờ xác nhận GPS</div>
-          <div className="stat-value">{mockOrders.length - stats.gps_confirm}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Chờ xác nhận SĐT</div>
-          <div className="stat-value">{mockOrders.length - stats.phone_confirm}</div>
-        </div>
+        {selectedOrder ? (
+          <>
+            <div className="stat-card">
+              <div className="stat-label">Tong don hang</div>
+              <div className="stat-value">{visibleOrders.length}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Dang van chuyen</div>
+              <div className="stat-value">{stats.in_transit}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Da giao</div>
+              <div className="stat-value">{stats.delivered}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Cho xu ly</div>
+              <div className="stat-value">{stats.waiting}</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="stat-card">
+              <div className="stat-label">Dang cho</div>
+              <div className="stat-value">{stats.waiting}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Dang van chuyen</div>
+              <div className="stat-value">{stats.in_transit}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Da giao</div>
+              <div className="stat-value">{stats.delivered}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Cho xac nhan GPS</div>
+              <div className="stat-value">{visibleOrders.length - stats.gps_confirm}</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-label">Cho xac nhan SDT</div>
+              <div className="stat-value">{visibleOrders.length - stats.phone_confirm}</div>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="orders-list">
-        {orders.map((o) => (
+        {visibleOrders.map((o) => (
           <div className="order-card" key={o.id}>
             <div className="order-card-top">
               <div>
@@ -117,7 +129,7 @@ export default function Orders() {
                 <div className="ov-label">Phương tiện / Tài xế</div>
                 <div className="ov-main">{o.vehicle}</div>
                 <div className="ov-sub">{o.driver}</div>
-                <button className="order-detail">Chi tiết</button>
+                <button className="order-detail" type="button" onClick={() => setSelectedOrderId(o.id)}>Chi tiết</button>
               </div>
             </div>
 
@@ -183,5 +195,13 @@ export default function Orders() {
     </div>
   );
 }
+
+
+
+
+
+
+
+
 
 
