@@ -70,12 +70,6 @@ const MENU_ITEMS = [
     roles: ["admin", "user"],
   },
   {
-    key: "orders",
-    label: "Quản lý đơn hàng",
-    icon: <FaBox />,
-    roles: ["admin"],
-  },
-  {
     key: "emergency",
     label: "Báo cáo khẩn cấp",
     icon: <FaExclamationTriangle />,
