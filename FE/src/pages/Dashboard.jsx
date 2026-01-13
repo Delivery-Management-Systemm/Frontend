@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  FaBox,
   FaCalendarAlt,
   FaExclamationTriangle,
   FaRoute,
@@ -21,7 +20,6 @@ import Drivers from "./Drivers";
 import TripManagement from "./TripManagement";
 import DriverAssignment from "./DriverAssignment";
 import Bookings from "./Bookings";
-import Orders from "./Orders";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
 import AccountManagement from "./admin/AccountManagement";
@@ -68,12 +66,6 @@ const MENU_ITEMS = [
     label: "Lịch đặt trước",
     icon: <FaCalendarAlt />,
     roles: ["admin", "user"],
-  },
-  {
-    key: "orders",
-    label: "Quản lý đơn hàng",
-    icon: <FaBox />,
-    roles: ["admin"],
   },
   {
     key: "emergency",
@@ -136,7 +128,6 @@ const Dashboard = ({ currentUser, onLogout }) => {
     trips: <TripManagement />,
     assignments: <DriverAssignment />,
     bookings: <Bookings />,
-    orders: <Orders />,
     emergency: <Emergency />,
     maintenance: <Maintenance />,
     account: <Account />,
