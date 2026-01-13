@@ -15,29 +15,29 @@ export default function EmergencyAddModal({ onClose, onSave, vehicles = [] }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.title.trim() || !form.level || !form.location.trim() || !form.contact.trim()) {
+    if (
+      !form.title.trim() ||
+      !form.level ||
+      !form.location.trim() ||
+      !form.contact.trim()
+    ) {
       alert("Vui lòng điền đầy đủ thông tin bắt buộc");
       return;
     }
 
-    const now = new Date();
-    const report = {
-      id: "e" + Date.now(),
-      title: form.title,
-      level: form.level,
-      status: "new",
-      desc: form.desc,
-      location: form.location,
-      contact: form.contact,
-      reporter: "Người dùng",
-      vehicle: form.vehicle ? form.vehicle : "",
-      driver: "",
-      reportedAt: now.toLocaleTimeString() + " " + now.toLocaleDateString(),
-      respondedAt: null,
-      resolvedAt: null,
+    // Format data for API - match backend DTO exactly
+    const reportData = {
+      Title: form.title, // Backend expects Title (capital T)
+      Description: form.desc, // Backend expects Description
+      Level: form.level === "critical" ? "critical" : "high", // Backend expects Level, lowercase values
+      Location: form.location, // Backend expects Location
+      ContactPhone: form.contact, // Backend expects ContactPhone
+      VehicleID: form.vehicle ? parseInt(form.vehicle) : null, // Backend expects VehicleID
+      TripID: null, // Optional field
+      DriverID: null, // Optional field
     };
 
-    if (onSave) onSave(report);
+    if (onSave) onSave(reportData);
   };
 
   return (
@@ -48,7 +48,11 @@ export default function EmergencyAddModal({ onClose, onSave, vehicles = [] }) {
           <div className="grid two">
             <div>
               <label>Loại sự cố</label>
-              <select className="input" value={form.title} onChange={(e) => update("title", e.target.value)}>
+              <select
+                className="input"
+                value={form.title}
+                onChange={(e) => update("title", e.target.value)}
+              >
                 <option>Hỏng xe</option>
                 <option>Tai nạn</option>
                 <option>Sự cố khác</option>
@@ -56,7 +60,11 @@ export default function EmergencyAddModal({ onClose, onSave, vehicles = [] }) {
             </div>
             <div>
               <label>Mức độ ưu tiên</label>
-              <select className="input" value={form.level} onChange={(e) => update("level", e.target.value)}>
+              <select
+                className="input"
+                value={form.level}
+                onChange={(e) => update("level", e.target.value)}
+              >
                 <option value="high">Cao</option>
                 <option value="critical">Khẩn cấp</option>
               </select>
@@ -65,11 +73,19 @@ export default function EmergencyAddModal({ onClose, onSave, vehicles = [] }) {
 
           <div className="mt-3">
             <label>Phương tiện (nếu có)</label>
-            <select className="input" value={form.vehicle} onChange={(e) => update("vehicle", e.target.value)}>
+            <select
+              className="input"
+              value={form.vehicle}
+              onChange={(e) => update("vehicle", e.target.value)}
+            >
               <option value="">-- Chọn xe --</option>
-              {vehicles.map((v) => (
-                <option key={v} value={v}>
-                  {v}
+              {vehicles.map((vehicle) => (
+                <option
+                  key={vehicle.vehicleID || vehicle.id}
+                  value={vehicle.vehicleID || vehicle.id}
+                >
+                  {vehicle.licensePlate || vehicle.plate} -{" "}
+                  {vehicle.model || vehicle.type}
                 </option>
               ))}
             </select>
@@ -77,17 +93,33 @@ export default function EmergencyAddModal({ onClose, onSave, vehicles = [] }) {
 
           <div className="mt-3">
             <label>Vị trí</label>
-            <input className="input" value={form.location} onChange={(e) => update("location", e.target.value)} placeholder="Nhập vị trí chi tiết" />
+            <input
+              className="input"
+              value={form.location}
+              onChange={(e) => update("location", e.target.value)}
+              placeholder="Nhập vị trí chi tiết"
+            />
           </div>
 
           <div className="mt-3">
             <label>Số điện thoại liên hệ</label>
-            <input className="input" value={form.contact} onChange={(e) => update("contact", e.target.value)} placeholder="0901234567" />
+            <input
+              className="input"
+              value={form.contact}
+              onChange={(e) => update("contact", e.target.value)}
+              placeholder="0901234567"
+            />
           </div>
 
           <div className="mt-3">
             <label>Mô tả chi tiết</label>
-            <textarea className="input" rows={5} value={form.desc} onChange={(e) => update("desc", e.target.value)} placeholder="Mô tả tình huống khẩn cấp" />
+            <textarea
+              className="input"
+              rows={5}
+              value={form.desc}
+              onChange={(e) => update("desc", e.target.value)}
+              placeholder="Mô tả tình huống khẩn cấp"
+            />
           </div>
 
           <div className="mt-4 actions em-actions">
@@ -103,5 +135,3 @@ export default function EmergencyAddModal({ onClose, onSave, vehicles = [] }) {
     </div>
   );
 }
-
-
