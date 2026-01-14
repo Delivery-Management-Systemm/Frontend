@@ -274,3 +274,44 @@
 }
 
 
+
+.bookings-map-card {
+  margin-top: 18px;
+  padding: 18px;
+}
+
+.bookings-map-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.bookings-map-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.bookings-map-sub {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.bookings-map-frame {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.bookings-map-canvas {
+  height: 280px;
+  width: 100%;
+}
+
+.bookings-map-empty {
+  font-size: 13px;
+  color: #6b7280;
+  padding: 12px 0;
+}

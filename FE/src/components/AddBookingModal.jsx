@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   Marker,
@@ -67,6 +67,7 @@ export default function AddBookingModal({ onClose, onSave }) {
   });
 
   const [routes, setRoutes] = useState([]);
+  const [rawRoutes, setRawRoutes] = useState([]);
   const [selectedRouteId, setSelectedRouteId] = useState("");
   const [loadingRoutes, setLoadingRoutes] = useState(false);
   const [routeError, setRouteError] = useState("");
@@ -162,6 +163,7 @@ export default function AddBookingModal({ onClose, onSave }) {
       ]);
       const alternatives = await getRouteAlternatives(start, end);
       const options = buildRouteOptions(alternatives, form.vehicleTypeKey, when);
+      setRawRoutes(alternatives);
       setRoutes(options);
       setSelectedRouteId(options[0]?.id || "");
       setPickupCoord({ lat: start.lat, lon: start.lon });
@@ -178,6 +180,18 @@ export default function AddBookingModal({ onClose, onSave }) {
       setLoadingRoutes(false);
     }
   };
+
+  useEffect(() => {
+    if (!rawRoutes.length) return;
+    const options = buildRouteOptions(rawRoutes, form.vehicleTypeKey, when);
+    setRoutes(options);
+    if (options.length === 0) {
+      setSelectedRouteId("");
+      return;
+    }
+    const stillSelected = options.find((route) => route.id === selectedRouteId);
+    setSelectedRouteId(stillSelected ? stillSelected.id : options[0].id);
+  }, [rawRoutes, form.vehicleTypeKey, when, selectedRouteId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -225,6 +239,7 @@ export default function AddBookingModal({ onClose, onSave }) {
             trafficFactor: selectedRoute.trafficFactor,
             trafficLabel: selectedRoute.trafficLabel,
             costs: selectedRoute.costs,
+            geometry: selectedRoute.geometry,
           }
         : null,
     };
