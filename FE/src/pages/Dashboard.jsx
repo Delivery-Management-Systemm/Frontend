@@ -22,7 +22,7 @@ import DriverAssignment from "./DriverAssignment";
 import Bookings from "./Bookings";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
-import AccountManagement from "./admin/AccountManagement";
+import Users from "./Users";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
@@ -131,7 +131,7 @@ const Dashboard = ({ currentUser, onLogout }) => {
     emergency: <Emergency />,
     maintenance: <Maintenance />,
     account: <Account />,
-    "account-management": <AccountManagement />,
+    "account-management": <Users />,
   };
 
   return (

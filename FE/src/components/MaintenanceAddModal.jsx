@@ -113,177 +113,175 @@ export default function MaintenanceAddModal({
       <div className="ma-add-container">
         <h3 className="ma-add-title">Tạo hóa đơn mới</h3>
         <form className="ma-add-form" onSubmit={handleSubmit}>
-          <div className="ma-add-body">
-            <div className="grid two">
-              <div>
-                <label>Số hóa đơn</label>
-                <input
-                  className="input"
-                  value={form.invoiceNumber}
-                  onChange={(e) => update("invoiceNumber", e.target.value)}
-                />
-              </div>
-              <div>
-                <label>Ngày thực hiện *</label>
-                <input
-                  className="input"
-                  type="date"
-                  value={form.date}
-                  onChange={(e) => update("date", e.target.value)}
-                />
-              </div>
+          <div className="grid two">
+            <div>
+              <label>Số hóa đơn</label>
+              <input
+                className="input"
+                value={form.invoiceNumber}
+                onChange={(e) => update("invoiceNumber", e.target.value)}
+              />
             </div>
-
-            <div className="grid two mt-3">
-              <div>
-                <label>Phương tiện *</label>
-                <select
-                  className="input"
-                  value={form.vehicle}
-                  onChange={(e) => update("vehicle", e.target.value)}
-                >
-                  <option value="">-- Chọn phương tiện --</option>
-                  {vehicles.map((vehicle) => (
-                    <option
-                      key={vehicle.vehicleID || vehicle.id}
-                      value={vehicle.vehicleID || vehicle.id}
-                    >
-                      {vehicle.licensePlate || vehicle.plate} -{" "}
-                      {vehicle.vehicleModel || vehicle.model}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label>Loại bảo trì *</label>
-                <select
-                  className="input"
-                  value={form.maintenanceType}
-                  onChange={(e) => update("maintenanceType", e.target.value)}
-                >
-                  <option>Bảo dưỡng định kỳ</option>
-                  <option>Sửa chữa</option>
-                  <option>Thay thế linh kiện</option>
-                </select>
-              </div>
+            <div>
+              <label>Ngày thực hiện *</label>
+              <input
+                className="input"
+                type="date"
+                value={form.date}
+                onChange={(e) => update("date", e.target.value)}
+              />
             </div>
+          </div>
 
-            <div className="grid two mt-3">
-              <div>
-                <label>Kỹ thuật viên *</label>
-                <input
-                  className="input"
-                  value={form.technician}
-                  onChange={(e) => update("technician", e.target.value)}
-                  placeholder="Tên kỹ thuật viên"
-                />
-              </div>
-              <div>
-                <label>Xưởng sửa chữa *</label>
-                <input
-                  className="input"
-                  value={form.workshop}
-                  onChange={(e) => update("workshop", e.target.value)}
-                  placeholder="Tên xưởng"
-                />
-              </div>
+          <div className="grid two mt-3">
+            <div>
+              <label>Phương tiện *</label>
+              <select
+                className="input"
+                value={form.vehicle}
+                onChange={(e) => update("vehicle", e.target.value)}
+              >
+                <option value="">-- Chọn phương tiện --</option>
+                {vehicles.map((vehicle) => (
+                  <option
+                    key={vehicle.vehicleID || vehicle.id}
+                    value={vehicle.vehicleID || vehicle.id}
+                  >
+                    {vehicle.licensePlate || vehicle.plate} -{" "}
+                    {vehicle.vehicleModel || vehicle.model}
+                  </option>
+                ))}
+              </select>
             </div>
+            <div>
+              <label>Loại bảo trì *</label>
+              <select
+                className="input"
+                value={form.maintenanceType}
+                onChange={(e) => update("maintenanceType", e.target.value)}
+              >
+                <option>Bảo dưỡng định kỳ</option>
+                <option>Sửa chữa</option>
+                <option>Thay thế linh kiện</option>
+              </select>
+            </div>
+          </div>
 
-            <h4 className="section-title mt-4">Dịch vụ đã thực hiện</h4>
-            <div className="services-list">
-              {form.services.length === 0 ? (
-                <div className="empty-services">
-                  Chưa có dịch vụ nào. Nhấn "Thêm dịch vụ" để bắt đầu.
-                </div>
-              ) : null}
+          <div className="grid two mt-3">
+            <div>
+              <label>Kỹ thuật viên *</label>
+              <input
+                className="input"
+                value={form.technician}
+                onChange={(e) => update("technician", e.target.value)}
+                placeholder="Tên kỹ thuật viên"
+              />
+            </div>
+            <div>
+              <label>Xưởng sửa chữa *</label>
+              <input
+                className="input"
+                value={form.workshop}
+                onChange={(e) => update("workshop", e.target.value)}
+                placeholder="Tên xưởng"
+              />
+            </div>
+          </div>
 
-              {form.services.map((s) => (
-                <div className="service-card" key={s.id}>
-                  <div className="service-left">
-                    <label className="service-label">Dịch vụ</label>
-                    <select
-                      className="input service-select"
-                      value={s.serviceId || s.name}
-                      onChange={(e) => {
-                        const selectedService = services.find(
-                          (service) => service.id == e.target.value
-                        );
-                        if (selectedService) {
-                          updateService(s.id, "serviceId", selectedService.id);
-                          updateService(s.id, "name", selectedService.name);
-                          updateService(s.id, "price", selectedService.price);
-                        } else {
-                          updateService(s.id, "serviceId", "");
-                          updateService(s.id, "name", e.target.value);
-                        }
-                      }}
-                    >
-                      <option value="">-- Chọn dịch vụ --</option>
-                      {services.map((service) => (
-                        <option key={service.id} value={service.id}>
-                          {service.name} -{" "}
-                          {service.price
-                            ? service.price.toLocaleString() + "đ"
-                            : "0đ"}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+          <h4 className="section-title mt-4">Dịch vụ đã thực hiện</h4>
+          <div className="services-list">
+            {form.services.length === 0 ? (
+              <div className="empty-services">
+                Chưa có dịch vụ nào. Nhấn "Thêm dịch vụ" để bắt đầu.
+              </div>
+            ) : null}
 
-                  <div className="service-mid">
-                    <label className="service-label">Số lượng</label>
-                    <input
-                      className="input service-qty"
-                      type="number"
-                      min="1"
-                      value={s.qty || 1}
-                      onChange={(e) =>
-                        updateService(
-                          s.id,
-                          "qty",
-                          Math.max(1, Number(e.target.value || 1))
-                        )
+            {form.services.map((s) => (
+              <div className="service-card" key={s.id}>
+                <div className="service-left">
+                  <label className="service-label">Dịch vụ</label>
+                  <select
+                    className="input service-select"
+                    value={s.serviceId || s.name}
+                    onChange={(e) => {
+                      const selectedService = services.find(
+                        (service) => service.id == e.target.value
+                      );
+                      if (selectedService) {
+                        updateService(s.id, "serviceId", selectedService.id);
+                        updateService(s.id, "name", selectedService.name);
+                        updateService(s.id, "price", selectedService.price);
+                      } else {
+                        updateService(s.id, "serviceId", "");
+                        updateService(s.id, "name", e.target.value);
                       }
-                    />
-                  </div>
-
-                  <div className="service-right">
-                    <label className="service-label">Thành tiền</label>
-                    <input
-                      className="input service-price"
-                      placeholder="Giá"
-                      value={s.price || inferPriceFromName(s.name)}
-                      onChange={(e) =>
-                        updateService(s.id, "price", e.target.value)
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="btn-trash"
-                      onClick={() => removeService(s.id)}
-                      title="Xóa dịch vụ"
-                    >
-                      <FaTrash />
-                    </button>
-                  </div>
+                    }}
+                  >
+                    <option value="">-- Chọn dịch vụ --</option>
+                    {services.map((service) => (
+                      <option key={service.id} value={service.id}>
+                        {service.name} -{" "}
+                        {service.price
+                          ? service.price.toLocaleString() + "đ"
+                          : "0đ"}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-              ))}
 
-              <div className="mt-3">
-                <button
-                  type="button"
-                  className="btn btn-success"
-                  onClick={addService}
-                >
-                  + Thêm dịch vụ
-                </button>
+                <div className="service-mid">
+                  <label className="service-label">Số lượng</label>
+                  <input
+                    className="input service-qty"
+                    type="number"
+                    min="1"
+                    value={s.qty || 1}
+                    onChange={(e) =>
+                      updateService(
+                        s.id,
+                        "qty",
+                        Math.max(1, Number(e.target.value || 1))
+                      )
+                    }
+                  />
+                </div>
+
+                <div className="service-right">
+                  <label className="service-label">Thành tiền</label>
+                  <input
+                    className="input service-price"
+                    placeholder="Giá"
+                    value={s.price || inferPriceFromName(s.name)}
+                    onChange={(e) =>
+                      updateService(s.id, "price", e.target.value)
+                    }
+                  />
+                  <button
+                    type="button"
+                    className="btn-trash"
+                    onClick={() => removeService(s.id)}
+                    title="Xóa dịch vụ"
+                  >
+                    <FaTrash />
+                  </button>
+                </div>
               </div>
+            ))}
 
-              <div className="total-row">
-                <div className="total-label">Tổng chi phí</div>
-                <div className="total-amount">
-                  {formatCurrency(computeTotal(form.services))}
-                </div>
+            <div className="mt-3">
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={addService}
+              >
+                + Thêm dịch vụ
+              </button>
+            </div>
+
+            <div className="total-row">
+              <div className="total-label">Tổng chi phí</div>
+              <div className="total-amount">
+                {formatCurrency(computeTotal(form.services))}
               </div>
             </div>
           </div>
