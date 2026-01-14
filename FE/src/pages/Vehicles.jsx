@@ -1,287 +1,138 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { FaTruck, FaPlus, FaSearch, FaFilter, FaPen, FaTrash, FaEye, FaSpinner, FaExclamationTriangle } from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./Vehicles.css";
-import VehicleViewModal from "../components/VehicleViewModal";
-import VehicleAddModal from "../components/VehicleAddModal";
-import ConfirmModal from "../components/ConfirmModal";
-import { getVehicles } from "../services/vehicleAPI";
-
-// ====================== CONFIG =============================
-
-const vehiclesConfig = {
-  header: {
-    title: "Quản lý phương tiện",
-    totalPrefix: "Tổng số:",
-    totalSuffix: "xe",
-    addButton: "Thêm xe mới",
-  },
-  filterCard: {
-    title: "Bộ lọc",
-    searchPlaceholder: "Tìm kiếm theo biển số, model...",
-    typeAllLabel: "Tất cả loại xe",
-    statusAllLabel: "Tất cả trạng thái",
-  },
-  table: {
-    columns: {
-      stt: "STT",
-      plate: "BIỂN SỐ",
-      type: "LOẠI XE",
-      brandModel: "MODEL",
-      year: "NĂM SX",
-      km: "KM ĐÃ ĐI",
-      status: "TRẠNG THÁI",
-      actions: "THAO TÁC",
-    },
-  },
-  vehicleTypes: [
-    { key: "all", label: "Tất cả loại xe" },
-    { key: "small_truck", label: "Xe tải nhỏ" },
-    { key: "big_truck", label: "Xe tải lớn" },
-    { key: "container", label: "Xe container" },
-    { key: "bus", label: "Xe khách" },
-    { key: "pickup", label: "Xe bán tải" },
-    { key: "car", label: "Xe con" },
-  ],
-  statuses: [
-    { key: "all", label: "Tất cả trạng thái" },
-    { key: "ready", label: "Sẵn sàng" },
-    { key: "in_use", label: "Đang sử dụng" },
-    { key: "on_trip", label: "Đang công tác" },
-    { key: "maintenance", label: "Bảo trì" },
-    { key: "available", label: "Có sẵn" },
-  ],
-};
-
-// =============================================================
-
-function vehiclesGetStatusBadgeClass(statusKey) {
-  switch (statusKey) {
-    case "ready":
-      return "vehicles-badge vehicles-badge--ready";
-    case "in_use":
-      return "vehicles-badge vehicles-badge--inuse";
-    case "on_trip":
-      return "vehicles-badge vehicles-badge--trip";
-    case "maintenance":
-      return "vehicles-badge vehicles-badge--maint";
-    default:
-      return "vehicles-badge";
-  }
-}
+import Pagination from "../components/Pagination";
+import CustomSelect from "../components/CustomSelect";
+import VehicleDetailModal from "../components/VehicleDetailModal";
+import VehicleEditModal from "../components/VehicleEditModal";
+import { getVehicles, deleteVehicle } from "../services/vehicleAPI";
 
 export default function Vehicles() {
-  const [vehiclesData, setVehiclesData] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [search, setSearch] = useState("");
-  const [typeKey, setTypeKey] = useState("all");
-  const [statusKey, setStatusKey] = useState("all");
-  const [viewVehicle, setViewVehicle] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editingVehicle, setEditingVehicle] = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [selectedVehicleId, setSelectedVehicleId] = useState(null);
+  const [editingVehicleId, setEditingVehicleId] = useState(null);
 
-  // Fetch vehicles data on component mount
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    vehicleStatus: "",
+    vehicleType: "",
+    fuelType: "",
+    vehicleBrand: "",
+  });
+
+  // Load vehicles from API
   useEffect(() => {
-    const fetchVehicles = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getVehicles();
+    loadVehicles();
+  }, [pagination.currentPage, pagination.pageSize, filters]);
 
-        // Map backend data to frontend format
-        const mappedData = data.map(vehicle => ({
-          id: vehicle.vehicleID,
-          plate: vehicle.licensePlate,
-          year: vehicle.manufacturedYear || 0,
-          typeKey: mapVehicleType(vehicle.vehicleType),
-          brand: extractBrandFromModel(vehicle.vehicleModel),
-          model: vehicle.vehicleModel || "",
-          km: vehicle.currentKm ? `${vehicle.currentKm.toLocaleString()} km` : "0 km",
-          licenses: [vehicle.requiredLicenseCode],
-          statusKey: mapVehicleStatus(vehicle.vehicleStatus),
-        }));
+  const loadVehicles = async () => {
+    try {
+      setTableLoading(true);
 
-        setVehiclesData(mappedData);
-      } catch (err) {
-        console.error('Error loading vehicles:', err);
-        setError('Không thể tải dữ liệu phương tiện. Vui lòng thử lại.');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await getVehicles({
+        pageNumber: pagination.currentPage,
+        pageSize: pagination.pageSize,
+        vehicleStatus: filters.vehicleStatus,
+        vehicleType: filters.vehicleType,
+      });
 
-    fetchVehicles();
-  }, []);
+      const vehiclesList = data.objects || data.items || data || [];
+      setVehicles(Array.isArray(vehiclesList) ? vehiclesList : []);
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: data.total || vehiclesList.length || 0,
+        totalPages: Math.ceil(
+          (data.total || vehiclesList.length || 0) / prev.pageSize
+        ),
+      }));
 
-  const mapVehicleType = (vehicleType) => {
-    if (!vehicleType) return "small_truck";
-
-    const typeLower = vehicleType.toLowerCase();
-    if (typeLower.includes("container")) return "container";
-    if (typeLower.includes("khách")) return "bus";
-    if (typeLower.includes("bán tải")) return "pickup";
-    if (typeLower.includes("tải lớn")) return "big_truck";
-    if (typeLower.includes("tải nhẹ")) return "small_truck";
-    if (typeLower.includes("con")) return "car";
-
-    return "small_truck"; // default
-  };
-
-  // Extract brand from model (simple heuristic)
-  const extractBrandFromModel = (vehicleModel) => {
-    if (!vehicleModel) return "Unknown";
-
-    const modelLower = vehicleModel.toLowerCase();
-    if (modelLower.includes("hyundai")) return "Hyundai";
-    if (modelLower.includes("hino")) return "Hino";
-    if (modelLower.includes("dongfeng")) return "Dongfeng";
-    if (modelLower.includes("thaco")) return "Thaco";
-    if (modelLower.includes("ford")) return "Ford";
-
-    // Return first word as brand
-    return vehicleModel.split(' ')[0];
-  };
-
-  // Map backend status to frontend status key
-  const mapVehicleStatus = (vehicleStatus) => {
-    if (!vehicleStatus) return "ready";
-
-    switch (vehicleStatus.toLowerCase()) {
-      case 'available':
-        return 'ready';
-      case 'on_trip':
-        return 'on_trip';
-      case 'maintenance':
-        return 'maintenance';
-      case 'in_use':
-        return 'in_use';
-      default:
-        return 'ready';
+      setError(null);
+    } catch (err) {
+      console.error("Error loading vehicles:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      setVehicles([]);
+    } finally {
+      setLoading(false);
+      setTableLoading(false);
     }
   };
 
-  const totalCount = vehiclesData.length;
-
-  const typeLabelMap = useMemo(() => {
-    const map = new Map();
-    vehiclesConfig.vehicleTypes.forEach((t) => map.set(t.key, t.label));
-    return map;
-  }, []);
-
-  const statusLabelMap = useMemo(() => {
-    const map = new Map();
-    vehiclesConfig.statuses.forEach((s) => map.set(s.key, s.label));
-    return map;
-  }, []);
-
-  const filteredVehicles = useMemo(() => {
-    const q = search.trim().toLowerCase();
-
-    return vehiclesData.filter((v) => {
-      const matchesSearch =
-        q.length === 0
-          ? true
-          : [
-              v.plate,
-              v.brand,
-              v.model,
-              typeLabelMap.get(v.typeKey) || "",
-              statusLabelMap.get(v.statusKey) || "",
-            ]
-              .join(" ")
-              .toLowerCase()
-              .includes(q);
-
-      const matchesType = typeKey === "all" ? true : v.typeKey === typeKey;
-      const matchesStatus = statusKey === "all" ? true : v.statusKey === statusKey;
-
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }, [vehiclesData, search, typeKey, statusKey, typeLabelMap, statusLabelMap]);
-
-  const handleAdd = () => {
-    // Open add modal for creating
-    setEditingVehicle(null);
-    setShowAddModal(true);
-  };
-
-  const handleEdit = (vehicle) => {
-    setEditingVehicle(vehicle);
-    setShowAddModal(true);
-  };
-
-  const handleDelete = (vehicle) => {
-    setConfirmTarget(vehicle);
-    setConfirmOpen(true);
-  };
-
-  const performDeleteConfirmed = () => {
-    if (!confirmTarget) {
-      setConfirmOpen(false);
+  const handleDeleteVehicle = async (vehicleId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa phương tiện này?")) {
       return;
     }
-    setVehiclesData((prev) => prev.filter((v) => v.id !== confirmTarget.id));
-    setConfirmTarget(null);
-    setConfirmOpen(false);
-  };
 
-  const handleModalClose = () => {
-    setShowAddModal(false);
-  };
-
-  const handleModalSubmit = (data) => {
-    // Map incoming payload to UI format used by the table
-    const mapped = {
-      id: data.id || `tmp-${Date.now()}`,
-      plate: data.plate || data.plateNumber || "",
-      year: data.year || new Date().getFullYear(),
-      typeKey: mapVehicleType(data.type || ""),
-      brand: data.brand || extractBrandFromModel(data.model || ""),
-      model: data.model || "",
-      km: typeof data.km === "number" ? `${Number(data.km).toLocaleString()} km` : (data.km ? `${String(data.km).replace(/\s*km$/i, "")} km` : "0 km"),
-      licenses: [],
-      statusKey: mapVehicleStatus(data.status || ""),
-    };
-
-    if (data.id) {
-      // update existing
-      setVehiclesData((prev) => prev.map((v) => (v.id === data.id ? mapped : v)));
-    } else {
-      // insert new at top
-      setVehiclesData((prev) => [mapped, ...prev]);
+    try {
+      await deleteVehicle(vehicleId);
+      await loadVehicles();
+      toast.success("Xóa phương tiện thành công!");
+    } catch (err) {
+      console.error("Error deleting vehicle:", err);
+      toast.error("Không thể xóa phương tiện. Vui lòng thử lại.");
     }
-    setEditingVehicle(null);
-    setShowAddModal(false);
   };
 
-  // Show loading state
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, currentPage: newPage }));
+  };
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPagination((prev) => ({
+      ...prev,
+      pageSize: newPageSize,
+      currentPage: 1,
+    }));
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prev) => ({ ...prev, [filterType]: value }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  };
+
+  const stats = {
+    total: vehicles.length,
+    available: vehicles.filter(
+      (v) =>
+        (v.vehicleStatus || "").toLowerCase() === "available" ||
+        (v.vehicleStatus || "") === "Sẵn sàng"
+    ).length,
+    inUse: vehicles.filter(
+      (v) =>
+        (v.vehicleStatus || "").toLowerCase() === "in_use" ||
+        (v.vehicleStatus || "") === "Đang dùng"
+    ).length,
+    maintenance: vehicles.filter(
+      (v) =>
+        (v.vehicleStatus || "").toLowerCase() === "maintenance" ||
+        (v.vehicleStatus || "") === "Bảo trì"
+    ).length,
+  };
+
   if (loading) {
     return (
       <div className="vehicles-page">
-        <div className="vehicles-loading">
-          <FaSpinner className="vehicles-spinner" />
-          <div>Đang tải dữ liệu phương tiện...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="vehicles-page">
-        <div className="vehicles-error">
-          <FaExclamationTriangle />
-          <div>{error}</div>
-          <button
-            type="button"
-            className="vehicles-primaryBtn"
-            onClick={() => window.location.reload()}
-          >
-            Thử lại
-          </button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "200px",
+          }}
+        >
+          <div className="line-spinner"></div>
         </div>
       </div>
     );
@@ -289,187 +140,276 @@ export default function Vehicles() {
 
   return (
     <div className="vehicles-page">
-      {/* ===================== HEADER CARD ===================== */}
-      <div className="vehicles-card vehicles-headerCard">
-        <div className="vehicles-headerLeft">
-          <div className="vehicles-headerIcon">
-            <FaTruck />
-          </div>
-
-          <div className="vehicles-headerText">
-            <div className="vehicles-headerTitle">{vehiclesConfig.header.title}</div>
-            <div className="vehicles-headerSub">
-              {vehiclesConfig.header.totalPrefix} {totalCount} {vehiclesConfig.header.totalSuffix}
-            </div>
-          </div>
-        </div>
-
-        <button className="vehicles-primaryBtn" onClick={handleAdd} type="button">
-          <FaPlus className="vehicles-btnIcon" />
-          {vehiclesConfig.header.addButton}
-        </button>
-      </div>
-
-      {/* ===================== FILTER CARD ===================== */}
-      <div className="vehicles-card vehicles-filterCard">
-        <div className="vehicles-filterTitleRow">
-          <FaFilter className="vehicles-filterTitleIcon" />
-          <div className="vehicles-filterTitle">{vehiclesConfig.filterCard.title}</div>
-        </div>
-
-        <div className="vehicles-filterRow">
-          {/* Search */}
-          <div className="vehicles-inputWrap vehicles-inputWrap--search">
-            <FaSearch className="vehicles-inputIcon" />
-            <input
-              className="vehicles-input"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={vehiclesConfig.filterCard.searchPlaceholder}
-              type="text"
-            />
-          </div>
-
-          {/* Type select */}
-          <div className="vehicles-inputWrap">
-            <select
-              className="vehicles-select"
-              value={typeKey}
-              onChange={(e) => setTypeKey(e.target.value)}
-            >
-              {vehiclesConfig.vehicleTypes.map((t) => (
-                <option key={t.key} value={t.key}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Status select */}
-          <div className="vehicles-inputWrap">
-            <select
-              className="vehicles-select"
-              value={statusKey}
-              onChange={(e) => setStatusKey(e.target.value)}
-            >
-              {vehiclesConfig.statuses.map((s) => (
-                <option key={s.key} value={s.key}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+      <div className="vehicles-header-simple">
+        <div>
+          <div className="vehicles-header-title">Quản lý phương tiện</div>
+          <div className="vehicles-header-subtitle">
+            Quản lý xe và thiết bị vận chuyển
           </div>
         </div>
       </div>
 
-      {/* ===================== TABLE CARD ===================== */}
-      <div className="vehicles-card vehicles-tableCard">
-        <div className="vehicles-tableWrap">
-          <table className="vehicles-table">
-            <thead>
-              <tr>
-                <th className="vehicles-th vehicles-th--stt">{vehiclesConfig.table.columns.stt}</th>
-                <th className="vehicles-th">{vehiclesConfig.table.columns.plate}</th>
-                <th className="vehicles-th">{vehiclesConfig.table.columns.type}</th>
-                <th className="vehicles-th">{vehiclesConfig.table.columns.brandModel}</th>
-                <th className="vehicles-th">{vehiclesConfig.table.columns.year}</th>
-                <th className="vehicles-th">{vehiclesConfig.table.columns.km}</th>
-                <th className="vehicles-th">{vehiclesConfig.table.columns.status}</th>
-                <th className="vehicles-th vehicles-th--actions">{vehiclesConfig.table.columns.actions}</th>
-              </tr>
-            </thead>
+      {error && (
+        <div
+          className="error-message"
+          style={{
+            background: "#fee",
+            color: "#c33",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            border: "1px solid #fcc",
+          }}
+        >
+          {error}
+        </div>
+      )}
 
-            <tbody>
-              {filteredVehicles.map((v, idx) => (
-                <tr className="vehicles-tr" key={v.id}>
-                  <td className="vehicles-td vehicles-td--stt">{idx + 1}</td>
-                  <td className="vehicles-td vehicles-td--plate">{v.plate}</td>
+      <div className="vehicles-stats-row">
+        <div className="vehicle-stat">
+          <div className="vehicle-stat-label">Tổng số</div>
+          <div className="vehicle-stat-value">{stats.total}</div>
+        </div>
+        <div className="vehicle-stat">
+          <div className="vehicle-stat-label">Sẵn sàng</div>
+          <div className="vehicle-stat-value">{stats.available}</div>
+        </div>
+        <div className="vehicle-stat">
+          <div className="vehicle-stat-label">Đang dùng</div>
+          <div className="vehicle-stat-value">{stats.inUse}</div>
+        </div>
+        <div className="vehicle-stat">
+          <div className="vehicle-stat-label">Bảo trì</div>
+          <div className="vehicle-stat-value">{stats.maintenance}</div>
+        </div>
+      </div>
 
-                  <td className="vehicles-td">
-                    <div className="vehicles-type-label">{typeLabelMap.get(v.typeKey) || v.typeKey}</div>
-                    {v.licenses && v.licenses.length > 0 ? (
-                      <div className="vehicles-license-link">Bằng {v.licenses.join(", ")}</div>
-                    ) : null}
-                  </td>
+      {/* Filters */}
+      <div className="vehicles-filters">
+        <CustomSelect
+          value={filters.vehicleStatus}
+          onChange={(value) => handleFilterChange("vehicleStatus", value)}
+          options={[
+            { value: "", label: "Tất cả trạng thái" },
+            { value: "available", label: "Sẵn sàng" },
+            { value: "in_use", label: "Đang dùng" },
+            { value: "maintenance", label: "Bảo trì" },
+          ]}
+          placeholder="Tất cả trạng thái"
+        />
 
-                  <td className="vehicles-td">
-                    <div className="vehicles-brand">{v.brand}</div>
-                    <div className="vehicles-model">{v.model}</div>
-                  </td>
+        <CustomSelect
+          value={filters.fuelType}
+          onChange={(value) => handleFilterChange("fuelType", value)}
+          options={[
+            { value: "", label: "Tất cả nhiên liệu" },
+            { value: "Xăng", label: "Xăng" },
+            { value: "Dầu", label: "Dầu" },
+            { value: "Điện", label: "Điện" },
+            { value: "Hybrid", label: "Hybrid" },
+          ]}
+          placeholder="Tất cả nhiên liệu"
+        />
 
-                  <td className="vehicles-td">{v.year}</td>
+        <CustomSelect
+          value={filters.vehicleBrand}
+          onChange={(value) => handleFilterChange("vehicleBrand", value)}
+          options={[
+            { value: "", label: "Tất cả hãng" },
+            { value: "Toyota", label: "Toyota" },
+            { value: "Honda", label: "Honda" },
+            { value: "Ford", label: "Ford" },
+            { value: "Hyundai", label: "Hyundai" },
+            { value: "Isuzu", label: "Isuzu" },
+            { value: "Hino", label: "Hino" },
+          ]}
+          placeholder="Tất cả hãng"
+        />
+      </div>
 
-                  <td className="vehicles-td">{v.km}</td>
-
-                  <td className="vehicles-td">
-                    <span className={vehiclesGetStatusBadgeClass(v.statusKey)}>
-                      {statusLabelMap.get(v.statusKey) || v.statusKey}
-                    </span>
-                  </td>
-
-                  <td className="vehicles-td vehicles-td--actions">
-                    <button
-                      className="vehicles-iconBtn vehicles-iconBtn--edit"
-                      type="button"
-                      onClick={() => handleEdit(v)}
-                      aria-label="edit"
-                      title="Sửa"
-                    >
-                      <FaPen />
-                    </button>
-                    <button
-                      className="vehicles-iconBtn vehicles-iconBtn--delete"
-                      type="button"
-                      onClick={() => handleDelete(v)}
-                      aria-label="delete"
-                      title="Xóa"
-                    >
-                      <FaTrash />
-                    </button>
-                    <button
-                      className="vehicles-iconBtn vehicles-iconBtn--view"
-                      type="button"
-                      onClick={() => setViewVehicle(v)}
-                      aria-label="view"
-                      title="Xem"
-                    >
-                      <FaEye />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredVehicles.length === 0 && (
+      <div className="vehicles-list">
+        <div className="vehicles-table-card">
+          <div className="vehicles-table-wrap">
+            <table className="vehicles-table">
+              <thead>
                 <tr>
-                  <td className="vehicles-empty" colSpan={8}>
-                    Không có dữ liệu phù hợp bộ lọc.
-                  </td>
+                  <th>Biển số</th>
+                  <th>Loại xe</th>
+                  <th>Model</th>
+                  <th>Năm SX</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {tableLoading ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                ) : vehicles.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      style={{
+                        textAlign: "center",
+                        padding: "40px",
+                        color: "#6b7280",
+                      }}
+                    >
+                      Không có phương tiện nào
+                    </td>
+                  </tr>
+                ) : (
+                  vehicles.map((vehicle) => (
+                    <tr key={vehicle.vehicleID} className="vehicles-tr">
+                      <td className="vehicles-td">
+                        <div className="vehicles-plate-text">
+                          {vehicle.licensePlate}
+                        </div>
+                      </td>
+                      <td className="vehicles-td">
+                        <div
+                          className="vehicles-type-text"
+                          title={vehicle.vehicleType}
+                        >
+                          {vehicle.vehicleType?.length > 20
+                            ? `${vehicle.vehicleType.substring(0, 20)}...`
+                            : vehicle.vehicleType || "-"}
+                        </div>
+                      </td>
+                      <td className="vehicles-td">
+                        <div
+                          className="vehicles-model-text"
+                          title={vehicle.vehicleModel}
+                        >
+                          {vehicle.vehicleModel?.length > 25
+                            ? `${vehicle.vehicleModel.substring(0, 25)}...`
+                            : vehicle.vehicleModel || "-"}
+                        </div>
+                      </td>
+                      <td className="vehicles-td">
+                        <div className="vehicles-year-text">
+                          {vehicle.manufacturedYear || "-"}
+                        </div>
+                      </td>
+                      <td className="vehicles-td">
+                        <span
+                          className={`vehicles-status-badge status-${(
+                            vehicle.vehicleStatus || "unknown"
+                          )
+                            .toLowerCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .replace(/đ/g, "d")
+                            .replace(/\s+/g, "_")}`}
+                        >
+                          {(() => {
+                            const status = vehicle.vehicleStatus || "";
+                            if (status === "available" || status === "Sẵn sàng")
+                              return "Sẵn sàng";
+                            if (
+                              status === "in_use" ||
+                              status === "Đang dùng" ||
+                              status === "on_trip" ||
+                              status === "Đang chạy"
+                            )
+                              return "Đang dùng";
+                            if (
+                              status === "maintenance" ||
+                              status === "Bảo trì"
+                            )
+                              return "Bảo trì";
+                            return status || "Không rõ";
+                          })()}
+                        </span>
+                      </td>
+                      <td className="vehicles-td vehicles-td-actions">
+                        <div className="vehicles-actions">
+                          <button
+                            className="vehicles-icon-btn vehicles-icon-view"
+                            title="Xem chi tiết"
+                            onClick={() =>
+                              setSelectedVehicleId(vehicle.vehicleID)
+                            }
+                          >
+                            <FaEye />
+                          </button>
+                          <button
+                            className="vehicles-icon-btn vehicles-icon-edit"
+                            title="Chỉnh sửa"
+                            onClick={() =>
+                              setEditingVehicleId(vehicle.vehicleID)
+                            }
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="vehicles-icon-btn vehicles-icon-delete"
+                            title="Xóa"
+                            onClick={() =>
+                              handleDeleteVehicle(vehicle.vehicleID)
+                            }
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    {viewVehicle ? (
-      <VehicleViewModal
-        vehicle={viewVehicle}
-        onClose={() => setViewVehicle(null)}
+
+      {/* Pagination */}
+      {pagination.totalItems > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
+
+      {selectedVehicleId && (
+        <VehicleDetailModal
+          vehicleId={selectedVehicleId}
+          onClose={() => setSelectedVehicleId(null)}
+        />
+      )}
+
+      {editingVehicleId && (
+        <VehicleEditModal
+          vehicleId={editingVehicleId}
+          onClose={() => setEditingVehicleId(null)}
+          onSave={async () => {
+            setEditingVehicleId(null);
+            await loadVehicles();
+            toast.success("Cập nhật phương tiện thành công!");
+          }}
+        />
+      )}
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
       />
-    ) : null}
-    {showAddModal ? (
-      <VehicleAddModal
-        vehicle={editingVehicle}
-        onClose={handleModalClose}
-        onSubmit={handleModalSubmit}
-      />
-    ) : null}
-    <ConfirmModal
-      open={confirmOpen}
-      title="Xóa phương tiện"
-      message={`Bạn có chắc muốn xóa phương tiện ${confirmTarget?.plate ?? ""}?`}
-      onConfirm={performDeleteConfirmed}
-      onCancel={() => { setConfirmOpen(false); setConfirmTarget(null); }}
-    />
-  </div>
-);
+    </div>
+  );
 }

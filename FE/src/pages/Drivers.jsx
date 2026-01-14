@@ -1,241 +1,126 @@
-import React, { useMemo, useState, useEffect } from "react";
-import {
-  FaPlus,
-  FaSearch,
-  FaPen,
-  FaTrash,
-  FaEye,
-  FaFilter,
-  FaStar,
-  FaUsers,
-  FaSpinner,
-  FaExclamationTriangle,
-} from "react-icons/fa";
-
-import DriverAddModal from "../components/DriverAddModal";
-import DriverViewModal from "../components/DriverViewModal";
-import ConfirmModal from "../components/ConfirmModal";
-import { getDrivers } from "../services/driverAPI";
+import React, { useState, useEffect } from "react";
+import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./Drivers.css";
-
-// ========================= CONFIG =========================
-
-const driversConfig = {
-  page: {
-    title: "Quản lý tài xế",
-    subtitlePrefix: "Tổng số:",
-    addBtn: "Thêm tài xế",
-    filtersTitle: "Bộ lọc",
-    searchPlaceholder: "Tìm kiếm tên, SĐT, GPLX...",
-  },
-  statuses: {
-    all: "Tất cả trạng thái",
-    driving: { label: "Đang lái" },
-    ready: { label: "Sẵn sàng" },
-    duty: { label: "Đang công tác" },
-    leave: { label: "Nghỉ phép" },
-    available: { label: "Có sẵn" },
-    on_trip: { label: "Đang chạy" },
-  },
-  licenseTypes: {
-    all: "Tất cả loại bằng",
-    "Bằng B1": "Bằng B1",
-    "Bằng B": "Bằng B",
-    "Bằng C1": "Bằng C1",
-    "Bằng C": "Bằng C",
-    "Bằng D1": "Bằng D1",
-    "Bằng D2": "Bằng D2",
-    "Bằng D": "Bằng D",
-    "Bằng BE": "Bằng BE",
-    "Bằng C1E": "Bằng C1E",
-    "Bằng CE": "Bằng CE",
-    "Bằng D1E": "Bằng D1E",
-    "Bằng D2E": "Bằng D2E",
-    "Bằng DE": "Bằng DE",
-  },
-  shifts: [
-    { key: "all", label: "Tất cả ca làm việc" },
-    { key: "morning", label: "Ca sáng" },
-    { key: "afternoon", label: "Ca chiều" },
-    { key: "night", label: "Ca đêm" },
-  ],
-};
-
-// ============================== HELPERS ==============================
-
-function driversGetInitials(name) {
-  const parts = String(name || "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
-  const first = parts[0]?.[0] || "";
-  const last = parts[parts.length - 1]?.[0] || "";
-  return (first + last).toUpperCase() || "D";
-}
-
-function driversGetShiftPillClass(shift) {
-  // removed - shift UI deleted
-}
-
-function driversGetStatusPillClass(status) {
-  if (status === "driving") return "drivers-pill-status-driving";
-  if (status === "ready") return "drivers-pill-status-ready";
-  if (status === "duty") return "drivers-pill-status-duty";
-  return "drivers-pill-status-leave";
-}
-
-// ====================================================================
+import Pagination from "../components/Pagination";
+import CustomSelect from "../components/CustomSelect";
+import DriverDetailModal from "../components/DriverDetailModal";
+import DriverEditModal from "../components/DriverEditModal";
+import { getDrivers, deleteDriver } from "../services/driverAPI";
 
 export default function Drivers() {
-  const [driversData, setDriversData] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [driversSearch, setDriversSearch] = useState("");
-  const [driversFilterStatus, setDriversFilterStatus] = useState("all");
-  const [driversFilterLicense, setDriversFilterLicense] = useState("all");
-  const [driversFilterShift, setDriversFilterShift] = useState("all");
-  const [driversShowAddModal, setDriversShowAddModal] = useState(false);
-  const [driversViewDriver, setDriversViewDriver] = useState(null);
-  const [editingDriver, setEditingDriver] = useState(null);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [selectedDriverId, setSelectedDriverId] = useState(null);
+  const [editingDriverId, setEditingDriverId] = useState(null);
 
-  // Fetch drivers data on component mount
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    driverStatus: "",
+  });
+
+  // Load drivers from API
   useEffect(() => {
-    const fetchDrivers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getDrivers();
+    loadDrivers();
+  }, [pagination.currentPage, pagination.pageSize, filters]);
 
-        // Map backend data to frontend format
-        const mappedData = data.map(driver => ({
-          id: driver.driverID,
-          name: driver.name,
-          phone: driver.phone,
-          email: driver.email || "",
-          licenses: driver.licenses || [],
-          vehicle: driver.assignedVehicle && driver.assignedVehicle !== "Đang rảnh"
-            ? { plate: driver.assignedVehicle, desc: "Đang chạy" }
-            : null,
-          expYears: driver.experienceYears || 0,
-          rating: driver.rating || 0,
-          status: mapDriverStatus(driver.status),
-          statusSub: null,
-        }));
+  const loadDrivers = async () => {
+    try {
+      setTableLoading(true);
 
-        setDriversData(mappedData);
-      } catch (err) {
-        console.error('Error loading drivers:', err);
-        setError('Không thể tải dữ liệu tài xế. Vui lòng thử lại.');
-      } finally {
-        setLoading(false);
-      }
-    };
+      const data = await getDrivers({
+        pageNumber: pagination.currentPage,
+        pageSize: pagination.pageSize,
+        driverStatus: filters.driverStatus,
+      });
 
-    fetchDrivers();
-  }, []);
+      const driversList = data.objects || data.items || data || [];
+      setDrivers(Array.isArray(driversList) ? driversList : []);
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: data.total || driversList.length || 0,
+        totalPages: Math.ceil(
+          (data.total || driversList.length || 0) / prev.pageSize
+        ),
+      }));
 
-  // Map backend status to frontend status
-  const mapDriverStatus = (backendStatus) => {
-    switch (backendStatus?.toLowerCase()) {
-      case 'on_trip':
-        return 'driving';
-      case 'available':
-        return 'ready';
-      case 'active':
-        return 'ready';
-      default:
-        return backendStatus?.toLowerCase() || 'ready';
+      setError(null);
+    } catch (err) {
+      console.error("Error loading drivers:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      setDrivers([]);
+    } finally {
+      setLoading(false);
+      setTableLoading(false);
     }
   };
 
-  const driversFiltered = useMemo(() => {
-    const q = driversSearch.trim().toLowerCase();
-
-    return driversData.filter((d) => {
-      const driversMatchesSearch =
-        !q ||
-        d.name.toLowerCase().includes(q) ||
-        d.phone.includes(q) ||
-        d.licenses.some((x) => String(x).toLowerCase().includes(q));
-      const driversMatchesStatus =
-        driversFilterStatus === "all" ? true : d.status === driversFilterStatus;
-
-      const driversMatchesLicense =
-        driversFilterLicense === "all"
-          ? true
-          : d.licenses.includes(driversFilterLicense);
-
-      return (
-        driversMatchesSearch &&
-        driversMatchesStatus &&
-        driversMatchesLicense
-      );
-    });
-  }, [driversSearch, driversFilterStatus, driversFilterLicense, driversData]);
-
-  const driversTotal = driversData.length;
-
-  const handleModalSubmit = (data) => {
-    // update existing or insert new
-    if (data.id) {
-      setDriversData((prev) => prev.map((x) => (x.id === data.id ? { ...x, ...data } : x)));
-    } else {
-      const newDriver = {
-        id: `tmp-${Date.now()}`,
-        name: data.name,
-        phone: data.phone,
-        email: data.email || "",
-        licenses: data.licenseTypes || [],
-        vehicle: null,
-        expYears: data.expYears || 0,
-        rating: data.rating || 0,
-        status: data.status || "ready",
-        statusSub: null,
-      };
-      setDriversData((prev) => [newDriver, ...prev]);
-    }
-    setDriversShowAddModal(false);
-    setEditingDriver(null);
-  };
-
-  const performDeleteConfirmed = () => {
-    if (!confirmTarget) {
-      setConfirmOpen(false);
+  const handleDeleteDriver = async (driverId) => {
+    if (!window.confirm("Bạn có chắc chắn muốn xóa tài xế này?")) {
       return;
     }
-    setDriversData((prev) => prev.filter((v) => v.id !== confirmTarget.id));
-    setConfirmTarget(null);
-    setConfirmOpen(false);
+
+    try {
+      await deleteDriver(driverId);
+      await loadDrivers();
+      toast.success("Xóa tài xế thành công!");
+    } catch (err) {
+      console.error("Error deleting driver:", err);
+      toast.error("Không thể xóa tài xế. Vui lòng thử lại.");
+    }
   };
 
-  // Show loading state
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, currentPage: newPage }));
+  };
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPagination((prev) => ({
+      ...prev,
+      pageSize: newPageSize,
+      currentPage: 1,
+    }));
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prev) => ({ ...prev, [filterType]: value }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  };
+
+  const stats = {
+    total: drivers.length,
+    available: drivers.filter(
+      (d) => (d.status || d.driverStatus) === "available"
+    ).length,
+    onTrip: drivers.filter((d) => (d.status || d.driverStatus) === "on_trip")
+      .length,
+    offline: drivers.filter((d) => (d.status || d.driverStatus) === "offline")
+      .length,
+  };
+
   if (loading) {
     return (
       <div className="drivers-page">
-        <div className="drivers-loading">
-          <FaSpinner className="drivers-spinner" />
-          <div>Đang tải dữ liệu tài xế...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state
-  if (error) {
-    return (
-      <div className="drivers-page">
-        <div className="drivers-error">
-          <FaExclamationTriangle />
-          <div>{error}</div>
-          <button
-            type="button"
-            className="drivers-primary-btn"
-            onClick={() => window.location.reload()}
-          >
-            Thử lại
-          </button>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "200px",
+          }}
+        >
+          <div className="line-spinner"></div>
         </div>
       </div>
     );
@@ -243,264 +128,261 @@ export default function Drivers() {
 
   return (
     <div className="drivers-page">
-
-      {/* ================= HEADER CARD ================= */}
-      <div className="drivers-card drivers-header">
-        <div className="drivers-header-left">
-          <div className="drivers-header-icon">
-            <FaUsers />
-          </div>
-
-          <div>
-            <div className="drivers-header-title">{driversConfig.page.title}</div>
-            <div className="drivers-header-sub">
-              {driversConfig.page.subtitlePrefix} {driversTotal} tài xế
-            </div>
+      <div className="drivers-header-simple">
+        <div>
+          <div className="drivers-header-title">Quản lý tài xế</div>
+          <div className="drivers-header-subtitle">
+            Quản lý thông tin và lịch trình tài xế
           </div>
         </div>
+      </div>
 
-        <button
-          type="button"
-          className="drivers-primary-btn"
-          onClick={() => { setEditingDriver(null); setDriversShowAddModal(true); }}
+      {error && (
+        <div
+          className="error-message"
+          style={{
+            background: "#fee",
+            color: "#c33",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            border: "1px solid #fcc",
+          }}
         >
-          <FaPlus />
-          {driversConfig.page.addBtn}
-        </button>
-      </div>
-
-      {/* ================= FILTERS CARD ================= */}
-      <div className="drivers-card drivers-filters">
-        <div className="drivers-filters-title">
-          <FaFilter />
-          {driversConfig.page.filtersTitle}
+          {error}
         </div>
+      )}
 
-        <div className="drivers-filters-row">
-          {/* Search */}
-          <div className="drivers-input-wrap">
-            <FaSearch className="drivers-input-icon" />
-            <input
-              className="drivers-input"
-              value={driversSearch}
-              onChange={(e) => setDriversSearch(e.target.value)}
-              placeholder={driversConfig.page.searchPlaceholder}
-            />
-          </div>
-          {/* Shift */}
-          <select
-            className="drivers-select"
-            value={driversFilterShift}
-            onChange={(e) => setDriversFilterShift(e.target.value)}
-          >
-            {driversConfig.shifts.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-
-          {/* Status */}
-          <select
-            className="drivers-select"
-            value={driversFilterStatus}
-            onChange={(e) => setDriversFilterStatus(e.target.value)}
-          >
-            <option value="all">{driversConfig.statuses.all}</option>
-            {Object.entries(driversConfig.statuses)
-              .filter(([k]) => k !== "all")
-              .map(([key, v]) => (
-                <option key={key} value={key}>
-                  {v.label}
-                </option>
-              ))}
-          </select>
-
-          {/* License type */}
-          <select
-            className="drivers-select"
-            value={driversFilterLicense}
-            onChange={(e) => setDriversFilterLicense(e.target.value)}
-          >
-            {Object.entries(driversConfig.licenseTypes).map(([key, label]) => (
-              <option key={key} value={key}>
-                {label}
-              </option>
-            ))}
-          </select>
+      <div className="drivers-stats-row">
+        <div className="driver-stat">
+          <div className="driver-stat-label">Tổng số</div>
+          <div className="driver-stat-value">{stats.total}</div>
+        </div>
+        <div className="driver-stat">
+          <div className="driver-stat-label">Sẵn sàng</div>
+          <div className="driver-stat-value">{stats.available}</div>
+        </div>
+        <div className="driver-stat">
+          <div className="driver-stat-label">Đang chạy</div>
+          <div className="driver-stat-value">{stats.onTrip}</div>
+        </div>
+        <div className="driver-stat">
+          <div className="driver-stat-label">Nghỉ</div>
+          <div className="driver-stat-value">{stats.offline}</div>
         </div>
       </div>
 
-      {/* ================= TABLE CARD ================= */}
-      <div className="drivers-card drivers-table-card">
-        <div className="drivers-table-wrap">
-          <table className="drivers-table">
-            <thead>
-              <tr>
-                <th className="drivers-th drivers-col-driver">TÀI XẾ</th>
-                <th className="drivers-th">LIÊN HỆ</th>
-                <th className="drivers-th">LOẠI BẰNG LÁI</th>
-                <th className="drivers-th">PHƯƠNG TIỆN HIỆN TẠI</th>
-                <th className="drivers-th">KINH NGHIỆM</th>
-                <th className="drivers-th">ĐÁNH GIÁ</th>
-                <th className="drivers-th">TRẠNG THÁI</th>
-                <th className="drivers-th drivers-col-actions">THAO TÁC</th>
-              </tr>
-            </thead>
+      {/* Filters */}
+      <div className="drivers-filters">
+        <CustomSelect
+          value={filters.driverStatus}
+          onChange={(value) => handleFilterChange("driverStatus", value)}
+          options={[
+            { value: "", label: "Tất cả trạng thái" },
+            { value: "available", label: "Sẵn sàng" },
+            { value: "on_trip", label: "Đang chạy" },
+            { value: "offline", label: "Nghỉ" },
+          ]}
+          placeholder="Tất cả trạng thái"
+        />
+      </div>
 
-            <tbody>
-              {driversFiltered.length === 0 ? (
+      <div className="drivers-list">
+        <div className="drivers-table-card">
+          <div className="drivers-table-wrap">
+            <table className="drivers-table">
+              <thead>
                 <tr>
-                  <td className="drivers-empty" colSpan={8}>
-                    Không có dữ liệu phù hợp bộ lọc.
-                  </td>
+                  <th>Tài xế</th>
+                  <th>Liên hệ</th>
+                  <th>Bằng lái</th>
+                  <th>Kinh nghiệm</th>
+                  <th>Đánh giá</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
                 </tr>
-              ) : (
-                driversFiltered.map((d) => (
-                  <tr className="drivers-tr" key={d.id}>
-                    {/* Driver */}
-                    <td className="drivers-td drivers-col-driver">
-                      <div className="drivers-driver-cell">
-                        <div className="drivers-avatar">
-                          {driversGetInitials(d.name)}
-                        </div>
-                        <div>
-                          <div className="drivers-driver-name">{d.name}</div>
-                          <div className="drivers-driver-id">ID: {d.id}</div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Contact */}
-                    <td className="drivers-td">
-                      <div className="drivers-contact-phone">{d.phone}</div>
-                      <div className="drivers-contact-email">{d.email}</div>
-                    </td>
-
-                    {/* Licenses */}
-                    <td className="drivers-td">
-                      <div className="drivers-license-chips">
-                        {d.licenses.map((x) => (
-                          <span key={x} className="drivers-chip">
-                            {x}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-
-                    {/* Vehicle */}
-                    <td className="drivers-td">
-                      {d.vehicle && d.vehicle.plate ? (
-                        <div>
-                          <div className="drivers-vehicle-plate">
-                            {d.vehicle.plate}
-                          </div>
-                          {d.vehicle.desc ? (
-                            <div className="drivers-vehicle-sub">
-                              {d.vehicle.desc}
-                            </div>
-                          ) : null}
-                        </div>
-                      ) : (
-                        <div className="drivers-vehicle-sub">Chưa có xe</div>
-                      )}
-                    </td>
-
-                    {/* Experience */}
-                    <td className="drivers-td">{d.expYears} năm</td>
-
-                    {/* Rating */}
-                    <td className="drivers-td">
-                      <span className="drivers-rating">
-                        <FaStar className="drivers-star" />
-                        {d.rating}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="drivers-td">
-                      <div className="drivers-status-stack">
-                        <span
-                          className={
-                            "drivers-pill " + driversGetStatusPillClass(d.status)
-                          }
-                        >
-                          {driversConfig.statuses[d.status]?.label || d.status}
-                        </span>
-
-                        {d.statusSub ? (
-                          <div className="drivers-status-sub">{d.statusSub}</div>
-                        ) : null}
-                      </div>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="drivers-td drivers-td-actions">
-                      <div className="drivers-actions">
-                        <button
-                          type="button"
-                          className="drivers-icon-btn drivers-icon-edit"
-                          aria-label="Sửa"
-                          onClick={() => { setEditingDriver(d); setDriversShowAddModal(true); }}
-                        >
-                          <FaPen />
-                        </button>
-
-                        <button
-                          type="button"
-                          className="drivers-icon-btn drivers-icon-del"
-                          aria-label="Xóa"
-                          onClick={() => { setConfirmTarget(d); setConfirmOpen(true); }}
-                        >
-                          <FaTrash />
-                        </button>
- 
-                        <button
-                          type="button"
-                          className="drivers-icon-btn drivers-icon-view"
-                          aria-label="Xem"
-                          onClick={() => setDriversViewDriver(d)}
-                        >
-                          <FaEye />
-                        </button>
-
-                        </div>
+              </thead>
+              <tbody>
+                {tableLoading ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : drivers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{
+                        textAlign: "center",
+                        padding: "40px",
+                        color: "#6b7280",
+                      }}
+                    >
+                      Không có tài xế nào
+                    </td>
+                  </tr>
+                ) : (
+                  drivers.map((driver) => (
+                    <tr key={driver.driverID} className="drivers-tr">
+                      <td className="drivers-td">
+                        <div className="drivers-name-cell">
+                          <div className="drivers-avatar">
+                            {driver.name?.charAt(0).toUpperCase() || "D"}
+                          </div>
+                          <div>
+                            <div
+                              className="drivers-name-text"
+                              title={driver.name}
+                            >
+                              {driver.name?.length > 25
+                                ? `${driver.name.substring(0, 25)}...`
+                                : driver.name || "-"}
+                            </div>
+                            <div className="drivers-id-text">
+                              ID: {driver.driverID}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="drivers-td">
+                        <div className="drivers-phone-text">
+                          {driver.phone || "-"}
+                        </div>
+                        <div
+                          className="drivers-email-text"
+                          title={driver.email}
+                        >
+                          {driver.email?.length > 20
+                            ? `${driver.email.substring(0, 20)}...`
+                            : driver.email || "-"}
+                        </div>
+                      </td>
+                      <td className="drivers-td">
+                        <div className="drivers-licenses-text">
+                          {driver.licenses?.join(", ") || "-"}
+                        </div>
+                      </td>
+                      <td className="drivers-td">
+                        <div className="drivers-exp-text">
+                          {driver.experienceYears || 0} năm
+                        </div>
+                      </td>
+                      <td className="drivers-td">
+                        <div className="drivers-rating-text">
+                          ⭐ {driver.rating?.toFixed(1) || "0.0"}
+                        </div>
+                      </td>
+                      <td className="drivers-td">
+                        <span
+                          className={`drivers-status-badge status-${(
+                            driver.status ||
+                            driver.driverStatus ||
+                            "unknown"
+                          )
+                            .toLowerCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .replace(/đ/g, "d")
+                            .replace(/\s+/g, "_")}`}
+                        >
+                          {(driver.status || driver.driverStatus) ===
+                            "available" ||
+                          (driver.status || driver.driverStatus) === "Sẵn sàng"
+                            ? "Sẵn sàng"
+                            : (driver.status || driver.driverStatus) ===
+                                "on_trip" ||
+                              (driver.status || driver.driverStatus) ===
+                                "Đang chạy"
+                            ? "Đang chạy"
+                            : (driver.status || driver.driverStatus) ===
+                                "offline" ||
+                              (driver.status || driver.driverStatus) === "Nghỉ"
+                            ? "Nghỉ"
+                            : driver.status ||
+                              driver.driverStatus ||
+                              "Không rõ"}
+                        </span>
+                      </td>
+                      <td className="drivers-td drivers-td-actions">
+                        <div className="drivers-actions">
+                          <button
+                            className="drivers-icon-btn drivers-icon-view"
+                            title="Xem chi tiết"
+                            onClick={() => setSelectedDriverId(driver.driverID)}
+                          >
+                            <FaEye />
+                          </button>
+                          <button
+                            className="drivers-icon-btn drivers-icon-edit"
+                            title="Chỉnh sửa"
+                            onClick={() => setEditingDriverId(driver.driverID)}
+                          >
+                            <FaEdit />
+                          </button>
+                          <button
+                            className="drivers-icon-btn drivers-icon-delete"
+                            title="Xóa"
+                            onClick={() => handleDeleteDriver(driver.driverID)}
+                          >
+                            <FaTrash />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {driversShowAddModal && (
-        <DriverAddModal
-          driver={editingDriver}
-          onClose={() => { setDriversShowAddModal(false); setEditingDriver(null); }}
-          onSubmit={handleModalSubmit}
+      {/* Pagination */}
+      {pagination.totalItems > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
       )}
-      {driversViewDriver && (
-        <DriverViewModal
-          driver={driversViewDriver}
-          onClose={() => setDriversViewDriver(null)}
+
+      {selectedDriverId && (
+        <DriverDetailModal
+          driverId={selectedDriverId}
+          onClose={() => setSelectedDriverId(null)}
         />
       )}
-      <ConfirmModal
-        open={confirmOpen}
-        title="Xóa tài xế"
-        message={`Bạn có chắc muốn xóa tài xế ${confirmTarget?.name ?? ""}?`}
-        onConfirm={performDeleteConfirmed}
-        onCancel={() => { setConfirmTarget(null); setConfirmOpen(false); }}
+
+      {editingDriverId && (
+        <DriverEditModal
+          driverId={editingDriverId}
+          onClose={() => setEditingDriverId(null)}
+          onSave={async () => {
+            setEditingDriverId(null);
+            await loadDrivers();
+            toast.success("Cập nhật tài xế thành công!");
+          }}
+        />
+      )}
+
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
       />
     </div>
   );
 }
-
-
-
-
-
-
-

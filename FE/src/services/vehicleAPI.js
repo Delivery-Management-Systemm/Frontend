@@ -3,13 +3,31 @@ import { API_CONFIG } from "../config/api";
 import { fetchWithRetry } from "../utils/apiUtils";
 
 class VehicleAPI {
-  // Get all vehicles
-  async getAllVehicles() {
+  // Get all vehicles with pagination
+  async getAllVehicles(params = {}) {
     try {
-      const response = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Vehicle`, {
-        method: "GET",
-        headers: API_CONFIG.getAuthHeaders(),
-      });
+      const queryParams = new URLSearchParams();
+      if (params.pageNumber)
+        queryParams.append("pageNumber", params.pageNumber);
+      if (params.pageSize) queryParams.append("pageSize", params.pageSize);
+      if (params.vehicleStatus)
+        queryParams.append("vehicleStatus", params.vehicleStatus);
+      if (params.vehicleType)
+        queryParams.append("vehicleType", params.vehicleType);
+      if (params.fuelType) queryParams.append("fuelType", params.fuelType);
+      if (params.vehicleBrand)
+        queryParams.append("vehicleBrand", params.vehicleBrand);
+      if (params.sortBy) queryParams.append("sortBy", params.sortBy);
+      if (params.isDescending !== undefined)
+        queryParams.append("isDescending", params.isDescending);
+
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/Vehicle?${queryParams}`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -66,6 +84,53 @@ class VehicleAPI {
       throw error;
     }
   }
+
+  // Update vehicle
+  async updateVehicle(vehicleId, vehicleData) {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle/${vehicleId}`,
+        {
+          method: "PUT",
+          headers: API_CONFIG.getAuthHeaders(),
+          body: JSON.stringify(vehicleData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error updating vehicle:", error);
+      throw error;
+    }
+  }
+
+  // Delete vehicle
+  async deleteVehicle(vehicleId) {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle/${vehicleId}`,
+        {
+          method: "DELETE",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error deleting vehicle:", error);
+      throw error;
+    }
+  }
 }
 
 const vehicleAPIInstance = new VehicleAPI();
@@ -74,8 +139,13 @@ const vehicleAPIInstance = new VehicleAPI();
 export default vehicleAPIInstance;
 
 // Export individual functions that existing code expects
-export const getVehicles = () => vehicleAPIInstance.getAllVehicles();
+export const getVehicles = (params) =>
+  vehicleAPIInstance.getAllVehicles(params);
 export const getVehicleDetails = (vehicleId) =>
   vehicleAPIInstance.getVehicleDetails(vehicleId);
 export const createVehicle = (vehicleData) =>
   vehicleAPIInstance.createVehicle(vehicleData);
+export const updateVehicle = (vehicleId, vehicleData) =>
+  vehicleAPIInstance.updateVehicle(vehicleId, vehicleData);
+export const deleteVehicle = (vehicleId) =>
+  vehicleAPIInstance.deleteVehicle(vehicleId);

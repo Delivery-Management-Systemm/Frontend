@@ -77,7 +77,10 @@ export default function Emergency() {
 
       console.log("Loading vehicles...");
       const vehiclesData = await vehicleAPI.getAllVehicles();
-      setVehicles(vehiclesData);
+      // Ensure vehicles is always an array
+      setVehicles(
+        Array.isArray(vehiclesData) ? vehiclesData : vehiclesData?.objects || []
+      );
 
       setError(null);
     } catch (err) {

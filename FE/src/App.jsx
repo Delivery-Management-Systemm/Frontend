@@ -9,6 +9,7 @@ import Vehicles from "./pages/Vehicles.jsx";
 import Drivers from "./pages/Drivers.jsx";
 import TripManagement from "./pages/TripManagement.jsx";
 import Maintenance from "./pages/Maintenance.jsx";
+import Users from "./pages/Users.jsx";
 import AdminGuard from "./routes/AdminGuard.jsx";
 import AdminLayout from "./components/admin/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/Dashboard.jsx";
@@ -82,6 +83,10 @@ function App() {
 
           {/* Maintenance */}
           <Route path="maintenance" element={<Maintenance />} />
+
+          {/* Users Management */}
+          <Route path="users" element={<Users />} />
+
           {/* GPS Tracking (removed) */}
 
           {/* Account page */}
@@ -93,4 +98,3 @@ function App() {
 }
 
 export default App;
-

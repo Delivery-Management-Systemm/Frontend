@@ -95,7 +95,10 @@ const Maintenance = () => {
         vehicleAPI.getAllVehicles().catch(() => []),
       ]);
       setServices(servicesData);
-      setVehicles(vehiclesData);
+      // Ensure vehicles is always an array
+      setVehicles(
+        Array.isArray(vehiclesData) ? vehiclesData : vehiclesData?.objects || []
+      );
     } catch (err) {
       console.error("Error loading services/vehicles:", err);
       setServices([]);
