@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { FaCalendarAlt, FaSearch, FaPlus, FaEye, FaMapMarkerAlt, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { MapContainer, Marker, Polyline, TileLayer } from "react-leaflet";
 import "./Bookings.css";
 import AddBookingModal from "../components/AddBookingModal";
 
@@ -51,6 +52,7 @@ export default function Bookings() {
   const [search, setSearch] = useState("");
   const [bookings, setBookings] = useState(mockBookings);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
 
   const filtered = bookings.filter((b) =>
     [b.customer, b.contact, b.email, b.route, b.vehicleType]
@@ -65,6 +67,15 @@ export default function Bookings() {
     assigned: mockBookings.filter((b) => b.status === "assigned").length,
     done: mockBookings.filter((b) => b.status === "done").length,
   };
+
+  const routeLine = useMemo(() => {
+    const geometry = selectedBooking?.routeMeta?.geometry;
+    if (!geometry || !geometry.coordinates) return [];
+    return geometry.coordinates.map((coord) => [coord[1], coord[0]]);
+  }, [selectedBooking]);
+
+  const startPoint = routeLine.length ? routeLine[0] : null;
+  const endPoint = routeLine.length ? routeLine[routeLine.length - 1] : null;
 
   return (
     <div className="bookings-page">
@@ -166,7 +177,11 @@ export default function Bookings() {
                     <span className={`badge badge-${b.status}`}>{b.status === "pending" ? "Chờ xác nhận" : b.status === "confirmed" ? "Đã xác nhận" : b.status === "assigned" ? "Đã phân công" : "Hoàn thành"}</span>
                   </td>
                   <td className="td-actions">
-                    <button className="btn-icon btn-icon--view" title="Xem">
+                    <button
+                      className="btn-icon btn-icon--view"
+                      title="Xem"
+                      onClick={() => setSelectedBooking(b)}
+                    >
                       <FaEye />
                     </button>
                     {b.status === "pending" && (
@@ -186,12 +201,57 @@ export default function Bookings() {
           </table>
         </div>
       </div>
+
+      {selectedBooking ? (
+        <div className="bookings-card bookings-map-card">
+          <div className="bookings-map-header">
+            <div>
+              <div className="bookings-map-title">Tuyen duong da chon</div>
+              <div className="bookings-map-sub">
+                {selectedBooking.route}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="btn-icon btn-icon--view"
+              onClick={() => setSelectedBooking(null)}
+              title="Dong"
+            >
+              ✕
+            </button>
+          </div>
+
+          {routeLine.length === 0 ? (
+            <div className="bookings-map-empty">
+              Chua co du lieu tuyen duong cho lich dat truoc nay.
+            </div>
+          ) : (
+            <div className="bookings-map-frame">
+              <MapContainer
+                center={startPoint || [21.0285, 105.8542]}
+                zoom={11}
+                scrollWheelZoom={false}
+                className="bookings-map-canvas"
+              >
+                <TileLayer
+                  attribution='&copy; OpenStreetMap contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                {startPoint ? <Marker position={startPoint} /> : null}
+                {endPoint ? <Marker position={endPoint} /> : null}
+                <Polyline positions={routeLine} />
+              </MapContainer>
+            </div>
+          )}
+        </div>
+      ) : null}
       {showAddModal && (
         <AddBookingModal
           onClose={() => setShowAddModal(false)}
           onSave={(booking) => {
             setBookings((prev) => [booking, ...prev]);
             setShowAddModal(false);
+            setSelectedBooking(booking);
           }}
         />
       )}
