@@ -14,6 +14,9 @@ export default function Users() {
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Options state
+  const [roleOptions, setRoleOptions] = useState([]);
+
   // Pagination state
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -36,6 +39,20 @@ export default function Users() {
   useEffect(() => {
     loadUsers();
   }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  // Load options on mount
+  useEffect(() => {
+    loadOptions();
+  }, []);
+
+  const loadOptions = async () => {
+    try {
+      const roles = await userAPI.getUserRoles();
+      setRoleOptions([{ value: "", label: "Tất cả vai trò" }, ...roles]);
+    } catch (err) {
+      console.error("Error loading options:", err);
+    }
+  };
 
   const loadUsers = async () => {
     try {
@@ -205,12 +222,7 @@ export default function Users() {
         <CustomSelect
           value={filters.role}
           onChange={(value) => handleFilterChange("role", value)}
-          options={[
-            { value: "", label: "Tất cả vai trò" },
-            { value: "Admin", label: "Admin" },
-            { value: "Manager", label: "Manager" },
-            { value: "User", label: "User" },
-          ]}
+          options={roleOptions}
           placeholder="Tất cả vai trò"
         />
       </div>

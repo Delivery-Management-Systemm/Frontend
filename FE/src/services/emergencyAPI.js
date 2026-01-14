@@ -133,6 +133,52 @@ class EmergencyAPI {
       throw error;
     }
   }
+
+  // Get emergency status options
+  async getEmergencyStatuses() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/EmergencyReport/options/statuses`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching emergency statuses:", error);
+      throw error;
+    }
+  }
+
+  // Get emergency level options
+  async getEmergencyLevels() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/EmergencyReport/options/levels`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching emergency levels:", error);
+      throw error;
+    }
+  }
 }
 
 export default new EmergencyAPI();

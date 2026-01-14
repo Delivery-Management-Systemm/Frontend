@@ -131,6 +131,98 @@ class VehicleAPI {
       throw error;
     }
   }
+
+  // Get vehicle status options
+  async getVehicleStatuses() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle/options/statuses`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching vehicle statuses:", error);
+      throw error;
+    }
+  }
+
+  // Get vehicle type options
+  async getVehicleTypes() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle/options/types`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching vehicle types:", error);
+      throw error;
+    }
+  }
+
+  // Get fuel type options
+  async getFuelTypes() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle/options/fuel-types`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching fuel types:", error);
+      throw error;
+    }
+  }
+
+  // Get vehicle brand options
+  async getVehicleBrands() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle/options/brands`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching vehicle brands:", error);
+      throw error;
+    }
+  }
 }
 
 const vehicleAPIInstance = new VehicleAPI();

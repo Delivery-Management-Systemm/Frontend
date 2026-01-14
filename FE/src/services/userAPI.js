@@ -105,6 +105,52 @@ class UserAPI {
       throw error;
     }
   }
+
+  // Get user role options
+  async getUserRoles() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/User/options/roles`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching user roles:", error);
+      throw error;
+    }
+  }
+
+  // Get department options
+  async getDepartments() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/User/options/departments`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      throw error;
+    }
+  }
 }
 
 const userAPIInstance = new UserAPI();
