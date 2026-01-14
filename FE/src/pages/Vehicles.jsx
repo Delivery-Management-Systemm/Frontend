@@ -8,6 +8,7 @@ import CustomSelect from "../components/CustomSelect";
 import VehicleDetailModal from "../components/VehicleDetailModal";
 import VehicleEditModal from "../components/VehicleEditModal";
 import { getVehicles, deleteVehicle } from "../services/vehicleAPI";
+import vehicleAPI from "../services/vehicleAPI";
 
 export default function Vehicles() {
   const [vehicles, setVehicles] = useState([]);
@@ -16,6 +17,12 @@ export default function Vehicles() {
   const [error, setError] = useState(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [editingVehicleId, setEditingVehicleId] = useState(null);
+
+  // Options state
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [typeOptions, setTypeOptions] = useState([]);
+  const [fuelTypeOptions, setFuelTypeOptions] = useState([]);
+  const [brandOptions, setBrandOptions] = useState([]);
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -38,6 +45,34 @@ export default function Vehicles() {
     loadVehicles();
   }, [pagination.currentPage, pagination.pageSize, filters]);
 
+  // Load options on mount
+  useEffect(() => {
+    loadOptions();
+  }, []);
+
+  const loadOptions = async () => {
+    try {
+      const [statuses, types, fuelTypes, brands] = await Promise.all([
+        vehicleAPI.getVehicleStatuses(),
+        vehicleAPI.getVehicleTypes(),
+        vehicleAPI.getFuelTypes(),
+        vehicleAPI.getVehicleBrands(),
+      ]);
+      setStatusOptions([
+        { value: "", label: "Tất cả trạng thái" },
+        ...statuses,
+      ]);
+      setTypeOptions([{ value: "", label: "Tất cả loại xe" }, ...types]);
+      setFuelTypeOptions([
+        { value: "", label: "Tất cả nhiên liệu" },
+        ...fuelTypes,
+      ]);
+      setBrandOptions([{ value: "", label: "Tất cả hãng" }, ...brands]);
+    } catch (err) {
+      console.error("Error loading options:", err);
+    }
+  };
+
   const loadVehicles = async () => {
     try {
       setTableLoading(true);
@@ -47,6 +82,8 @@ export default function Vehicles() {
         pageSize: pagination.pageSize,
         vehicleStatus: filters.vehicleStatus,
         vehicleType: filters.vehicleType,
+        fuelType: filters.fuelType,
+        vehicleBrand: filters.vehicleBrand,
       });
 
       const vehiclesList = data.objects || data.items || data || [];
@@ -189,40 +226,28 @@ export default function Vehicles() {
         <CustomSelect
           value={filters.vehicleStatus}
           onChange={(value) => handleFilterChange("vehicleStatus", value)}
-          options={[
-            { value: "", label: "Tất cả trạng thái" },
-            { value: "available", label: "Sẵn sàng" },
-            { value: "in_use", label: "Đang dùng" },
-            { value: "maintenance", label: "Bảo trì" },
-          ]}
+          options={statusOptions}
           placeholder="Tất cả trạng thái"
+        />
+
+        <CustomSelect
+          value={filters.vehicleType}
+          onChange={(value) => handleFilterChange("vehicleType", value)}
+          options={typeOptions}
+          placeholder="Tất cả loại xe"
         />
 
         <CustomSelect
           value={filters.fuelType}
           onChange={(value) => handleFilterChange("fuelType", value)}
-          options={[
-            { value: "", label: "Tất cả nhiên liệu" },
-            { value: "Xăng", label: "Xăng" },
-            { value: "Dầu", label: "Dầu" },
-            { value: "Điện", label: "Điện" },
-            { value: "Hybrid", label: "Hybrid" },
-          ]}
+          options={fuelTypeOptions}
           placeholder="Tất cả nhiên liệu"
         />
 
         <CustomSelect
           value={filters.vehicleBrand}
           onChange={(value) => handleFilterChange("vehicleBrand", value)}
-          options={[
-            { value: "", label: "Tất cả hãng" },
-            { value: "Toyota", label: "Toyota" },
-            { value: "Honda", label: "Honda" },
-            { value: "Ford", label: "Ford" },
-            { value: "Hyundai", label: "Hyundai" },
-            { value: "Isuzu", label: "Isuzu" },
-            { value: "Hino", label: "Hino" },
-          ]}
+          options={brandOptions}
           placeholder="Tất cả hãng"
         />
       </div>

@@ -8,6 +8,7 @@ import CustomSelect from "../components/CustomSelect";
 import DriverDetailModal from "../components/DriverDetailModal";
 import DriverEditModal from "../components/DriverEditModal";
 import { getDrivers, deleteDriver } from "../services/driverAPI";
+import driverAPI from "../services/driverAPI";
 
 export default function Drivers() {
   const [drivers, setDrivers] = useState([]);
@@ -16,6 +17,9 @@ export default function Drivers() {
   const [error, setError] = useState(null);
   const [selectedDriverId, setSelectedDriverId] = useState(null);
   const [editingDriverId, setEditingDriverId] = useState(null);
+
+  // Options state
+  const [statusOptions, setStatusOptions] = useState([]);
 
   // Pagination state
   const [pagination, setPagination] = useState({
@@ -34,6 +38,23 @@ export default function Drivers() {
   useEffect(() => {
     loadDrivers();
   }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  // Load options on mount
+  useEffect(() => {
+    loadOptions();
+  }, []);
+
+  const loadOptions = async () => {
+    try {
+      const statuses = await driverAPI.getDriverStatuses();
+      setStatusOptions([
+        { value: "", label: "Tất cả trạng thái" },
+        ...statuses,
+      ]);
+    } catch (err) {
+      console.error("Error loading options:", err);
+    }
+  };
 
   const loadDrivers = async () => {
     try {
@@ -177,12 +198,7 @@ export default function Drivers() {
         <CustomSelect
           value={filters.driverStatus}
           onChange={(value) => handleFilterChange("driverStatus", value)}
-          options={[
-            { value: "", label: "Tất cả trạng thái" },
-            { value: "available", label: "Sẵn sàng" },
-            { value: "on_trip", label: "Đang chạy" },
-            { value: "offline", label: "Nghỉ" },
-          ]}
+          options={statusOptions}
           placeholder="Tất cả trạng thái"
         />
       </div>

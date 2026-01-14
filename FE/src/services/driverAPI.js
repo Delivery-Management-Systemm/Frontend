@@ -149,6 +149,29 @@ class DriverAPI {
       throw error;
     }
   }
+
+  // Get driver status options
+  async getDriverStatuses() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Driver/options/statuses`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching driver statuses:", error);
+      throw error;
+    }
+  }
 }
 
 const driverAPIInstance = new DriverAPI();
