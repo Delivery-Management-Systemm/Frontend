@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import CustomSelect from "../components/CustomSelect";
 import VehicleDetailModal from "../components/VehicleDetailModal";
 import VehicleEditModal from "../components/VehicleEditModal";
+import ConfirmModal from "../components/ConfirmModal";
 import { getVehicles, deleteVehicle } from "../services/vehicleAPI";
 import vehicleAPI from "../services/vehicleAPI";
 
@@ -17,6 +18,11 @@ export default function Vehicles() {
   const [error, setError] = useState(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [editingVehicleId, setEditingVehicleId] = useState(null);
+  const [deletingVehicleId, setDeletingVehicleId] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [confirmTitle, setConfirmTitle] = useState("Xác nhận");
 
   // Options state
   const [statusOptions, setStatusOptions] = useState([]);
@@ -108,18 +114,26 @@ export default function Vehicles() {
   };
 
   const handleDeleteVehicle = async (vehicleId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa phương tiện này?")) {
-      return;
-    }
-
     try {
+      setDeletingVehicleId(vehicleId);
       await deleteVehicle(vehicleId);
-      await loadVehicles();
+      // optimistic remove
+      setVehicles((prev) => prev.filter((v) => v.vehicleID !== vehicleId));
+      setPagination((prev) => ({ ...prev, totalItems: Math.max(0, prev.totalItems - 1) }));
       toast.success("Xóa phương tiện thành công!");
     } catch (err) {
       console.error("Error deleting vehicle:", err);
       toast.error("Không thể xóa phương tiện. Vui lòng thử lại.");
+    } finally {
+      setDeletingVehicleId(null);
     }
+  };
+
+  const promptDeleteVehicle = (vehicleId) => {
+    setConfirmTarget(vehicleId);
+    setConfirmTitle("Xóa phương tiện");
+    setConfirmMessage("Bạn có chắc chắn muốn xóa phương tiện này?");
+    setConfirmOpen(true);
   };
 
   const handlePageChange = (newPage) => {
@@ -377,10 +391,11 @@ export default function Vehicles() {
                             className="vehicles-icon-btn vehicles-icon-delete"
                             title="Xóa"
                             onClick={() =>
-                              handleDeleteVehicle(vehicle.vehicleID)
+                              promptDeleteVehicle(vehicle.vehicleID)
                             }
+                            disabled={deletingVehicleId === vehicle.vehicleID}
                           >
-                            <FaTrash />
+                            {deletingVehicleId === vehicle.vehicleID ? "..." : <FaTrash />}
                           </button>
                         </div>
                       </td>
@@ -423,6 +438,23 @@ export default function Vehicles() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        title={confirmTitle}
+        message={confirmMessage}
+        onConfirm={() => {
+          if (confirmTarget) {
+            handleDeleteVehicle(confirmTarget);
+          }
+          setConfirmOpen(false);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmTarget(null);
+        }}
+      />
 
       <ToastContainer
         position="top-right"
