@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   FaCalendarAlt,
   FaExclamationTriangle,
@@ -86,6 +86,12 @@ const MENU_ITEMS = [
     roles: ["admin", "user"],
   },
   {
+    key: "account",
+    label: "Thong tin ca nhan",
+    icon: <FaUserCircle />,
+    roles: ["admin", "user", "driver"],
+  },
+  {
     key: "account-management",
     label: "Quản lý tài khoản",
     icon: <FaUserCircle />,
@@ -93,7 +99,7 @@ const MENU_ITEMS = [
   },
 ];
 
-const Dashboard = ({ currentUser, onLogout }) => {
+const Dashboard = ({ currentUser, onLogout, onUpdateUser }) => {
   const role = currentUser?.role || "admin";
   const [activeMenu, setActiveMenu] = useState("home");
 
@@ -130,7 +136,7 @@ const Dashboard = ({ currentUser, onLogout }) => {
     bookings: <Bookings />,
     emergency: <Emergency />,
     maintenance: <Maintenance />,
-    account: <Account />,
+    account: <Account currentUser={currentUser} onUpdateUser={onUpdateUser} />,
     "account-management": <AccountManagement />,
   };
 
@@ -198,3 +204,5 @@ const Dashboard = ({ currentUser, onLogout }) => {
 };
 
 export default Dashboard;
+
+
