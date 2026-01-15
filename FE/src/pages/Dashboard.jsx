@@ -22,7 +22,7 @@ import DriverAssignment from "./DriverAssignment";
 import Bookings from "./Bookings";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
-import Users from "./Users";
+import AccountManagement from "./admin/AccountManagement";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
