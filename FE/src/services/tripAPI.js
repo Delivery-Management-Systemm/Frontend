@@ -1,78 +1,78 @@
-// Mock data và service cho quản lý chuyến đi
+import { API_CONFIG } from "../config/api";
+import { fetchWithRetry } from "../utils/apiUtils";
 
-export const mockTrips = [
-  {
-    id: 1,
-    date: "01/12/2024",
-    vehicle: "29A-12345",
-    driver: "Nguyễn Văn A",
-    route: "Hà Nội → Hải Phòng",
-    time: "08:30 - 10:30",
-    distance: "120 km",
-    fuel: "15L",
-    status: "completed",
-  },
-  {
-    id: 2,
-    date: "01/12/2024",
-    vehicle: "30B-98765",
-    driver: "Trần Văn B",
-    route: "Hà Nội → Nam Định",
-    time: "09:00",
-    distance: "90 km",
-    fuel: "12L",
-    status: "in-progress",
-  },
-  {
-    id: 3,
-    date: "01/12/2024",
-    vehicle: "51F-11111",
-    driver: "Hoàng Thị E",
-    route: "Hà Nội → Thái Bình",
-    time: "07:30 - 09:45",
-    distance: "110 km",
-    fuel: "14L",
-    status: "completed",
-  },
-  {
-    id: 4,
-    date: "01/12/2024",
-    vehicle: "29A-12345",
-    driver: "Nguyễn Văn A",
-    route: "Hà Nội → Ninh Bình",
-    time: "14:00",
-    distance: "95 km",
-    fuel: "13L",
-    status: "in-progress",
-  },
-  {
-    id: 5,
-    date: "30/11/2024",
-    vehicle: "30D-33333",
-    driver: "Lê Thị C",
-    route: "Hà Nội → Hưng Yên",
-    time: "10:30 - 10:45",
-    distance: "60 km",
-    fuel: "8L",
-    status: "completed",
-  },
-];
+// Fetch paginated trips from backend and return items array
+export const getTrips = async (params = {}) => {
+  try {
+    const query = new URLSearchParams();
+    if (params.pageNumber) query.append("pageNumber", params.pageNumber);
+    if (params.pageSize) query.append("pageSize", params.pageSize);
+    if (params.tripStatus) query.append("tripStatus", params.tripStatus);
 
-export const getTripStats = () => ({
-  todayTrips: 4,
-  inProgress: 2,
-  completed: 3,
-  totalDistance: "290 km",
-});
-
-export const getTrips = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockTrips), 300);
-  });
+    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip?${query}`, {
+      method: "GET",
+      headers: API_CONFIG.getAuthHeaders(),
+    });
+    const data = await resp.json();
+    // Backend returns PaginatedResult: { total, limit, page, objects: [...] }
+    if (Array.isArray(data.objects)) return data.objects;
+    if (Array.isArray(data)) return data;
+    return [];
+  } catch (err) {
+    console.error("Error fetching trips:", err);
+    throw err;
+  }
 };
 
-export const getTripById = (id) => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockTrips.find((t) => t.id === id)), 300);
-  });
+export const getTripStats = async () => {
+  try {
+    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/stats`, {
+      method: "GET",
+      headers: API_CONFIG.getAuthHeaders(),
+    });
+    const data = await resp.json();
+    // Normalize PascalCase -> camelCase
+    return {
+      todayTrips: data.TodayTrips ?? data.todayTrips ?? data.TodayTrips,
+      inProgress: data.InProgress ?? data.inProgress ?? data.InProgress,
+      completed: data.Completed ?? data.completed ?? data.Completed,
+      totalDistance: data.TotalDistance ?? data.totalDistance ?? data.TotalDistance,
+    };
+  } catch (err) {
+    console.error("Error fetching trip stats:", err);
+    throw err;
+  }
+};
+
+export const getTripById = async (id) => {
+  try {
+    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/${id}`, {
+      method: "GET",
+      headers: API_CONFIG.getAuthHeaders(),
+    });
+    return await resp.json();
+  } catch (err) {
+    console.error("Error fetching trip by id:", err);
+    throw err;
+  }
+};
+
+export const getBookedTrips = async (params = {}) => {
+  try {
+    const query = new URLSearchParams();
+    if (params.pageNumber) query.append("pageNumber", params.pageNumber);
+    if (params.pageSize) query.append("pageSize", params.pageSize);
+
+    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/booked?${query}`, {
+      method: "GET",
+      headers: API_CONFIG.getAuthHeaders(),
+    });
+    const data = await resp.json();
+    if (Array.isArray(data.objects)) return data.objects;
+    if (Array.isArray(data)) return data;
+    return [];
+  } catch (err) {
+    console.error("Error fetching booked trips:", err);
+    throw err;
+  }
 };

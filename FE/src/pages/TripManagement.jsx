@@ -40,22 +40,27 @@ const TripManagement = () => {
       getTrips(),
       getTripStats(),
     ]);
-    const normalized = (tripsData || []).map((t) => ({
-      ...t,
-      charges: t.charges || [],
-    }));
+    const normalized = (tripsData || [])
+      .map((t) => ({
+        ...t,
+        charges: t.charges || [],
+      }))
+      .slice()
+      .sort((a, b) => (Number(a.id) || 0) - (Number(b.id) || 0));
     setTrips(normalized);
     setStats(statsData);
     setLoading(false);
   };
 
   const filteredTrips = useMemo(() => {
-    return trips.filter(
-      (trip) =>
-        trip.vehicle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        trip.driver.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        trip.route.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const q = (searchTerm || "").toString().toLowerCase();
+    if (!q) return trips;
+    return trips.filter((trip) => {
+      const vehicle = (trip?.vehicle || "").toString().toLowerCase();
+      const driver = (trip?.driver || "").toString().toLowerCase();
+      const route = (trip?.route || "").toString().toLowerCase();
+      return vehicle.includes(q) || driver.includes(q) || route.includes(q);
+    });
   }, [trips, searchTerm]);
 
   const handleAddCharge = (tripId, charge) => {
@@ -79,8 +84,8 @@ const TripManagement = () => {
 
   const getStatusBadge = (status) => {
     const badges = {
-      completed: { text: "HoAÿn thAÿnh", class: "status-completed" },
-      "in-progress": { text: "Ž?ang th ¯ñc hi ¯Øn", class: "status-in-progress" },
+      completed: { text: "HoAï¿½n thAï¿½nh", class: "status-completed" },
+      "in-progress": { text: "ï¿½?ang thï¿½ï¿½ï¿½c hiï¿½ï¿½ï¿½n", class: "status-in-progress" },
     };
     return badges[status] || badges.completed;
   };
