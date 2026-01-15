@@ -36,17 +36,17 @@ export default function Bookings() {
         else if (statusRaw.includes("confirm")) status = "confirmed";
         else if (statusRaw.includes("assign")) status = "assigned";
         return {
-          id: b.TripID || b.id || b.Id,
+          id: b.TripID || b.tripID || b.Id,
           customer: b.CustomerName || b.customerName || b.Customer || "",
           contact: b.CustomerPhone || b.customerPhone || b.Contact || "",
           email: b.CustomerEmail || b.customerEmail || "",
           route:
             (b.PickupLocation || b.pickupLocation || "") +
-            (b.DropoffLocation ? " → " + b.DropoffLocation : ""),
-          date: b.ScheduledDate ? formatDate(b.ScheduledDate) : b.Date || "",
-          time: b.ScheduledTime || b.Time || "",
-          vehicleType: b.RequestedVehicleType || b.RequestedVehicleType || "",
-          vehicleNote: b.RequestedCargo || b.RequestedCargo || "",
+            (b.dropoffLocation ? " → " + b.dropoffLocation : ""),
+          date: b.scheduledDate ? formatDate(b.ScheduledDate) : b.Date || "",
+          time: b.scheduledTime || b.Time || "",
+          vehicleType: b.RequestedVehicleType || b.requestedVehicleType || "",
+          vehicleNote: b.RequestedCargo || b.requestedCargo || "",
           assigned: b.AssignedVehiclePlate || b.assignedVehiclePlate || null,
           assignedDriver: b.AssignedDriverName || b.assignedDriverName || null,
           status,
