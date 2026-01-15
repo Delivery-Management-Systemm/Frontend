@@ -25,6 +25,10 @@ export default function Emergency() {
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Options state
+  const [statusOptions, setStatusOptions] = useState([]);
+  const [levelOptions, setLevelOptions] = useState([]);
+
   // Pagination state
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -43,6 +47,27 @@ export default function Emergency() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Load options on mount
+  useEffect(() => {
+    loadOptions();
+  }, []);
+
+  const loadOptions = async () => {
+    try {
+      const [statuses, levels] = await Promise.all([
+        emergencyAPI.getEmergencyStatuses(),
+        emergencyAPI.getEmergencyLevels(),
+      ]);
+      setStatusOptions([
+        { value: "", label: "Tất cả trạng thái" },
+        ...statuses,
+      ]);
+      setLevelOptions([{ value: "", label: "Tất cả mức độ" }, ...levels]);
+    } catch (err) {
+      console.error("Error loading options:", err);
+    }
+  };
 
   // Load reports when filters change
   useEffect(() => {
@@ -77,7 +102,10 @@ export default function Emergency() {
 
       console.log("Loading vehicles...");
       const vehiclesData = await vehicleAPI.getAllVehicles();
-      setVehicles(vehiclesData);
+      // Ensure vehicles is always an array
+      setVehicles(
+        Array.isArray(vehiclesData) ? vehiclesData : vehiclesData?.objects || []
+      );
 
       setError(null);
     } catch (err) {
@@ -241,23 +269,14 @@ export default function Emergency() {
         <CustomSelect
           value={filters.status}
           onChange={(value) => handleFilterChange("status", value)}
-          options={[
-            { value: "", label: "Tất cả trạng thái" },
-            { value: "new", label: "Mới" },
-            { value: "processing", label: "Đang xử lý" },
-            { value: "resolved", label: "Đã giải quyết" },
-          ]}
+          options={statusOptions}
           placeholder="Tất cả trạng thái"
         />
 
         <CustomSelect
           value={filters.level}
           onChange={(value) => handleFilterChange("level", value)}
-          options={[
-            { value: "", label: "Tất cả mức độ" },
-            { value: "high", label: "Cao" },
-            { value: "critical", label: "Khẩn cấp" },
-          ]}
+          options={levelOptions}
           placeholder="Tất cả mức độ"
         />
 

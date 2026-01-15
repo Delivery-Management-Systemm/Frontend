@@ -86,6 +86,52 @@ class MaintenanceAPI {
       throw error;
     }
   }
+
+  // Get maintenance type options
+  async getMaintenanceTypes() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Maintenance/options/types`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching maintenance types:", error);
+      throw error;
+    }
+  }
+
+  // Get maintenance status options
+  async getMaintenanceStatuses() {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Maintenance/options/statuses`,
+        {
+          method: "GET",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching maintenance statuses:", error);
+      throw error;
+    }
+  }
 }
 
 const maintenanceAPIInstance = new MaintenanceAPI();

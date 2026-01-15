@@ -28,6 +28,10 @@ const Maintenance = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [error, setError] = useState(null);
 
+  // Options state
+  const [typeOptions, setTypeOptions] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
+
   // Pagination state
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -45,6 +49,27 @@ const Maintenance = () => {
   useEffect(() => {
     loadData();
   }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  // Load options on mount
+  useEffect(() => {
+    loadOptions();
+  }, []);
+
+  const loadOptions = async () => {
+    try {
+      const [types, statuses] = await Promise.all([
+        maintenanceAPI.getMaintenanceTypes(),
+        maintenanceAPI.getMaintenanceStatuses(),
+      ]);
+      setTypeOptions([{ value: "", label: "Tất cả loại bảo trì" }, ...types]);
+      setStatusOptions([
+        { value: "", label: "Tất cả trạng thái" },
+        ...statuses,
+      ]);
+    } catch (err) {
+      console.error("Error loading options:", err);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -95,7 +120,10 @@ const Maintenance = () => {
         vehicleAPI.getAllVehicles().catch(() => []),
       ]);
       setServices(servicesData);
-      setVehicles(vehiclesData);
+      // Ensure vehicles is always an array
+      setVehicles(
+        Array.isArray(vehiclesData) ? vehiclesData : vehiclesData?.objects || []
+      );
     } catch (err) {
       console.error("Error loading services/vehicles:", err);
       setServices([]);
@@ -252,24 +280,14 @@ const Maintenance = () => {
         <CustomSelect
           value={filters.maintenanceType}
           onChange={(value) => handleFilterChange("maintenanceType", value)}
-          options={[
-            { value: "", label: "Tất cả loại bảo trì" },
-            { value: "Bảo dưỡng định kỳ", label: "Bảo dưỡng định kỳ" },
-            { value: "Sửa chữa", label: "Sửa chữa" },
-            { value: "Thay thế linh kiện", label: "Thay thế linh kiện" },
-          ]}
+          options={typeOptions}
           placeholder="Tất cả loại bảo trì"
         />
 
         <CustomSelect
           value={filters.maintenanceStatus}
           onChange={(value) => handleFilterChange("maintenanceStatus", value)}
-          options={[
-            { value: "", label: "Tất cả trạng thái" },
-            { value: "scheduled", label: "Đã lên lịch" },
-            { value: "in-progress", label: "Đang thực hiện" },
-            { value: "completed", label: "Hoàn thành" },
-          ]}
+          options={statusOptions}
           placeholder="Tất cả trạng thái"
         />
 
