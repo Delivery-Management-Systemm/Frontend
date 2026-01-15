@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import LoginPage from "./pages/Login.jsx";
@@ -66,6 +66,9 @@ function App() {
             <DashboardPage
               currentUser={currentUser}
               onLogout={() => setCurrentUser(null)}
+              onUpdateUser={(updates) =>
+                setCurrentUser((prev) => ({ ...prev, ...updates }))
+              }
             />
           }
         >
@@ -90,7 +93,17 @@ function App() {
           {/* GPS Tracking (removed) */}
 
           {/* Account page */}
-          <Route path="account" element={<Account />} />
+          <Route
+            path="account"
+            element={
+              <Account
+                currentUser={currentUser}
+                onUpdateUser={(updates) =>
+                  setCurrentUser((prev) => ({ ...prev, ...updates }))
+                }
+              />
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -98,3 +111,7 @@ function App() {
 }
 
 export default App;
+
+
+
+
