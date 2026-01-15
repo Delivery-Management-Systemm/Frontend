@@ -2,6 +2,7 @@
 import {
   FaCalendarAlt,
   FaExclamationTriangle,
+  FaGasPump,
   FaRoute,
   FaSignOutAlt,
   FaThLarge,
@@ -23,6 +24,7 @@ import Bookings from "./Bookings";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
 import AccountManagement from "./admin/AccountManagement";
+import FuelManagement from "../components/modules/FuelManagement";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
@@ -77,6 +79,12 @@ const MENU_ITEMS = [
     key: "maintenance",
     label: "Bảo trì & Sửa chữa",
     icon: <FaTools />,
+    roles: ["admin", "user"],
+  },
+  {
+    key: "fuel-management",
+    label: "Nhiên liệu",
+    icon: <FaGasPump />,
     roles: ["admin", "user"],
   },
   {
@@ -136,6 +144,7 @@ const Dashboard = ({ currentUser, onLogout, onUpdateUser }) => {
     bookings: <Bookings />,
     emergency: <Emergency />,
     maintenance: <Maintenance />,
+    "fuel-management": <FuelManagement />,
     account: <Account currentUser={currentUser} onUpdateUser={onUpdateUser} />,
     "account-management": <AccountManagement />,
   };
@@ -204,5 +213,6 @@ const Dashboard = ({ currentUser, onLogout, onUpdateUser }) => {
 };
 
 export default Dashboard;
+
 
 
