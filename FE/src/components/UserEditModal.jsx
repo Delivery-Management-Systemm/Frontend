@@ -90,7 +90,7 @@ export default function UserEditModal({ user, onClose, onSave }) {
                 <option value="">-- Chọn vai trò --</option>
                 <option value="Admin">Admin</option>
                 <option value="Manager">Manager</option>
-                <option value="User">User</option>
+                <option value="Staff">Staff</option>
               </select>
             </div>
           </div>
@@ -118,3 +118,4 @@ export default function UserEditModal({ user, onClose, onSave }) {
     </div>
   );
 }
+

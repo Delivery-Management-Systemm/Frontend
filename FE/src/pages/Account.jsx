@@ -1,5 +1,6 @@
 ﻿import React, { useEffect, useState } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaLock } from "react-icons/fa";
+import userAPI from "../services/userAPI";
 import "./Account.css";
 
 const Account = ({ currentUser, onUpdateUser }) => {
@@ -23,7 +24,19 @@ const Account = ({ currentUser, onUpdateUser }) => {
     code: "",
     isOpen: false,
     error: "",
+    purpose: "",
   });
+  const [saveState, setSaveState] = useState({
+    isSaving: false,
+    error: "",
+    success: "",
+  });
+  const [passwordState, setPasswordState] = useState({
+    isSaving: false,
+    error: "",
+    success: "",
+  });
+  const [pendingPassword, setPendingPassword] = useState("");
 
   const updateProfile = (field, value) =>
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -47,61 +60,222 @@ const Account = ({ currentUser, onUpdateUser }) => {
     });
   }, [currentUser]);
 
-  const handleSaveProfile = () => {
+  const syncProfileFromUser = (user) => {
+    if (!user) {
+      return;
+    }
+
+    setProfile((prev) => ({
+      ...prev,
+      fullName: user.fullName ?? prev.fullName,
+      email: user.email ?? prev.email,
+      phone: user.phone ?? prev.phone,
+      role: user.role ?? prev.role,
+      department: user.department ?? prev.department,
+    }));
+  };
+
+  const handleSaveProfile = async () => {
     if (!onUpdateUser) {
       return;
     }
 
-    if (currentUser?.email && profile.email !== currentUser.email) {
+    const nextEmail = profile.email?.trim() || "";
+    const currentEmail = currentUser?.email?.trim() || "";
+
+    if (nextEmail && nextEmail !== currentEmail) {
+      setSaveState({ isSaving: true, error: "", success: "" });
+      try {
+        await userAPI.sendOtp(nextEmail, "email-change");
+        setOtpState({
+          pendingEmail: nextEmail,
+          code: "",
+          isOpen: true,
+          error: "",
+          purpose: "email-change",
+        });
+        setSaveState({ isSaving: false, error: "", success: "" });
+      } catch (error) {
+        setSaveState({
+          isSaving: false,
+          error: error?.message || "Không thể gửi OTP.",
+          success: "",
+        });
+      }
+      return;
+    }
+
+    setSaveState({ isSaving: true, error: "", success: "" });
+    try {
+      const updatedUser = await onUpdateUser({ ...profile });
+      syncProfileFromUser(updatedUser);
+      setSaveState({ isSaving: false, error: "", success: "Đã lưu thay đổi." });
+    } catch (error) {
+      setSaveState({
+        isSaving: false,
+        error: error?.message || "Lưu thay đổi thất bại.",
+        success: "",
+      });
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    const trimmedOtp = otpState.code.trim();
+    if (!trimmedOtp) {
+      setOtpState((prev) => ({ ...prev, error: "Vui lòng nhập mã OTP." }));
+      return;
+    }
+
+    try {
+      await userAPI.verifyOtp(
+        otpState.pendingEmail,
+        trimmedOtp,
+        otpState.purpose
+      );
+
+      if (otpState.purpose === "email-change") {
+        if (!onUpdateUser) {
+          return;
+        }
+
+        setSaveState({ isSaving: true, error: "", success: "" });
+        const updatedUser = await onUpdateUser({
+          ...profile,
+          email: otpState.pendingEmail,
+        });
+        syncProfileFromUser(updatedUser);
+        setSaveState({
+          isSaving: false,
+          error: "",
+          success: "Đã cập nhật email.",
+        });
+      }
+
+      if (otpState.purpose === "password") {
+        if (!pendingPassword) {
+          setOtpState((prev) => ({
+            ...prev,
+            error: "Vui lòng nhập mật khẩu mới.",
+          }));
+          return;
+        }
+
+        setPasswordState({ isSaving: true, error: "", success: "" });
+        await userAPI.changePassword(otpState.pendingEmail, pendingPassword);
+        setPasswordState({
+          isSaving: false,
+          error: "",
+          success: "Đã đổi mật khẩu.",
+        });
+        setPassword({ current: "", next: "", confirm: "" });
+        setPendingPassword("");
+      }
+
       setOtpState({
-        pendingEmail: profile.email,
+        pendingEmail: "",
         code: "",
-        isOpen: true,
+        isOpen: false,
         error: "",
+        purpose: "",
+      });
+    } catch (error) {
+      const message = error?.message || "Xác nhận OTP thất bại.";
+      setOtpState((prev) => ({ ...prev, error: message }));
+      if (otpState.purpose === "email-change") {
+        setSaveState({ isSaving: false, error: message, success: "" });
+      }
+      if (otpState.purpose === "password") {
+        setPasswordState({ isSaving: false, error: message, success: "" });
+      }
+    }
+  };
+
+  const handleCancelOtp = () => {
+    if (otpState.purpose === "email-change") {
+      setProfile((prev) => ({
+        ...prev,
+        email: currentUser?.email || "",
+      }));
+    }
+
+    setOtpState({
+      pendingEmail: "",
+      code: "",
+      isOpen: false,
+      error: "",
+      purpose: "",
+    });
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordState({ isSaving: false, error: "", success: "" });
+
+    if (!currentUser?.email) {
+      setPasswordState({
+        isSaving: false,
+        error: "Vui lòng cập nhật email trước khi đổi mật khẩu.",
+        success: "",
       });
       return;
     }
 
-    onUpdateUser({ ...profile });
-  };
-
-  const handleVerifyOtp = () => {
-    const expectedOtp = "123456";
-    if (otpState.code.trim() !== expectedOtp) {
-      setOtpState((prev) => ({ ...prev, error: "Ma OTP khong dung." }));
+    if (!password.current || !password.next || !password.confirm) {
+      setPasswordState({
+        isSaving: false,
+        error: "Vui lòng nhập đầy đủ thông tin mật khẩu.",
+        success: "",
+      });
       return;
     }
 
-    if (onUpdateUser) {
-      onUpdateUser({ ...profile, email: otpState.pendingEmail });
+    if (password.next !== password.confirm) {
+      setPasswordState({
+        isSaving: false,
+        error: "Mật khẩu mới không khớp.",
+        success: "",
+      });
+      return;
     }
 
-    setOtpState({
-      pendingEmail: "",
-      code: "",
-      isOpen: false,
-      error: "",
-    });
+    if (password.current === password.next) {
+      setPasswordState({
+        isSaving: false,
+        error: "Mật khẩu mới phải khác mật khẩu hiện tại.",
+        success: "",
+      });
+      return;
+    }
+
+    setPasswordState({ isSaving: true, error: "", success: "" });
+    try {
+      await userAPI.sendOtp(currentUser.email, "password");
+      setPendingPassword(password.next);
+      setOtpState({
+        pendingEmail: currentUser.email,
+        code: "",
+        isOpen: true,
+        error: "",
+        purpose: "password",
+      });
+      setPasswordState({ isSaving: false, error: "", success: "" });
+    } catch (error) {
+      setPasswordState({
+        isSaving: false,
+        error: error?.message || "Không thể gửi OTP.",
+        success: "",
+      });
+    }
   };
 
-  const handleCancelOtp = () => {
-    setProfile((prev) => ({
-      ...prev,
-      email: currentUser?.email || "",
-    }));
-    setOtpState({
-      pendingEmail: "",
-      code: "",
-      isOpen: false,
-      error: "",
-    });
-  };
+  const otpSubtitle =
+    otpState.purpose === "password"
+      ? `Mã OTP đã được gửi tới email ${otpState.pendingEmail}. Nhập mã để đổi mật khẩu.`
+      : "Mã OTP đã được gửi tới email mới. Nhập OTP để lưu thay đổi.";
+
   return (
     <div className="account-container">
       <h2 className="account-title">Quản lý tài khoản</h2>
-      <p className="account-subtitle">
-        Cập nhật thông tin cá nhân và cài đặt
-      </p>
+      <p className="account-subtitle">Cập nhật thông tin cá nhân và cài đặt</p>
 
       <div className="account-grid">
         <div className="account-card">
@@ -123,7 +297,14 @@ const Account = ({ currentUser, onUpdateUser }) => {
           <div className="info-block">
             <h4>Thông tin tài khoản</h4>
             <p>
-              ID: <strong>#{currentUser?.id || "USER-001"}</strong>
+              ID:{" "}
+              <strong>
+                #
+                {currentUser?.id ??
+                  currentUser?.userID ??
+                  currentUser?.UserID ??
+                  "USER-001"}
+              </strong>
             </p>
             <p>
               Ngày tạo: <strong>15/01/2024</strong>
@@ -230,9 +411,20 @@ const Account = ({ currentUser, onUpdateUser }) => {
             </label>
           </div>
 
-          <button className="save-btn" type="button" onClick={handleSaveProfile}>
+          <button
+            className="save-btn"
+            type="button"
+            onClick={handleSaveProfile}
+            disabled={saveState.isSaving}
+          >
             Lưu thay đổi
           </button>
+          {saveState.error && (
+            <p className="account-save-error">{saveState.error}</p>
+          )}
+          {saveState.success && (
+            <p className="account-save-success">{saveState.success}</p>
+          )}
         </div>
 
         <div className="account-card full-width">
@@ -279,24 +471,33 @@ const Account = ({ currentUser, onUpdateUser }) => {
             </label>
           </div>
 
-          <button className="save-btn" type="button">
+          <button
+            className="save-btn"
+            type="button"
+            onClick={handleChangePassword}
+            disabled={passwordState.isSaving}
+          >
             Đổi mật khẩu
           </button>
+          {passwordState.error && (
+            <p className="account-save-error">{passwordState.error}</p>
+          )}
+          {passwordState.success && (
+            <p className="account-save-success">{passwordState.success}</p>
+          )}
         </div>
       </div>
 
       {otpState.isOpen && (
         <div className="account-otp-overlay">
           <div className="account-otp-card">
-            <h3>Xac nhan OTP</h3>
-            <p className="account-otp-subtitle">
-              Ma OTP da duoc gui toi email moi. Nhap OTP de luu thay doi.
-            </p>
+            <h3>Xác nhận OTP</h3>
+            <p className="account-otp-subtitle">{otpSubtitle}</p>
             <div className="input-wrapper">
               <input
                 type="text"
                 inputMode="numeric"
-                placeholder="Nhap ma OTP"
+                placeholder="Nhập mã OTP"
                 value={otpState.code}
                 onChange={(e) =>
                   setOtpState((prev) => ({
@@ -316,17 +517,18 @@ const Account = ({ currentUser, onUpdateUser }) => {
                 type="button"
                 onClick={handleCancelOtp}
               >
-                Huy
+                Hủy
               </button>
               <button
                 className="account-otp-confirm"
                 type="button"
                 onClick={handleVerifyOtp}
+                disabled={saveState.isSaving || passwordState.isSaving}
               >
-                Xac nhan
+                Xác nhận
               </button>
             </div>
-            <p className="account-otp-hint">OTP demo: 123456</p>
+            <p className="account-otp-hint">Mã OTP có hiệu lực trong 10 phút.</p>
           </div>
         </div>
       )}
@@ -335,6 +537,3 @@ const Account = ({ currentUser, onUpdateUser }) => {
 };
 
 export default Account;
-
-
-

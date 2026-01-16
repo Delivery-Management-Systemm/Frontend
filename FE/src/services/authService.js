@@ -12,7 +12,7 @@ export const mockUsers = [
     id: "2",
     username: "user",
     password: "user123",
-    role: "user",
+    role: "staff",
     fullName: "Trần Thị Bình",
     email: "user@fms.vn",
     phone: "0902234567",
@@ -46,3 +46,4 @@ export const loginWithMock = ({ username, password }) => {
     user: safeUser,
   };
 };
+

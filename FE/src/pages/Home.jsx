@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import {
   FaTruck,
   FaUser,
@@ -310,3 +310,4 @@ export default function Home({ currentUser }) {
     </div>
   );
 }
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaUser } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -7,6 +7,20 @@ import Pagination from "../components/Pagination";
 import CustomSelect from "../components/CustomSelect";
 import UserEditModal from "../components/UserEditModal";
 import userAPI from "../services/userAPI";
+
+const normalizeRole = (role) => (role || "").toLowerCase();
+
+const getRoleClass = (role) => {
+  const normalized = normalizeRole(role);
+  if (normalized === "admin") return "role-admin";
+  if (normalized === "manager") return "role-manager";
+  return "role-staff";
+};
+
+const formatRoleLabel = (role) => {
+  const normalized = normalizeRole(role) || "staff";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+};
 
 export default function Users() {
   const [users, setUsers] = useState([]);
@@ -147,9 +161,9 @@ export default function Users() {
 
   const stats = {
     total: users.length,
-    admin: users.filter((u) => u.role === "Admin").length,
-    manager: users.filter((u) => u.role === "Manager").length,
-    user: users.filter((u) => u.role === "User" || !u.role).length,
+    admin: users.filter((u) => (u.role || "").toLowerCase() === "admin").length,
+    manager: users.filter((u) => (u.role || "").toLowerCase() === "manager").length,
+    staff: users.filter((u) => (u.role || "").toLowerCase() === "staff" || !u.role).length,
   };
 
   if (loading) {
@@ -212,8 +226,8 @@ export default function Users() {
           <div className="user-stat-value">{stats.manager}</div>
         </div>
         <div className="user-stat">
-          <div className="user-stat-label">User</div>
-          <div className="user-stat-value">{stats.user}</div>
+          <div className="user-stat-label">Staff</div>
+          <div className="user-stat-value">{stats.staff}</div>
         </div>
       </div>
 
@@ -290,15 +304,11 @@ export default function Users() {
                       </td>
                       <td className="users-td">
                         <span
-                          className={`users-role-badge ${
-                            user.role === "Admin"
-                              ? "role-admin"
-                              : user.role === "Manager"
-                              ? "role-manager"
-                              : "role-user"
-                          }`}
+                          className={`users-role-badge ${getRoleClass(
+                            user.role
+                          )}`}
                         >
-                          {user.role || "User"}
+                          {formatRoleLabel(user.role)}
                         </span>
                       </td>
                       <td className="users-td">
@@ -388,3 +398,7 @@ export default function Users() {
     </div>
   );
 }
+
+
+
+
