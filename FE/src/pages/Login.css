@@ -190,6 +190,22 @@
   gap: 8px;
 }
 
+.login-forgot {
+  margin-top: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: #1d4ed8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.login-forgot:hover {
+  text-decoration: underline;
+}
+
 .login-register-icon {
   font-size: 18px;
   line-height: 1;
@@ -231,6 +247,68 @@
 
 .login-demo-role {
   font-weight: 600;
+}
+
+.login-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 2000;
+}
+
+.login-modal {
+  width: min(420px, 100%);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+  overflow: hidden;
+}
+
+.login-modal-header {
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e9f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.login-modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.login-modal-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #94a3b8;
+}
+
+.login-modal-body {
+  padding: 18px 20px 22px;
+}
+
+.login-modal-text {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.login-modal-error {
+  margin-top: 12px;
+}
+
+.login-modal-success {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #16a34a;
 }
 
 @media (max-width: 520px) {

@@ -83,6 +83,54 @@ class UserAPI {
     }
   }
 
+  // Forgot password (send OTP)
+  async forgotPassword(email) {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/forgot-password`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ email }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error sending forgot password OTP:", error);
+      throw error;
+    }
+  }
+
+  // Reset password with OTP
+  async resetPassword(email, otp, newPassword) {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/reset-password`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ email, otp, newPassword }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error resetting password:", error);
+      throw error;
+    }
+  }
+
   // Update user profile
   async updateUser(userId, userData) {
     try {

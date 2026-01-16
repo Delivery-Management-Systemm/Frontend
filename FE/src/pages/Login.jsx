@@ -6,6 +6,15 @@ const Login = ({ onLogin }) => {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotStep, setForgotStep] = useState("request");
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotOtp, setForgotOtp] = useState("");
+  const [forgotPassword, setForgotPassword] = useState("");
+  const [forgotConfirm, setForgotConfirm] = useState("");
+  const [forgotError, setForgotError] = useState("");
+  const [forgotMessage, setForgotMessage] = useState("");
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -18,6 +27,80 @@ const Login = ({ onLogin }) => {
       onLogin?.(result.user);
     } catch (err) {
       setError("Đăng nhập thất bại. Vui lòng kiểm tra thông tin.");
+    }
+  };
+
+  const openForgot = () => {
+    setForgotOpen(true);
+    setForgotStep("request");
+    setForgotEmail("");
+    setForgotOtp("");
+    setForgotPassword("");
+    setForgotConfirm("");
+    setForgotError("");
+    setForgotMessage("");
+  };
+
+  const closeForgot = () => {
+    setForgotOpen(false);
+    setForgotError("");
+    setForgotMessage("");
+  };
+
+  const handleSendOtp = async () => {
+    if (!forgotEmail.trim()) {
+      setForgotError("Vui lòng nhập email.");
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError("");
+    setForgotMessage("");
+    try {
+      await userAPI.forgotPassword(forgotEmail.trim());
+      setForgotStep("verify");
+      setForgotMessage("Đã gửi OTP tới email. Vui lòng kiểm tra hộp thư.");
+    } catch (err) {
+      setForgotError("Không thể gửi OTP. Vui lòng thử lại.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!forgotOtp.trim()) {
+      setForgotError("Vui lòng nhập mã OTP.");
+      return;
+    }
+
+    if (!forgotPassword || !forgotConfirm) {
+      setForgotError("Vui lòng nhập đầy đủ mật khẩu mới.");
+      return;
+    }
+
+    if (forgotPassword !== forgotConfirm) {
+      setForgotError("Mật khẩu mới không khớp.");
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError("");
+    setForgotMessage("");
+    try {
+      await userAPI.resetPassword(
+        forgotEmail.trim(),
+        forgotOtp.trim(),
+        forgotPassword
+      );
+      setForgotMessage("Đổi mật khẩu thành công. Bạn có thể đăng nhập lại.");
+      setForgotStep("request");
+      setForgotOtp("");
+      setForgotPassword("");
+      setForgotConfirm("");
+    } catch (err) {
+      setForgotError("OTP không đúng hoặc đã hết hạn.");
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -149,6 +232,14 @@ const Login = ({ onLogin }) => {
               Đăng nhập
             </button>
 
+            <button
+              type="button"
+              className="login-forgot"
+              onClick={openForgot}
+            >
+              Quên mật khẩu?
+            </button>
+
             <button type="button" className="login-register">
               <span className="login-register-icon" aria-hidden="true">
                 +
@@ -156,15 +247,103 @@ const Login = ({ onLogin }) => {
               Đăng ký tài khoản mới
             </button>
           </form>
-
-
         </div>
       </div>
+
+      {forgotOpen && (
+        <div className="login-modal-overlay">
+          <div className="login-modal">
+            <div className="login-modal-header">
+              <h2>Quên mật khẩu</h2>
+              <button
+                type="button"
+                className="login-modal-close"
+                onClick={closeForgot}
+                aria-label="Đóng"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="login-modal-body">
+              {forgotStep === "request" ? (
+                <>
+                  <p className="login-modal-text">
+                    Nhập email tài khoản để nhận mã OTP.
+                  </p>
+                  <div className="login-input-wrapper">
+                    <input
+                      type="email"
+                      className="login-input"
+                      placeholder="Email"
+                      value={forgotEmail}
+                      onChange={(event) => setForgotEmail(event.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="login-submit"
+                    onClick={handleSendOtp}
+                    disabled={forgotLoading}
+                  >
+                    Gửi OTP
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="login-modal-text">
+                    Nhập OTP và mật khẩu mới để hoàn tất.
+                  </p>
+                  <div className="login-input-wrapper">
+                    <input
+                      type="text"
+                      className="login-input"
+                      placeholder="Mã OTP"
+                      value={forgotOtp}
+                      onChange={(event) => setForgotOtp(event.target.value)}
+                    />
+                  </div>
+                  <div className="login-input-wrapper">
+                    <input
+                      type="password"
+                      className="login-input"
+                      placeholder="Mật khẩu mới"
+                      value={forgotPassword}
+                      onChange={(event) => setForgotPassword(event.target.value)}
+                    />
+                  </div>
+                  <div className="login-input-wrapper">
+                    <input
+                      type="password"
+                      className="login-input"
+                      placeholder="Xác nhận mật khẩu mới"
+                      value={forgotConfirm}
+                      onChange={(event) => setForgotConfirm(event.target.value)}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="login-submit"
+                    onClick={handleResetPassword}
+                    disabled={forgotLoading}
+                  >
+                    Đổi mật khẩu
+                  </button>
+                </>
+              )}
+
+              {forgotError ? (
+                <p className="login-error login-modal-error">{forgotError}</p>
+              ) : null}
+              {forgotMessage ? (
+                <p className="login-modal-success">{forgotMessage}</p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 export default Login;
-
-
-
