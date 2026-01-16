@@ -1,8 +1,11 @@
-﻿// src/components/modules/FuelManagement.jsx
+// src/pages/FuelManagement.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { FaChartLine, FaDollarSign, FaGasPump, FaPlus, FaSearch, FaTint, FaTimes } from "react-icons/fa";
 import "./FuelManagement.css";
-import { ensureSeedVehicles, getFuelRecords, setFuelRecords, getVehicles, makeId } from "../../services/fuelStorage";
+import ConfirmModal from "../components/ConfirmModal";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { ensureSeedVehicles, getVehicles, setFuelRecords, makeId } from "../services/fuelStorage";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Mới nhất" },
@@ -14,6 +17,55 @@ const SORT_OPTIONS = [
 export default function FuelManagement() {
   const [vehicles, setVehiclesState] = useState([]);
   const [records, setRecords] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+ 
+  // helper to try multiple backend bases and return parsed JSON
+  async function tryFetchEndpoints(path, options) {
+    const bases = ["http://localhost:5064", "", "http://localhost:5000", "https://localhost:5064", "https://localhost:5001"];
+    const attempts = [];
+    for (const base of bases) {
+      const url = base + path;
+      try {
+        const res = await fetch(url, options);
+        const ct = (res.headers.get("content-type") || "").toLowerCase();
+        if (!res.ok) {
+          // try to extract error body
+          let bodyText = "";
+          try {
+            if (ct.includes("application/json")) {
+              const json = await res.json();
+              bodyText = JSON.stringify(json);
+            } else {
+              bodyText = await res.text();
+            }
+          } catch { /* ignore */ }
+          const msg = `HTTP ${res.status} ${bodyText ? "- " + bodyText : ""}`;
+          attempts.push({ url, ok: false, reason: msg });
+          console.warn("Fetch non-ok:", url, res.status, bodyText);
+          continue;
+        }
+
+        if (ct.includes("application/json")) {
+          const json = await res.json();
+          return json;
+        } else if (res.status === 204) {
+          return null;
+        } else {
+          const text = await res.text().catch(() => "");
+          attempts.push({ url, ok: true, reason: `non-json content-type: ${ct} body: ${text}` });
+          console.warn("Fetch non-json response, skipping:", url, ct);
+          continue;
+        }
+      } catch (err) {
+        const reason = err?.message || String(err);
+        attempts.push({ url, ok: false, reason });
+        console.warn("Fetch error:", url, reason);
+        continue;
+      }
+    }
+    const details = attempts.map(a => `${a.url} -> ${a.reason}`).join("; ");
+    throw new Error(`All endpoints failed for ${path}. Attempts: ${details}`);
+  }
 
   const [query, setQuery] = useState("");
   const [vehicleFilter, setVehicleFilter] = useState("all");
@@ -32,13 +84,91 @@ export default function FuelManagement() {
     note: "",
   });
   const [formError, setFormError] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTargetId, setConfirmTargetId] = useState(null);
 
   useEffect(() => {
-    const seededVehicles = ensureSeedVehicles();
-    setVehiclesState(seededVehicles);
+    async function tryFetchEndpoints(path, options) {
+      const bases = [
+        "",
+        "https://localhost:5064",
+        "http://localhost:5064",
+        "https://localhost:5001",
+        "http://localhost:5000",
+      ];
+      for (const base of bases) {
+        const url = base + path;
+        try {
+          const res = await fetch(url, options);
+          if (res.ok) {
+            return await res.json();
+          } else {
+            // non-ok response, log and continue
+            console.warn("Fetch non-ok:", url, res.status);
+          }
+        } catch (err) {
+          console.warn("Fetch error:", url, err.message);
+        }
+      }
+      throw new Error("All endpoints failed for " + path);
+    }
 
-    const rs = getFuelRecords();
-    setRecords(rs);
+    async function loadData() {
+      // vehicles: try backend then fallback to seeded
+      try {
+        const vdata = await tryFetchEndpoints("/api/vehicle?pageNumber=1&pageSize=50");
+        const items = Array.isArray(vdata?.objects) ? vdata.objects : [];
+        const mapped = items.map((v) => ({
+          id: v.vehicleID,
+          name: v.vehicleModel ?? v.vehicleType ?? `Xe ${v.vehicleID}`,
+          plate: v.licensePlate,
+        }));
+        if (mapped.length > 0) setVehiclesState(mapped);
+        else setVehiclesState(ensureSeedVehicles());
+      } catch (err) {
+        console.error("Failed to load vehicles:", err.message);
+        setVehiclesState(ensureSeedVehicles());
+      }
+
+      // drivers: try backend
+      try {
+        const ddata = await tryFetchEndpoints("/api/driver?pageNumber=1&pageSize=50");
+        const ditems = Array.isArray(ddata?.objects) ? ddata.objects : [];
+        const dmapped = ditems.map((d) => ({
+          id: d.driverID ?? d.DriverID,
+          name: d.name ?? d.Name ?? d.fullName ?? d.FullName,
+        }));
+        if (dmapped.length > 0) setDrivers(dmapped);
+      } catch (err) {
+        console.warn("Failed to load drivers:", err.message);
+      }
+
+      // fuel records
+      try {
+        const fdata = await tryFetchEndpoints("/api/fuelrecord?pageNumber=1&pageSize=50");
+        const items = Array.isArray(fdata?.objects) ? fdata.objects : [];
+        const mapped = items.map((fr) => ({
+          id: fr.fuelRecordID,
+          date: (fr.fuelTime || "").slice(0, 10),
+          vehicleId: fr.vehicleID,
+          vehiclePlate: fr.vehiclePlate, // convenience if available
+          liters: fr.fuelAmount,
+          unitPrice: fr.fuelAmount ? Math.round((fr.fuelCost / fr.fuelAmount) * 100) / 100 : 0,
+          cost: fr.fuelCost,
+          odometer: fr.currentKm,
+          station: fr.reFuelLocation,
+          note: fr.note ?? "",
+          createdAt: fr.fuelTime,
+          updatedAt: fr.fuelTime,
+        }));
+        setRecords(mapped);
+      } catch (err) {
+        console.error("Failed to load fuel records:", err.message);
+        setRecords([]);
+      }
+    }
+
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -90,28 +220,93 @@ export default function FuelManagement() {
 
     const cost = Math.round(liters * unitPrice);
 
-    const newRecord = {
-      id: makeId(),
-      date: form.date,
-      vehicleId: form.vehicleId,
-      liters,
-      unitPrice,
-      cost,
-      odometer,
-      station: form.station.trim(),
-      note: form.note.trim(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    (async () => {
+      try {
+        // try get vehicle detail to find assigned driver
+        let driverId = null;
+        try {
+          const vdetail = await tryFetchEndpoints(`/api/vehicle/${form.vehicleId}`);
+          if (vdetail) {
+            driverId = vdetail.assignedDriverId ?? vdetail.AssignedDriverId ?? vdetail.assignedDriverID ?? vdetail.AssignedDriverID ?? vdetail.driverID ?? vdetail.DriverID ?? vdetail.VehicleID ?? null;
+            // prefer DriverID-like fields
+            if (vdetail.assignedDriverId) driverId = vdetail.assignedDriverId;
+            else if (vdetail.AssignedDriverId) driverId = vdetail.AssignedDriverId;
+            else if (vdetail.assignedDriverID) driverId = vdetail.assignedDriverID;
+            else if (vdetail.AssignedDriverID) driverId = vdetail.AssignedDriverID;
+            else if (vdetail.driverID) driverId = vdetail.driverID;
+            else if (vdetail.DriverID) driverId = vdetail.DriverID;
+            else if (vdetail.DriverId) driverId = vdetail.DriverId;
+          }
+        } catch (err) {
+          // ignore
+        }
+        // if no driver found, auto-pick first available driver from drivers list
+        if (!driverId && Array.isArray(drivers) && drivers.length > 0) {
+          driverId = drivers[0].id;
+        }
+        const payload = {
+          VehicleID: Number(form.vehicleId),
+          DriverID: driverId ? Number(driverId) : undefined,
+          TripID: null,
+          FuelTime: new Date(form.date).toISOString(),
+          ReFuelLocation: form.station.trim(),
+          FuelAmount: liters,
+          FuelCost: cost,
+          CurrentKm: odometer
+        };
 
-    persist([newRecord, ...records]);
-    setIsModalOpen(false);
+        const created = await tryFetchEndpoints("/api/fuelrecord", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!created) throw new Error("Create failed");
+        const mapped = {
+          id: created.fuelRecordID,
+          date: (created.fuelTime || "").slice(0,10),
+          vehicleId: created.vehicleID,
+          vehiclePlate: created.vehiclePlate ?? null,
+          liters: created.fuelAmount,
+          unitPrice: created.fuelAmount ? Math.round((created.fuelCost / created.fuelAmount) * 100) / 100 : 0,
+          cost: created.fuelCost,
+          odometer: created.currentKm,
+          station: created.reFuelLocation,
+          note: created.note ?? "",
+          createdAt: created.fuelTime,
+          updatedAt: created.fuelTime,
+        };
+        persist([mapped, ...records]);
+        setIsModalOpen(false);
+        toast.success("Tạo phiếu thành công");
+      } catch (err) {
+        setFormError(err.message || "Failed to create fuel record");
+        toast.error(err.message || "Failed to create fuel record");
+      }
+    })();
   }
 
   function handleDelete(id) {
-    const ok = confirm("Xóa phiếu đổ xăng này?");
-    if (!ok) return;
-    persist(records.filter((r) => r.id !== id));
+    console.log("[FuelManagement] handleDelete called for id=", id);
+    // open confirmation modal (do not use native confirm)
+    setConfirmTargetId(id);
+    setConfirmOpen(true);
+  }
+
+  async function onConfirmDelete() {
+    const id = confirmTargetId;
+    setConfirmOpen(false);
+    console.log("[FuelManagement] onConfirmDelete executing for id=", id);
+    try {
+      await tryFetchEndpoints(`/api/fuelrecord/${id}`, { method: "DELETE" });
+      const remaining = records.filter((r) => r.id !== id);
+        persist(remaining);
+        toast.success("Xóa phiếu thành công");
+    } catch (err) {
+      console.error("[FuelManagement] delete failed:", err);
+        toast.error("Xóa thất bại: " + (err?.message || "Lỗi khi gọi server"));
+    } finally {
+      setConfirmTargetId(null);
+    }
   }
 
   const nowMonth = new Date().toISOString().slice(0, 7);
@@ -178,6 +373,8 @@ export default function FuelManagement() {
 
   return (
     <div className="fuel-page">
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+
       <div className="fuel-hero">
         <div className="fuel-hero-left">
           <div className="fuel-hero-icon">
@@ -308,7 +505,7 @@ export default function FuelManagement() {
             return (
               <div key={record.id} className="fuel-table-row">
                 <div>{record.date}</div>
-                <div>{vehicle?.plate || "--"}</div>
+                <div>{vehicle?.plate || record.vehiclePlate || "--"}</div>
                 <div>{record.odometer == null ? "--" : formatNumber(record.odometer)}</div>
                 <div>{formatNumber(record.liters)} L</div>
                 <div>{formatMoney(unitPrice)}</div>
@@ -450,6 +647,13 @@ export default function FuelManagement() {
           </div>
         </div>
       ) : null}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc muốn xóa phiếu đổ xăng này? Hành động này sẽ xóa vĩnh viễn."
+        onConfirm={onConfirmDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }
@@ -463,3 +667,5 @@ function formatNumber(n) {
   const v = Number(n || 0);
   return v.toLocaleString("vi-VN");
 }
+
+

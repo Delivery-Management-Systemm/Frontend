@@ -24,7 +24,7 @@ import Bookings from "./Bookings";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
 import AccountManagement from "./admin/AccountManagement";
-import FuelManagement from "../components/modules/FuelManagement";
+import FuelManagement from "./FuelManagement";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
@@ -107,7 +107,7 @@ const MENU_ITEMS = [
   },
 ];
 
-const Dashboard = ({ currentUser, onLogout, onUpdateUser }) => {
+export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
   const role = currentUser?.role || "admin";
   const [activeMenu, setActiveMenu] = useState("home");
 
@@ -210,9 +210,7 @@ const Dashboard = ({ currentUser, onLogout, onUpdateUser }) => {
       </main>
     </div>
   );
-};
-
-export default Dashboard;
+}
 
 
 

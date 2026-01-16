@@ -1,7 +1,7 @@
-// src/components/modules/FuelDetail.jsx
+// src/components/FuelRecordDetail.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
-export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete }) {
+export default function FuelRecordDetail({ record, vehicles, types, onUpdate, onDelete }) {
   const [edit, setEdit] = useState(false);
 
   const [date, setDate] = useState("");
@@ -26,13 +26,13 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
 
   const vehicleText = useMemo(() => {
     const v = vehicles.find((x) => x.id === record?.vehicleId);
-    return v ? `${v.name} (${v.plate})` : "Xe (kh�ng x�c d?nh)";
+    return v ? `${v.name} (${v.plate})` : "Xe (không xác định)";
   }, [vehicles, record]);
 
   if (!record) {
     return (
       <div className="fuel-detail">
-        <div className="fuel-detail-empty">Ch?n m?t b?n ghi b�n tr�i d? xem chi ti?t.</div>
+        <div className="fuel-detail-empty">Chọn một bản ghi bên trái để xem chi tiết.</div>
       </div>
     );
   }
@@ -45,9 +45,9 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
     const c = Number(cost);
     const odo = odometer ? Number(odometer) : null;
 
-    if (!vehicleId) return alert("Vui l�ng ch?n xe.");
-    if (!Number.isFinite(l) || l <= 0) return alert("S? l�t ph?i > 0.");
-    if (!Number.isFinite(c) || c <= 0) return alert("Chi ph� ph?i > 0.");
+    if (!vehicleId) return alert("Vui lòng chọn xe.");
+    if (!Number.isFinite(l) || l <= 0) return alert("Số lít phải > 0.");
+    if (!Number.isFinite(c) || c <= 0) return alert("Chi phí phải > 0.");
 
     onUpdate(record.id, {
       date,
@@ -74,7 +74,7 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
   }
 
   function remove() {
-    const ok = confirm("Xo� b?n ghi n�y?");
+    const ok = confirm("Xoá bản ghi này?");
     if (!ok) return;
     onDelete(record.id);
   }
@@ -83,39 +83,39 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
     <div className="fuel-detail">
       <div className="fuel-detail-head">
         <div>
-          <div className="fuel-detail-title">Chi ti?t</div>
+          <div className="fuel-detail-title">Chi tiết</div>
           <div className="fuel-muted">{vehicleText}</div>
         </div>
 
         <div className="fuel-actions">
           {!edit ? (
             <button className="fuel-btn" type="button" onClick={() => setEdit(true)}>
-              S?a
+              Sửa
             </button>
           ) : (
             <>
               <button className="fuel-btn primary" type="button" onClick={save}>
-                Luu
+                Lưu
               </button>
               <button className="fuel-btn" type="button" onClick={cancel}>
-                Hu?
+                Hủy
               </button>
             </>
           )}
           <button className="fuel-btn danger" type="button" onClick={remove}>
-            Xo�
+            Xoá
           </button>
         </div>
       </div>
 
       <div className="fuel-detail-grid">
         <div className="fuel-kv">
-          <div className="fuel-k">M�</div>
+          <div className="fuel-k">Mã</div>
           <div className="fuel-v mono">{record.id}</div>
         </div>
 
         <div className="fuel-kv">
-          <div className="fuel-k">Ng�y</div>
+          <div className="fuel-k">Ngày</div>
           <div className="fuel-v">
             {edit ? (
               <input className="fuel-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
@@ -143,7 +143,7 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
         </div>
 
         <div className="fuel-kv">
-          <div className="fuel-k">Lo?i</div>
+          <div className="fuel-k">Loại</div>
           <div className="fuel-v">
             {edit ? (
               <select className="fuel-select" value={type} onChange={(e) => setType(e.target.value)}>
@@ -160,7 +160,7 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
         </div>
 
         <div className="fuel-kv">
-          <div className="fuel-k">S? l�t</div>
+          <div className="fuel-k">Số lít</div>
           <div className="fuel-v">
             {edit ? (
               <input className="fuel-input" value={liters} onChange={(e) => setLiters(e.target.value)} />
@@ -171,7 +171,7 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
         </div>
 
         <div className="fuel-kv">
-          <div className="fuel-k">Chi ph�</div>
+          <div className="fuel-k">Chi phí</div>
           <div className="fuel-v">
             {edit ? (
               <input className="fuel-input" value={cost} onChange={(e) => setCost(e.target.value)} />
@@ -182,7 +182,7 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
         </div>
 
         <div className="fuel-kv">
-          <div className="fuel-k">�on gi�</div>
+          <div className="fuel-k">Đơn giá</div>
           <div className="fuel-v">
             {Number(unitPrice).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}/L
           </div>
@@ -194,7 +194,7 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
             {edit ? (
               <input className="fuel-input" value={odometer} onChange={(e) => setOdometer(e.target.value)} />
             ) : record.odometer == null ? (
-              <span className="fuel-muted">�</span>
+              <span className="fuel-muted">—</span>
             ) : (
               Number(record.odometer).toLocaleString("vi-VN")
             )}
@@ -202,14 +202,14 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
         </div>
 
         <div className="fuel-kv full">
-          <div className="fuel-k">Ghi ch�</div>
+          <div className="fuel-k">Ghi chú</div>
           <div className="fuel-v">
             {edit ? (
               <input className="fuel-input" value={note} onChange={(e) => setNote(e.target.value)} />
             ) : record.note ? (
               record.note
             ) : (
-              <span className="fuel-muted">�</span>
+              <span className="fuel-muted">—</span>
             )}
           </div>
         </div>
@@ -217,3 +217,6 @@ export default function FuelDetail({ record, vehicles, types, onUpdate, onDelete
     </div>
   );
 }
+
+
+
