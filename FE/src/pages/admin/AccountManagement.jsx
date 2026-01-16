@@ -12,6 +12,7 @@ import {
   Shield,
 } from "lucide-react";
 import "./AccountManagement.css";
+import userAPI from "../../services/userAPI";
 
 export default function AccountManagement() {
   const [users, setUsers] = useState([]);
@@ -35,7 +36,23 @@ export default function AccountManagement() {
     loadUsers();
   }, []);
 
-  const loadUsers = () => {
+  const loadUsers = async () => {
+    // Try API first (admin must be authenticated)
+    try {
+      const resp = await userAPI.getAllUsers({ pageNumber: 1, pageSize: 1000 });
+      const list = resp.objects || resp.items || resp || [];
+      const normalized = Array.isArray(list) ? list : [];
+      setUsers(normalized);
+      // cache a copy locally for offline/dev convenience
+      try {
+        localStorage.setItem("fms_users", JSON.stringify(normalized));
+      } catch {}
+      return;
+    } catch (err) {
+      console.warn("User API failed, falling back to localStorage:", err);
+    }
+
+    // Fallback to localStorage if API call fails
     const data = localStorage.getItem("fms_users");
     if (data) {
       try {
@@ -43,6 +60,8 @@ export default function AccountManagement() {
       } catch {
         setUsers([]);
       }
+    } else {
+      setUsers([]);
     }
   };
 
@@ -185,7 +204,7 @@ export default function AccountManagement() {
     switch (role) {
       case "admin":
         return "Quản trị viên";
-      case "user":
+      case "staff":
         return "Nhân viên";
       case "driver":
         return "Tài xế";
@@ -292,8 +311,8 @@ export default function AccountManagement() {
             </thead>
 
             <tbody>
-              {filteredUsers.map((user) => (
-                <tr key={user.id}>
+              {filteredUsers.map((user, idx) => (
+                <tr key={user.id ?? user.userID ?? `user-${idx}`}>
                   <td>
                     <div className="am-userCell">
                       <div className="am-avatar" aria-hidden="true">

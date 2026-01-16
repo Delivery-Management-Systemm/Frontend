@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import CustomSelect from "../components/CustomSelect";
 import DriverDetailModal from "../components/DriverDetailModal";
 import DriverEditModal from "../components/DriverEditModal";
+import ConfirmModal from "../components/ConfirmModal";
 import { getDrivers, deleteDriver } from "../services/driverAPI";
 import driverAPI from "../services/driverAPI";
 
@@ -17,6 +18,11 @@ export default function Drivers() {
   const [error, setError] = useState(null);
   const [selectedDriverId, setSelectedDriverId] = useState(null);
   const [editingDriverId, setEditingDriverId] = useState(null);
+  const [deletingDriverId, setDeletingDriverId] = useState(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTarget, setConfirmTarget] = useState(null);
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [confirmTitle, setConfirmTitle] = useState("Xác nhận");
 
   // Options state
   const [statusOptions, setStatusOptions] = useState([]);
@@ -67,13 +73,24 @@ export default function Drivers() {
       });
 
       const driversList = data.objects || data.items || data || [];
-      setDrivers(Array.isArray(driversList) ? driversList : []);
+      // normalize to array
+      let normalized = Array.isArray(driversList) ? driversList : [];
+
+      // If "All statuses" (no driverStatus filter) is selected, sort by ID ascending
+      if (!filters.driverStatus) {
+        normalized = normalized.slice().sort((a, b) => {
+          const aId = Number(a.driverID ?? a.id ?? 0) || 0;
+          const bId = Number(b.driverID ?? b.id ?? 0) || 0;
+          return aId - bId;
+        });
+      }
+
+      setDrivers(normalized);
+      const totalCount = data.total ?? normalized.length ?? 0;
       setPagination((prev) => ({
         ...prev,
-        totalItems: data.total || driversList.length || 0,
-        totalPages: Math.ceil(
-          (data.total || driversList.length || 0) / prev.pageSize
-        ),
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / prev.pageSize),
       }));
 
       setError(null);
@@ -88,18 +105,26 @@ export default function Drivers() {
   };
 
   const handleDeleteDriver = async (driverId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa tài xế này?")) {
-      return;
-    }
-
     try {
+      setDeletingDriverId(driverId);
       await deleteDriver(driverId);
-      await loadDrivers();
+      // Optimistically remove from current list without full reload
+      setDrivers((prev) => prev.filter((d) => d.driverID !== driverId));
+      setPagination((prev) => ({ ...prev, totalItems: Math.max(0, prev.totalItems - 1) }));
       toast.success("Xóa tài xế thành công!");
     } catch (err) {
       console.error("Error deleting driver:", err);
       toast.error("Không thể xóa tài xế. Vui lòng thử lại.");
+    } finally {
+      setDeletingDriverId(null);
     }
+  };
+
+  const promptDeleteDriver = (driverId) => {
+    setConfirmTarget(driverId);
+    setConfirmTitle("Xóa tài xế");
+    setConfirmMessage("Bạn có chắc chắn muốn xóa tài xế này?");
+    setConfirmOpen(true);
   };
 
   const handlePageChange = (newPage) => {
@@ -342,9 +367,10 @@ export default function Drivers() {
                           <button
                             className="drivers-icon-btn drivers-icon-delete"
                             title="Xóa"
-                            onClick={() => handleDeleteDriver(driver.driverID)}
+                            onClick={() => promptDeleteDriver(driver.driverID)}
+                            disabled={deletingDriverId === driver.driverID}
                           >
-                            <FaTrash />
+                            {deletingDriverId === driver.driverID ? "..." : <FaTrash />}
                           </button>
                         </div>
                       </td>
@@ -387,6 +413,23 @@ export default function Drivers() {
           }}
         />
       )}
+
+      <ConfirmModal
+        open={confirmOpen}
+        title={confirmTitle}
+        message={confirmMessage}
+        onConfirm={() => {
+          if (confirmTarget) {
+            handleDeleteDriver(confirmTarget);
+          }
+          setConfirmOpen(false);
+          setConfirmTarget(null);
+        }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setConfirmTarget(null);
+        }}
+      />
 
       <ToastContainer
         position="top-right"

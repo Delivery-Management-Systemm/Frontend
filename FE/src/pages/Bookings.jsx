@@ -1,58 +1,66 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { FaCalendarAlt, FaSearch, FaPlus, FaEye, FaMapMarkerAlt, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import { MapContainer, Marker, Polyline, TileLayer } from "react-leaflet";
 import "./Bookings.css";
 import AddBookingModal from "../components/AddBookingModal";
+import { getBookedTrips } from "../services/tripAPI";
 
-const mockBookings = [
-  {
-    id: "c1",
-    customer: "Công ty TNHH ABC",
-    contact: "0241234567",
-    email: "abc@company.com",
-    route: "Khu CN Thăng Long, Hà Nội → Khu CN VSIP, Hải Phòng",
-    date: "20/12/2024",
-    time: "08:00",
-    vehicleType: "Xe tải lớn",
-    vehicleNote: "Máy móc công nghiệp - 5 tấn",
-    assigned: null,
-    status: "pending",
-  },
-  {
-    id: "c2",
-    customer: "Nguyễn Văn Tuấn",
-    contact: "0987654321",
-    email: "tuan@email.com",
-    route: "Sân bay Nội Bài → Khách sạn Hilton, Hà Nội",
-    date: "16/12/2024",
-    time: "14:30",
-    vehicleType: "Xe khách",
-    vehicleNote: "35 người",
-    assigned: "29D-22222",
-    assignedDriver: "Lê Thị Mai",
-    status: "confirmed",
-  },
-  {
-    id: "c3",
-    customer: "Công ty XYZ",
-    contact: "0909876543",
-    email: "xyz@company.com",
-    route: "Cảng Cát Lái, TP.HCM → Kho hàng, Bình Dương",
-    date: "18/12/2024",
-    time: "06:00",
-    vehicleType: "Xe container",
-    vehicleNote: "Container 40 feet - Hàng điện tử",
-    assigned: "51C-11111",
-    assignedDriver: "Trần Văn Kiên",
-    status: "assigned",
-  },
-];
+function formatDate(iso) {
+  try {
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
+  } catch {
+    return iso || "";
+  }
+}
 
 export default function Bookings() {
   const [search, setSearch] = useState("");
-  const [bookings, setBookings] = useState(mockBookings);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState(null);
+
+  useEffect(() => {
+    loadBooked();
+  }, []);
+
+  const loadBooked = async () => {
+    setLoading(true);
+    try {
+      const data = await getBookedTrips({ pageNumber: 1, pageSize: 1000 });
+      const normalized = (data || []).map((b) => {
+        const statusRaw = (b.Status || b.status || "").toString().toLowerCase();
+        let status = "done";
+        if (statusRaw.includes("plan") || statusRaw.includes("wait")) status = "pending";
+        else if (statusRaw.includes("confirm")) status = "confirmed";
+        else if (statusRaw.includes("assign")) status = "assigned";
+        return {
+          id: b.TripID || b.tripID || b.Id,
+          customer: b.CustomerName || b.customerName || b.Customer || "",
+          contact: b.CustomerPhone || b.customerPhone || b.Contact || "",
+          email: b.CustomerEmail || b.customerEmail || "",
+          route:
+            (b.PickupLocation || b.pickupLocation || "") +
+            (b.dropoffLocation ? " → " + b.dropoffLocation : ""),
+          date: b.scheduledDate ? formatDate(b.ScheduledDate) : b.Date || "",
+          time: b.scheduledTime || b.Time || "",
+          vehicleType: b.RequestedVehicleType || b.requestedVehicleType || "",
+          vehicleNote: b.RequestedCargo || b.requestedCargo || "",
+          assigned: b.AssignedVehiclePlate || b.assignedVehiclePlate || null,
+          assignedDriver: b.AssignedDriverName || b.assignedDriverName || null,
+          status,
+          routeMeta: b.RouteGeometryJson || b.routeMeta || null,
+        };
+      });
+      setBookings(normalized);
+    } catch (err) {
+      console.error("Error loading booked trips:", err);
+      setBookings([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filtered = bookings.filter((b) =>
     [b.customer, b.contact, b.email, b.route, b.vehicleType]
@@ -62,10 +70,10 @@ export default function Bookings() {
   );
 
   const stats = {
-    pending: mockBookings.filter((b) => b.status === "pending").length,
-    confirmed: mockBookings.filter((b) => b.status === "confirmed").length,
-    assigned: mockBookings.filter((b) => b.status === "assigned").length,
-    done: mockBookings.filter((b) => b.status === "done").length,
+    pending: bookings.filter((b) => b.status === "pending").length,
+    confirmed: bookings.filter((b) => b.status === "confirmed").length,
+    assigned: bookings.filter((b) => b.status === "assigned").length,
+    done: bookings.filter((b) => b.status === "done").length,
   };
 
   const routeLine = useMemo(() => {
@@ -142,8 +150,8 @@ export default function Bookings() {
             </thead>
 
             <tbody>
-              {filtered.map((b) => (
-                <tr key={b.id}>
+              {filtered.map((b, idx) => (
+                <tr key={b.id ?? b.TripID ?? `booking-${idx}`}>
                   <td className="td-customer">
                     <div className="cust-name">{b.customer}</div>
                     <div className="cust-id">ID: {b.id}</div>
