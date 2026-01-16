@@ -18,6 +18,12 @@ const Account = ({ currentUser, onUpdateUser }) => {
     next: "",
     confirm: "",
   });
+  const [otpState, setOtpState] = useState({
+    pendingEmail: "",
+    code: "",
+    isOpen: false,
+    error: "",
+  });
 
   const updateProfile = (field, value) =>
     setProfile((prev) => ({ ...prev, [field]: value }));
@@ -46,7 +52,49 @@ const Account = ({ currentUser, onUpdateUser }) => {
       return;
     }
 
+    if (currentUser?.email && profile.email !== currentUser.email) {
+      setOtpState({
+        pendingEmail: profile.email,
+        code: "",
+        isOpen: true,
+        error: "",
+      });
+      return;
+    }
+
     onUpdateUser({ ...profile });
+  };
+
+  const handleVerifyOtp = () => {
+    const expectedOtp = "123456";
+    if (otpState.code.trim() !== expectedOtp) {
+      setOtpState((prev) => ({ ...prev, error: "Ma OTP khong dung." }));
+      return;
+    }
+
+    if (onUpdateUser) {
+      onUpdateUser({ ...profile, email: otpState.pendingEmail });
+    }
+
+    setOtpState({
+      pendingEmail: "",
+      code: "",
+      isOpen: false,
+      error: "",
+    });
+  };
+
+  const handleCancelOtp = () => {
+    setProfile((prev) => ({
+      ...prev,
+      email: currentUser?.email || "",
+    }));
+    setOtpState({
+      pendingEmail: "",
+      code: "",
+      isOpen: false,
+      error: "",
+    });
   };
   return (
     <div className="account-container">
@@ -236,6 +284,52 @@ const Account = ({ currentUser, onUpdateUser }) => {
           </button>
         </div>
       </div>
+
+      {otpState.isOpen && (
+        <div className="account-otp-overlay">
+          <div className="account-otp-card">
+            <h3>Xac nhan OTP</h3>
+            <p className="account-otp-subtitle">
+              Ma OTP da duoc gui toi email moi. Nhap OTP de luu thay doi.
+            </p>
+            <div className="input-wrapper">
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="Nhap ma OTP"
+                value={otpState.code}
+                onChange={(e) =>
+                  setOtpState((prev) => ({
+                    ...prev,
+                    code: e.target.value,
+                    error: "",
+                  }))
+                }
+              />
+            </div>
+            {otpState.error && (
+              <p className="account-otp-error">{otpState.error}</p>
+            )}
+            <div className="account-otp-actions">
+              <button
+                className="account-otp-cancel"
+                type="button"
+                onClick={handleCancelOtp}
+              >
+                Huy
+              </button>
+              <button
+                className="account-otp-confirm"
+                type="button"
+                onClick={handleVerifyOtp}
+              >
+                Xac nhan
+              </button>
+            </div>
+            <p className="account-otp-hint">OTP demo: 123456</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
