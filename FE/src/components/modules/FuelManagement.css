@@ -1,0 +1,388 @@
+﻿/* src/components/modules/FuelManagement.css */
+
+.fuel-page {
+  --fuel-bg: #f4f6fb;
+  --fuel-card: #ffffff;
+  --fuel-border: #e4e9f2;
+  --fuel-text: #0f172a;
+  --fuel-muted: #64748b;
+  --fuel-primary: #1d4ed8;
+  --fuel-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  background: var(--fuel-bg);
+  color: var(--fuel-text);
+  padding: 20px;
+  min-height: 100%;
+}
+
+.fuel-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.fuel-hero-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fuel-hero-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #dbeafe;
+  color: #2563eb;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+}
+
+.fuel-hero-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.fuel-hero-subtitle {
+  margin: 4px 0 0;
+  color: var(--fuel-muted);
+}
+
+.fuel-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: var(--fuel-primary);
+  color: white;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(29, 78, 216, 0.3);
+}
+
+.fuel-secondary-btn {
+  border: 1px solid var(--fuel-border);
+  background: white;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fuel-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.fuel-stat-card {
+  background: var(--fuel-card);
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid var(--fuel-border);
+  box-shadow: var(--fuel-shadow);
+  display: grid;
+  gap: 6px;
+}
+
+.fuel-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.fuel-stat-icon.green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.fuel-stat-icon.blue {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.fuel-stat-icon.purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.fuel-stat-icon.orange {
+  background: #ffedd5;
+  color: #ea580c;
+}
+
+.fuel-stat-label {
+  color: var(--fuel-muted);
+  font-size: 14px;
+}
+
+.fuel-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.fuel-panel {
+  background: var(--fuel-card);
+  border-radius: 18px;
+  border: 1px solid var(--fuel-border);
+  padding: 18px;
+  box-shadow: var(--fuel-shadow);
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.fuel-panel-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fuel-field {
+  display: grid;
+  gap: 8px;
+}
+
+.fuel-field-label {
+  font-size: 14px;
+  color: var(--fuel-text);
+  font-weight: 600;
+}
+
+.fuel-input {
+  width: 100%;
+  border: 1px solid #d5dbe7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  outline: none;
+  background: white;
+  font-size: 14px;
+}
+
+.fuel-input:focus {
+  border-color: #94a3b8;
+}
+
+.fuel-input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d5dbe7;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: white;
+}
+
+.fuel-input-with-icon svg {
+  color: #94a3b8;
+}
+
+.fuel-input-with-icon .fuel-input {
+  border: none;
+  padding: 0;
+  flex: 1;
+}
+
+.fuel-table {
+  background: var(--fuel-card);
+  border-radius: 18px;
+  border: 1px solid var(--fuel-border);
+  box-shadow: var(--fuel-shadow);
+  overflow: hidden;
+}
+
+.fuel-table-head,
+.fuel-table-row {
+  display: grid;
+  grid-template-columns: 120px 140px 150px 90px 120px 140px 1.2fr 1.4fr 110px;
+  gap: 12px;
+  padding: 14px 18px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.fuel-table-head {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.fuel-table-row {
+  border-top: 1px solid var(--fuel-border);
+  font-size: 14px;
+}
+
+.fuel-note-cell {
+  color: var(--fuel-muted);
+}
+
+.fuel-link-btn {
+  border: none;
+  background: none;
+  color: #dc2626;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fuel-empty {
+  padding: 50px 20px;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  color: var(--fuel-muted);
+}
+
+.fuel-empty-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: #e2e8f0;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  font-size: 22px;
+}
+
+.fuel-empty-text {
+  font-size: 15px;
+}
+
+.fuel-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1200;
+}
+
+.fuel-modal {
+  width: min(720px, 92vw);
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.25);
+  overflow: hidden;
+}
+
+.fuel-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--fuel-border);
+}
+
+.fuel-modal-header h3 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.fuel-icon-btn {
+  border: none;
+  background: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #64748b;
+}
+
+.fuel-modal-body {
+  padding: 18px 22px 22px;
+  display: grid;
+  gap: 16px;
+}
+
+.fuel-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.fuel-modal-field {
+  display: grid;
+  gap: 8px;
+}
+
+.fuel-modal-field label {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.fuel-required {
+  color: #dc2626;
+}
+
+.fuel-total {
+  font-weight: 700;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.fuel-total-hint {
+  font-size: 12px;
+  color: var(--fuel-muted);
+}
+
+.fuel-form-error {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 600;
+}
+
+.fuel-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+@media (max-width: 1100px) {
+  .fuel-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fuel-panel-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fuel-table-head,
+  .fuel-table-row {
+    grid-template-columns: 120px 120px 140px 90px 120px 140px 1fr 1fr 90px;
+  }
+}
+
+@media (max-width: 900px) {
+  .fuel-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fuel-panel-row {
+    grid-template-columns: 1fr;
+  }
+
+  .fuel-table-head {
+    display: none;
+  }
+
+  .fuel-table-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .fuel-table-row > div {
+    display: flex;
+    justify-content: space-between;
+  }
+}
