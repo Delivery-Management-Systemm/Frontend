@@ -140,7 +140,7 @@
   background: #ef4444;
 }
 
-.role-badge.role-user {
+.role-badge.role-staff {
   background: #2563eb;
 }
 
@@ -204,4 +204,5 @@
   padding: 32px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
 }
+
 

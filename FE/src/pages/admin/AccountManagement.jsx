@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   UserCircle,
   Plus,
@@ -26,7 +26,7 @@ export default function AccountManagement() {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
-    role: "user",
+    role: "staff",
     fullName: "",
     email: "",
     phone: "",
@@ -102,7 +102,7 @@ export default function AccountManagement() {
     setFormData({
       username: "",
       password: "",
-      role: "user",
+      role: "staff",
       fullName: "",
       email: "",
       phone: "",
@@ -116,7 +116,7 @@ export default function AccountManagement() {
     setFormData({
       username: user.username || "",
       password: "",
-      role: user.role || "user",
+      role: user.role || "staff",
       fullName: user.fullName || "",
       email: user.email || "",
       phone: user.phone || "",
@@ -168,7 +168,7 @@ export default function AccountManagement() {
     setFormData({
       username: "",
       password: "",
-      role: "user",
+      role: "staff",
       fullName: "",
       email: "",
       phone: "",
@@ -217,8 +217,8 @@ export default function AccountManagement() {
     switch (role) {
       case "admin":
         return "am-badge am-badge--admin";
-      case "user":
-        return "am-badge am-badge--user";
+      case "staff":
+        return "am-badge am-badge--staff";
       case "driver":
         return "am-badge am-badge--driver";
       default:
@@ -227,7 +227,7 @@ export default function AccountManagement() {
   };
 
   const adminCount = users.filter((u) => u.role === "admin").length;
-  const userCount = users.filter((u) => u.role === "user").length;
+  const staffCount = users.filter((u) => u.role === "staff").length;
   const driverCount = users.filter((u) => u.role === "driver").length;
 
   return (
@@ -256,7 +256,7 @@ export default function AccountManagement() {
         </div>
         <div className="am-card am-stat">
           <div className="am-stat__label">Nhân viên</div>
-          <div className="am-stat__value am-stat__value--user">{userCount}</div>
+          <div className="am-stat__value am-stat__value--staff">{staffCount}</div>
         </div>
         <div className="am-card am-stat">
           <div className="am-stat__label">Tài xế</div>
@@ -291,7 +291,7 @@ export default function AccountManagement() {
           >
             <option value="all">Tất cả vai trò</option>
             <option value="admin">Quản trị viên</option>
-            <option value="user">Nhân viên</option>
+            <option value="staff">Nhân viên</option>
             <option value="driver">Tài xế</option>
           </select>
         </div>
@@ -494,7 +494,7 @@ export default function AccountManagement() {
                     setFormData({ ...formData, role: e.target.value })
                   }
                 >
-                  <option value="user">Nhân viên</option>
+                  <option value="staff">Nhân viên</option>
                   <option value="driver">Tài xế</option>
                   <option value="admin">Quản trị viên</option>
                 </select>
@@ -515,3 +515,5 @@ export default function AccountManagement() {
     </div>
   );
 }
+
+

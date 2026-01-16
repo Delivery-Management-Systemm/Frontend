@@ -144,6 +144,20 @@ input:focus {
   cursor: pointer;
   font-size: 14px;
 }
+.save-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.account-save-error {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #dc2626;
+}
+.account-save-success {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #16a34a;
+}
 .full-width {
   grid-column: span 2;
 }

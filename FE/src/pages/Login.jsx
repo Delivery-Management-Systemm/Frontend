@@ -1,31 +1,24 @@
-import React, { useMemo, useState } from "react";
+﻿import React, { useState } from "react";
 import "./Login.css";
-import { loginWithMock, mockUsers } from "../services/authService";
+import userAPI from "../services/userAPI";
 
 const Login = ({ onLogin }) => {
-  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const demoUsers = useMemo(
-    () =>
-      mockUsers.map((user) => ({
-        label: user.role[0].toUpperCase() + user.role.slice(1),
-        username: user.username,
-        password: user.password,
-      })),
-    []
-  );
-
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
-    const result = loginWithMock({ username, password });
-    if (result.ok) {
+    try {
+      const result = await userAPI.login(phone, password);
+      if (result?.token) {
+        localStorage.setItem("token", result.token);
+      }
       onLogin?.(result.user);
-      return;
+    } catch (err) {
+      setError("Đăng nhập thất bại. Vui lòng kiểm tra thông tin.");
     }
-    setError(result.message);
   };
 
   return (
@@ -76,8 +69,8 @@ const Login = ({ onLogin }) => {
           </div>
 
           <form className="login-form" onSubmit={handleSubmit}>
-            <label className="login-label" htmlFor="username">
-              Tên đăng nhập
+            <label className="login-label" htmlFor="phone">
+              Số điện thoại
             </label>
             <div className="login-input-wrapper">
               <span className="login-input-icon" aria-hidden="true">
@@ -102,12 +95,12 @@ const Login = ({ onLogin }) => {
                 </svg>
               </span>
               <input
-                id="username"
+                id="phone"
                 type="text"
                 className="login-input"
-                placeholder="Nhập tên đăng nhập"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Nhập số điện thoại"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
               />
             </div>
 
@@ -164,21 +157,7 @@ const Login = ({ onLogin }) => {
             </button>
           </form>
 
-          <div className="login-divider" />
 
-          <div className="login-demo">
-            <p className="login-demo-title">Tài khoản demo:</p>
-            <div className="login-demo-list">
-              {demoUsers.map((user) => (
-                <div className="login-demo-item" key={user.username}>
-                  <span className="login-demo-role">{user.label}:</span>
-                  <span>
-                    {user.username} / {user.password}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -186,4 +165,6 @@ const Login = ({ onLogin }) => {
 };
 
 export default Login;
+
+
 

@@ -17,6 +17,7 @@ import AdminVehicles from "./pages/admin/Vehicles.jsx";
 import AdminDrivers from "./pages/admin/Drivers.jsx";
 import AdminTrips from "./pages/admin/Trips.jsx";
 import AdminAccountManagement from "./pages/admin/AccountManagement.jsx";
+import userAPI from "./services/userAPI";
 import "./App.css";
 
 function App() {
@@ -40,6 +41,31 @@ function App() {
       // ignore storage errors (private mode, quota, etc.)
     }
   }, [currentUser]);
+
+  const resolveUserId = (user) =>
+    user?.userID ?? user?.UserID ?? user?.id ?? user?.userId ?? null;
+
+  const buildProfilePayload = (updates) => ({
+    fullName: updates.fullName,
+    email: updates.email,
+    phone: updates.phone,
+    role: updates.role,
+    department: updates.department,
+    avatar: updates.avatar,
+  });
+
+  const handleUpdateUser = async (updates) => {
+    const userId = resolveUserId(currentUser);
+    if (!userId) {
+      throw new Error("Missing user id.");
+    }
+
+    const payload = buildProfilePayload(updates);
+    await userAPI.updateUser(userId, payload);
+    const refreshedUser = await userAPI.getUserById(userId);
+    setCurrentUser((prev) => ({ ...prev, ...refreshedUser }));
+    return refreshedUser;
+  };
 
   if (!currentUser) {
     return <LoginPage onLogin={(user) => setCurrentUser(user)} />;
@@ -65,10 +91,11 @@ function App() {
           element={
             <DashboardPage
               currentUser={currentUser}
-              onLogout={() => setCurrentUser(null)}
-              onUpdateUser={(updates) =>
-                setCurrentUser((prev) => ({ ...prev, ...updates }))
-              }
+              onLogout={() => {
+                localStorage.removeItem("token");
+                setCurrentUser(null);
+              }}
+              onUpdateUser={handleUpdateUser}
             />
           }
         >
@@ -98,9 +125,7 @@ function App() {
             element={
               <Account
                 currentUser={currentUser}
-                onUpdateUser={(updates) =>
-                  setCurrentUser((prev) => ({ ...prev, ...updates }))
-                }
+                onUpdateUser={handleUpdateUser}
               />
             }
           />

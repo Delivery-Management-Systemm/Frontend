@@ -114,7 +114,7 @@
 .am-stat__value--admin {
   color: #dc2626;
 }
-.am-stat__value--user {
+.am-stat__value--staff {
   color: #2563eb;
 }
 .am-stat__value--driver {
@@ -289,7 +289,7 @@
   background: #fee2e2;
   color: #991b1b;
 }
-.am-badge--user {
+.am-badge--staff {
   background: #dbeafe;
   color: #1e40af;
 }
@@ -455,3 +455,4 @@
   width: 18px;
   height: 18px;
 }
+

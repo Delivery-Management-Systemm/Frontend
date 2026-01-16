@@ -28,13 +28,13 @@ import FuelManagement from "./FuelManagement";
 
 const ROLE_LABELS = {
   admin: "Quản trị",
-  user: "Quản lý",
+  staff: "Quản lý",
   driver: "Tài xế",
 };
 
 const ROLE_BADGE_CLASSES = {
   admin: "role-admin",
-  user: "role-user",
+  staff: "role-staff",
   driver: "role-driver",
 };
 
@@ -43,43 +43,43 @@ const MENU_ITEMS = [
     key: "home",
     label: "Tổng quan",
     icon: <FaThLarge />,
-    roles: ["admin", "user", "driver"],
+    roles: ["admin", "staff", "driver"],
   },
   {
     key: "vehicles",
     label: "Quản lý phương tiện",
     icon: <FaTruckMoving />,
-    roles: ["admin", "user"],
+    roles: ["admin", "staff"],
   },
   {
     key: "drivers",
     label: "Quản lý tài xế",
     icon: <FaUserAlt />,
-    roles: ["admin", "user"],
+    roles: ["admin", "staff"],
   },
   {
     key: "trips",
     label: "Quản lý chuyến đi",
     icon: <FaRoute />,
-    roles: ["admin", "user", "driver"],
+    roles: ["admin", "staff", "driver"],
   },
   {
     key: "bookings",
     label: "Lịch đặt trước",
     icon: <FaCalendarAlt />,
-    roles: ["admin", "user"],
+    roles: ["admin", "staff"],
   },
   {
     key: "emergency",
     label: "Báo cáo khẩn cấp",
     icon: <FaExclamationTriangle />,
-    roles: ["admin", "user", "driver"],
+    roles: ["admin", "staff", "driver"],
   },
   {
     key: "maintenance",
     label: "Bảo trì & Sửa chữa",
     icon: <FaTools />,
-    roles: ["admin", "user"],
+    roles: ["admin", "staff"],
   },
   {
     key: "fuel-management",
@@ -91,13 +91,13 @@ const MENU_ITEMS = [
     key: "assignments",
     label: "Phân công tài xế",
     icon: <FaUserFriends />,
-    roles: ["admin", "user"],
+    roles: ["admin", "staff"],
   },
   {
     key: "account",
-    label: "Thong tin ca nhan",
+    label: "Thông tin cá nhân",
     icon: <FaUserCircle />,
-    roles: ["admin", "user", "driver"],
+    roles: ["admin", "staff", "driver"],
   },
   {
     key: "account-management",
@@ -184,7 +184,7 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
               </span>
               <span
                 className={`role-badge ${
-                  ROLE_BADGE_CLASSES[role] || "role-user"
+                  ROLE_BADGE_CLASSES[role] || "role-staff"
                 }`}
               >
                 {ROLE_LABELS[role] || "Người dùng"}
@@ -211,6 +211,9 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
     </div>
   );
 }
+
+
+
 
 
 

@@ -59,6 +59,30 @@ class UserAPI {
     }
   }
 
+  // Login
+  async login(phone, password) {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/login`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ phone, password }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error logging in:", error);
+      throw error;
+    }
+  }
+
   // Update user profile
   async updateUser(userId, userData) {
     try {
@@ -79,6 +103,78 @@ class UserAPI {
       return data;
     } catch (error) {
       console.error("Error updating user:", error);
+      throw error;
+    }
+  }
+
+  // Send OTP to email
+  async sendOtp(email, purpose = "register") {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/send-otp`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ email, purpose }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      throw error;
+    }
+  }
+
+  // Verify OTP
+  async verifyOtp(email, otp, purpose = "register") {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/verify-otp`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ email, otp, purpose }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error verifying OTP:", error);
+      throw error;
+    }
+  }
+
+  // Change password after OTP verification
+  async changePassword(email, newPassword) {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/change-password`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ email, newPassword }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error changing password:", error);
       throw error;
     }
   }
