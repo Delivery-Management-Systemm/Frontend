@@ -1,7 +1,7 @@
-// src/components/modules/FuelForm.jsx
+// src/components/FuelRecordForm.jsx
 import React, { useMemo, useState } from "react";
 
-export default function FuelForm({ vehicles, types, onCreate }) {
+export default function FuelRecordForm({ vehicles, types, onCreate }) {
   const defaultVehicleId = useMemo(() => vehicles?.[0]?.id ?? "", [vehicles]);
 
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -17,12 +17,12 @@ export default function FuelForm({ vehicles, types, onCreate }) {
     e.preventDefault();
     setError("");
 
-    if (!vehicleId) return setError("Vui l�ng ch?n xe.");
+    if (!vehicleId) return setError("Vui lòng chọn xe.");
     const l = Number(liters);
     const c = Number(cost);
 
-    if (!Number.isFinite(l) || l <= 0) return setError("S? l�t ph?i > 0.");
-    if (!Number.isFinite(c) || c <= 0) return setError("Chi ph� ph?i > 0.");
+    if (!Number.isFinite(l) || l <= 0) return setError("Số lít phải > 0.");
+    if (!Number.isFinite(c) || c <= 0) return setError("Chi phí phải > 0.");
 
     onCreate({
       date,
@@ -43,11 +43,11 @@ export default function FuelForm({ vehicles, types, onCreate }) {
 
   return (
     <div className="fuel-form">
-      <div className="fuel-form-title">T?o b?n ghi m?i</div>
+      <div className="fuel-form-title">Tạo bản ghi mới</div>
 
       <form onSubmit={submit} className="fuel-form-grid">
         <label className="fuel-field">
-          <span>Ng�y</span>
+          <span>Ngày</span>
           <input className="fuel-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </label>
 
@@ -55,7 +55,7 @@ export default function FuelForm({ vehicles, types, onCreate }) {
           <span>Xe</span>
           <select className="fuel-select" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
             <option value="" disabled>
-              Ch?n xe...
+              Chọn xe...
             </option>
             {vehicles.map((v) => (
               <option key={v.id} value={v.id}>
@@ -66,7 +66,7 @@ export default function FuelForm({ vehicles, types, onCreate }) {
         </label>
 
         <label className="fuel-field">
-          <span>Lo?i</span>
+          <span>Loại</span>
           <select className="fuel-select" value={type} onChange={(e) => setType(e.target.value)}>
             {types.map((t) => (
               <option key={t} value={t}>
@@ -77,7 +77,7 @@ export default function FuelForm({ vehicles, types, onCreate }) {
         </label>
 
         <label className="fuel-field">
-          <span>S? l�t</span>
+          <span>Số lít</span>
           <input
             className="fuel-input"
             inputMode="decimal"
@@ -88,7 +88,7 @@ export default function FuelForm({ vehicles, types, onCreate }) {
         </label>
 
         <label className="fuel-field">
-          <span>Chi ph� (VND)</span>
+          <span>Chi phí (VND)</span>
           <input
             className="fuel-input"
             inputMode="numeric"
@@ -99,7 +99,7 @@ export default function FuelForm({ vehicles, types, onCreate }) {
         </label>
 
         <label className="fuel-field">
-          <span>ODO (tu? ch?n)</span>
+          <span>ODO (tùy chọn)</span>
           <input
             className="fuel-input"
             inputMode="numeric"
@@ -110,10 +110,10 @@ export default function FuelForm({ vehicles, types, onCreate }) {
         </label>
 
         <label className="fuel-field fuel-field-full">
-          <span>Ghi ch� (tu? ch?n)</span>
+          <span>Ghi chú (tùy chọn)</span>
           <input
             className="fuel-input"
-            placeholder="VD: �? ? c�y xang X..."
+            placeholder="VD: Ghi chú..."
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -123,10 +123,13 @@ export default function FuelForm({ vehicles, types, onCreate }) {
 
         <div className="fuel-actions fuel-field-full">
           <button className="fuel-btn primary" type="submit">
-            T?o b?n ghi
+            Tạo bản ghi
           </button>
         </div>
       </form>
     </div>
   );
 }
+
+
+
