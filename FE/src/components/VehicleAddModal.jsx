@@ -33,7 +33,7 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
         status: vehicle.status || "Sẵn sàng",
         lastMaintenance: vehicle.lastMaintenance || "",
         nextMaintenance: vehicle.nextMaintenance || "",
-  });
+      });
     }
   }, [vehicle]);
 
@@ -55,8 +55,6 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
       "km",
       "fuelType",
       "status",
-      "lastMaintenance",
-      "nextMaintenance",
     ];
 
     const missing = requiredFields.filter((key) => {
@@ -67,7 +65,7 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
     });
 
     if (missing.length > 0) {
-      setError("Vui lòng điền đầy đủ tất cả các trường trước khi thêm phương tiện.");
+      setError("Vui lòng điền đầy đủ tất cả các trường bắt buộc.");
       return;
     }
 
@@ -89,11 +87,11 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
   return (
     <div className="vehicle-modal-overlay">
       <div className="vehicle-modal-container">
-
-        <h2 className="vehicle-modal-title">{vehicle ? "Cập nhật phương tiện" : "Thêm phương tiện mới"}</h2>
+        <h2 className="vehicle-modal-title">
+          {vehicle ? "Cập nhật phương tiện" : "Thêm phương tiện mới"}
+        </h2>
 
         <div className="vehicle-modal-grid">
-
           <div className="vehicle-modal-field">
             <label>Biển số xe</label>
             <input
@@ -194,7 +192,7 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
           </div>
 
           <div className="vehicle-modal-field">
-            <label>Bảo trì lần cuối</label>
+            <label>Bảo trì lần cuối (tùy chọn)</label>
             <input
               type="date"
               value={form.lastMaintenance}
@@ -203,31 +201,30 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
           </div>
 
           <div className="vehicle-modal-field vehicle-modal-field--full">
-            <label>Bảo trì tiếp theo</label>
+            <label>Bảo trì tiếp theo (tùy chọn)</label>
             <input
               type="text"
               value={form.nextMaintenance}
               onChange={(e) => update("nextMaintenance", e.target.value)}
               placeholder="mm/dd/yyyy"
             />
+          </div>
         </div>
-
-        </div>
-        {error ? <div className="vehicle-modal-error" role="alert">{error}</div> : null}
+        {error ? (
+          <div className="vehicle-modal-error" role="alert">
+            {error}
+          </div>
+        ) : null}
 
         <div className="vehicle-modal-actions">
           <button className="vehicle-modal-cancel" onClick={onClose}>
             Hủy
           </button>
 
-          <button
-            className="vehicle-modal-submit"
-            onClick={handleSubmit}
-          >
+          <button className="vehicle-modal-submit" onClick={handleSubmit}>
             {vehicle ? "Cập nhật" : "Thêm phương tiện"}
           </button>
         </div>
-
       </div>
     </div>
   );

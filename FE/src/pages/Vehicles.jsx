@@ -7,8 +7,13 @@ import Pagination from "../components/Pagination";
 import CustomSelect from "../components/CustomSelect";
 import VehicleDetailModal from "../components/VehicleDetailModal";
 import VehicleEditModal from "../components/VehicleEditModal";
+import VehicleAddModal from "../components/VehicleAddModal";
 import ConfirmModal from "../components/ConfirmModal";
-import { getVehicles, deleteVehicle } from "../services/vehicleAPI";
+import {
+  getVehicles,
+  deleteVehicle,
+  createVehicle,
+} from "../services/vehicleAPI";
 import vehicleAPI from "../services/vehicleAPI";
 
 export default function Vehicles() {
@@ -19,6 +24,7 @@ export default function Vehicles() {
   const [selectedVehicleId, setSelectedVehicleId] = useState(null);
   const [editingVehicleId, setEditingVehicleId] = useState(null);
   const [deletingVehicleId, setDeletingVehicleId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
   const [confirmMessage, setConfirmMessage] = useState("");
@@ -113,13 +119,41 @@ export default function Vehicles() {
     }
   };
 
+  const handleCreateVehicle = async (vehicleData) => {
+    try {
+      // Map form data to API format
+      const apiData = {
+        licensePlate: vehicleData.plate,
+        vehicleType: vehicleData.type,
+        vehicleBrand: vehicleData.brand,
+        vehicleModel: vehicleData.model,
+        manufacturedYear: Number(vehicleData.year),
+        capacity: vehicleData.capacity,
+        fuelType: vehicleData.fuelType,
+        vehicleStatus: vehicleData.status,
+        currentKm: Number(vehicleData.km),
+      };
+
+      await createVehicle(apiData);
+      await loadVehicles(); // Reload to get updated data
+      setShowAddModal(false);
+      toast.success("Thêm phương tiện thành công!");
+    } catch (err) {
+      console.error("Error creating vehicle:", err);
+      toast.error("Không thể thêm phương tiện. Vui lòng thử lại.");
+    }
+  };
+
   const handleDeleteVehicle = async (vehicleId) => {
     try {
       setDeletingVehicleId(vehicleId);
       await deleteVehicle(vehicleId);
       // optimistic remove
       setVehicles((prev) => prev.filter((v) => v.vehicleID !== vehicleId));
-      setPagination((prev) => ({ ...prev, totalItems: Math.max(0, prev.totalItems - 1) }));
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: Math.max(0, prev.totalItems - 1),
+      }));
       toast.success("Xóa phương tiện thành công!");
     } catch (err) {
       console.error("Error deleting vehicle:", err);
@@ -264,6 +298,13 @@ export default function Vehicles() {
           options={brandOptions}
           placeholder="Tất cả hãng"
         />
+
+        <button
+          className="vehicles-new-btn"
+          onClick={() => setShowAddModal(true)}
+        >
+          + Thêm phương tiện
+        </button>
       </div>
 
       <div className="vehicles-list">
@@ -395,7 +436,11 @@ export default function Vehicles() {
                             }
                             disabled={deletingVehicleId === vehicle.vehicleID}
                           >
-                            {deletingVehicleId === vehicle.vehicleID ? "..." : <FaTrash />}
+                            {deletingVehicleId === vehicle.vehicleID ? (
+                              "..."
+                            ) : (
+                              <FaTrash />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -436,6 +481,13 @@ export default function Vehicles() {
             await loadVehicles();
             toast.success("Cập nhật phương tiện thành công!");
           }}
+        />
+      )}
+
+      {showAddModal && (
+        <VehicleAddModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleCreateVehicle}
         />
       )}
 

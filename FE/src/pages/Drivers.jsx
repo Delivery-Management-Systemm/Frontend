@@ -7,8 +7,9 @@ import Pagination from "../components/Pagination";
 import CustomSelect from "../components/CustomSelect";
 import DriverDetailModal from "../components/DriverDetailModal";
 import DriverEditModal from "../components/DriverEditModal";
+import DriverAddModal from "../components/DriverAddModal";
 import ConfirmModal from "../components/ConfirmModal";
-import { getDrivers, deleteDriver } from "../services/driverAPI";
+import { getDrivers, deleteDriver, createDriver } from "../services/driverAPI";
 import driverAPI from "../services/driverAPI";
 
 export default function Drivers() {
@@ -19,6 +20,7 @@ export default function Drivers() {
   const [selectedDriverId, setSelectedDriverId] = useState(null);
   const [editingDriverId, setEditingDriverId] = useState(null);
   const [deletingDriverId, setDeletingDriverId] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTarget, setConfirmTarget] = useState(null);
   const [confirmMessage, setConfirmMessage] = useState("");
@@ -104,13 +106,71 @@ export default function Drivers() {
     }
   };
 
+  const handleCreateDriver = async (driverData) => {
+    try {
+      // Map license types to LicenseClassID (simplified mapping)
+      const licenseMap = {
+        "Bằng B1": 1,
+        "Bằng B": 2,
+        "Bằng C1": 3,
+        "Bằng C": 4,
+        "Bằng D1": 5,
+        "Bằng D2": 6,
+        "Bằng D": 7,
+        "Bằng BE": 8,
+        "Bằng C1E": 9,
+        "Bằng CE": 10,
+        "Bằng D1E": 11,
+        "Bằng D2E": 12,
+        "Bằng DE": 13,
+      };
+
+      // Map form data to API format
+      const apiData = {
+        fullName: driverData.name || "-",
+        phone: driverData.phone || "-",
+        // If email is empty, generate a dummy email based on phone number
+        email:
+          driverData.email && driverData.email.trim()
+            ? driverData.email.trim()
+            : `driver${driverData.phone.replace(/\D/g, "")}@fms.local`,
+        birthPlace: "-",
+        experienceYears: Number(driverData.expYears) || 0,
+        licenses: driverData.licenseTypes.map((licenseType) => ({
+          licenseClassID: licenseMap[licenseType] || 1,
+          expiryDate: new Date(
+            new Date().setFullYear(new Date().getFullYear() + 5)
+          ).toISOString(), // Default 5 years from now
+        })),
+        driverStatus:
+          driverData.status === "Sẵn sàng"
+            ? "available"
+            : driverData.status === "Đang lái"
+            ? "on_trip"
+            : "offline",
+        password: "Driver@123", // Default password
+      };
+
+      await createDriver(apiData);
+      await loadDrivers(); // Reload to get updated data
+      setShowAddModal(false);
+      toast.success("Thêm tài xế thành công!");
+    } catch (err) {
+      console.error("Error creating driver:", err);
+      toast.error("Không thể thêm tài xế. Vui lòng thử lại.");
+    }
+  };
+
   const handleDeleteDriver = async (driverId) => {
     try {
       setDeletingDriverId(driverId);
       await deleteDriver(driverId);
       // Optimistically remove from current list without full reload
       setDrivers((prev) => prev.filter((d) => d.driverID !== driverId));
-      setPagination((prev) => ({ ...prev, totalItems: Math.max(0, prev.totalItems - 1) }));
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: Math.max(0, prev.totalItems - 1),
+      }));
       toast.success("Xóa tài xế thành công!");
     } catch (err) {
       console.error("Error deleting driver:", err);
@@ -226,6 +286,13 @@ export default function Drivers() {
           options={statusOptions}
           placeholder="Tất cả trạng thái"
         />
+
+        <button
+          className="drivers-new-btn"
+          onClick={() => setShowAddModal(true)}
+        >
+          + Thêm tài xế
+        </button>
       </div>
 
       <div className="drivers-list">
@@ -272,14 +339,16 @@ export default function Drivers() {
                       <td className="drivers-td">
                         <div className="drivers-name-cell">
                           <div className="drivers-avatar">
-                            {driver.name?.charAt(0).toUpperCase() || "D"}
+                            {(driver.name &&
+                              driver.name.charAt(0).toUpperCase()) ||
+                              "D"}
                           </div>
                           <div>
                             <div
                               className="drivers-name-text"
-                              title={driver.name}
+                              title={driver.name || "-"}
                             >
-                              {driver.name?.length > 25
+                              {driver.name && driver.name.length > 25
                                 ? `${driver.name.substring(0, 25)}...`
                                 : driver.name || "-"}
                             </div>
@@ -295,16 +364,18 @@ export default function Drivers() {
                         </div>
                         <div
                           className="drivers-email-text"
-                          title={driver.email}
+                          title={driver.email || "-"}
                         >
-                          {driver.email?.length > 20
+                          {driver.email && driver.email.length > 20
                             ? `${driver.email.substring(0, 20)}...`
                             : driver.email || "-"}
                         </div>
                       </td>
                       <td className="drivers-td">
                         <div className="drivers-licenses-text">
-                          {driver.licenses?.join(", ") || "-"}
+                          {driver.licenses && driver.licenses.length > 0
+                            ? driver.licenses.join(", ")
+                            : "-"}
                         </div>
                       </td>
                       <td className="drivers-td">
@@ -314,7 +385,7 @@ export default function Drivers() {
                       </td>
                       <td className="drivers-td">
                         <div className="drivers-rating-text">
-                          ⭐ {driver.rating?.toFixed(1) || "0.0"}
+                          ⭐ {driver.rating ? driver.rating.toFixed(1) : "0.0"}
                         </div>
                       </td>
                       <td className="drivers-td">
@@ -370,7 +441,11 @@ export default function Drivers() {
                             onClick={() => promptDeleteDriver(driver.driverID)}
                             disabled={deletingDriverId === driver.driverID}
                           >
-                            {deletingDriverId === driver.driverID ? "..." : <FaTrash />}
+                            {deletingDriverId === driver.driverID ? (
+                              "..."
+                            ) : (
+                              <FaTrash />
+                            )}
                           </button>
                         </div>
                       </td>
@@ -411,6 +486,13 @@ export default function Drivers() {
             await loadDrivers();
             toast.success("Cập nhật tài xế thành công!");
           }}
+        />
+      )}
+
+      {showAddModal && (
+        <DriverAddModal
+          onClose={() => setShowAddModal(false)}
+          onSubmit={handleCreateDriver}
         />
       )}
 

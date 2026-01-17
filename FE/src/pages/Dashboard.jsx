@@ -23,7 +23,7 @@ import DriverAssignment from "./DriverAssignment";
 import Bookings from "./Bookings";
 import Emergency from "./Emergency";
 import Maintenance from "./Maintenance";
-import AccountManagement from "./admin/AccountManagement";
+import Users from "./Users";
 import FuelManagement from "./FuelManagement";
 
 const ROLE_LABELS = {
@@ -146,7 +146,7 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
     maintenance: <Maintenance />,
     "fuel-management": <FuelManagement />,
     account: <Account currentUser={currentUser} onUpdateUser={onUpdateUser} />,
-    "account-management": <AccountManagement />,
+    "account-management": <Users />,
   };
 
   return (
@@ -211,9 +211,3 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
     </div>
   );
 }
-
-
-
-
-
-
