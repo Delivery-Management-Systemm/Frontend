@@ -7,6 +7,7 @@ import {
   FaTint,
   FaTimes,
   FaTrash,
+  FaSearch,
 } from "react-icons/fa";
 import "./FuelManagement.css";
 import Pagination from "../components/Pagination";
@@ -35,8 +36,12 @@ export default function FuelManagement() {
   // Filter state
   const [filters, setFilters] = useState({
     vehicleId: "",
-    dateFrom: "",
-    dateTo: "",
+    keyword: "",
+    day: "",
+    month: "",
+    year: "",
+    minAmount: "",
+    maxAmount: "",
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -113,8 +118,12 @@ export default function FuelManagement() {
       queryParams.append("pageNumber", pagination.currentPage);
       queryParams.append("pageSize", pagination.pageSize);
       if (filters.vehicleId) queryParams.append("vehicleId", filters.vehicleId);
-      if (filters.dateFrom) queryParams.append("fromDate", filters.dateFrom);
-      if (filters.dateTo) queryParams.append("toDate", filters.dateTo);
+      if (filters.keyword) queryParams.append("keyword", filters.keyword);
+      if (filters.day) queryParams.append("day", filters.day);
+      if (filters.month) queryParams.append("month", filters.month);
+      if (filters.year) queryParams.append("year", filters.year);
+      if (filters.minAmount) queryParams.append("minAmount", filters.minAmount);
+      if (filters.maxAmount) queryParams.append("maxAmount", filters.maxAmount);
 
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/FuelRecord?${queryParams}`,
@@ -336,15 +345,103 @@ export default function FuelManagement() {
   if (loading) {
     return (
       <div className="fuel-page">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
-          }}
-        >
-          <div className="line-spinner"></div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+
+        <div className="fuel-header-simple">
+          <div>
+            <div className="fuel-header-title">Quản lý nhiên liệu</div>
+            <div className="fuel-header-subtitle">
+              Theo dõi và quản lý các phiếu đổ xăng cho phương tiện
+            </div>
+          </div>
+        </div>
+
+        <div className="fuel-stats-row">
+          <div className="fuel-stat fuel-stat-1">
+            <div className="fuel-stat-label">Tổng chi phí</div>
+            <div className="fuel-stat-value">...</div>
+          </div>
+          <div className="fuel-stat fuel-stat-2">
+            <div className="fuel-stat-label">Tổng lít</div>
+            <div className="fuel-stat-value">...</div>
+          </div>
+          <div className="fuel-stat fuel-stat-3">
+            <div className="fuel-stat-label">Số phiếu</div>
+            <div className="fuel-stat-value">...</div>
+          </div>
+          <div className="fuel-stat fuel-stat-4">
+            <div className="fuel-stat-label">Trung bình / phiếu</div>
+            <div className="fuel-stat-value">...</div>
+          </div>
+        </div>
+
+        <div className="fuel-filters">
+          <CustomSelect
+            value=""
+            onChange={() => {}}
+            options={[{ value: "", label: "Tất cả phương tiện" }]}
+            placeholder="Tất cả phương tiện"
+          />
+          <input
+            type="date"
+            className="fuel-date-input"
+            value=""
+            onChange={() => {}}
+            placeholder="Từ ngày"
+            disabled
+          />
+          <input
+            type="date"
+            className="fuel-date-input"
+            value=""
+            onChange={() => {}}
+            placeholder="Đến ngày"
+            disabled
+          />
+          <button className="fuel-new-btn" disabled>
+            + Thêm phiếu
+          </button>
+        </div>
+
+        <div className="fuel-list">
+          <div className="fuel-table-card">
+            <div className="fuel-table-wrap">
+              <table className="fuel-table">
+                <thead>
+                  <tr>
+                    <th>Ngày</th>
+                    <th>Biển số</th>
+                    <th>Odometer (km)</th>
+                    <th>Số lít</th>
+                    <th>Đơn giá</th>
+                    <th>Tổng tiền</th>
+                    <th>Trạm xăng</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan="8"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -390,60 +487,105 @@ export default function FuelManagement() {
       )}
 
       <div className="fuel-stats-row">
-        <div className="fuel-stat">
+        <div className="fuel-stat fuel-stat-1">
           <div className="fuel-stat-label">Tổng chi phí</div>
           <div className="fuel-stat-value">{formatMoney(stats.totalCost)}</div>
         </div>
-        <div className="fuel-stat">
+        <div className="fuel-stat fuel-stat-2">
           <div className="fuel-stat-label">Tổng lít</div>
           <div className="fuel-stat-value">
             {formatNumber(stats.totalLiters)} L
           </div>
         </div>
-        <div className="fuel-stat">
+        <div className="fuel-stat fuel-stat-3">
           <div className="fuel-stat-label">Số phiếu</div>
           <div className="fuel-stat-value">{stats.count}</div>
         </div>
-        <div className="fuel-stat">
+        <div className="fuel-stat fuel-stat-4">
           <div className="fuel-stat-label">Trung bình / phiếu</div>
           <div className="fuel-stat-value">{formatMoney(stats.average)}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="fuel-filters">
-        <CustomSelect
-          value={filters.vehicleId}
-          onChange={(value) => handleFilterChange("vehicleId", value)}
-          options={[
-            { value: "", label: "Tất cả phương tiện" },
-            ...vehicles.map((v) => ({
-              value: v.vehicleID,
-              label: `${v.licensePlate} - ${v.vehicleModel || v.vehicleType}`,
-            })),
-          ]}
-          placeholder="Tất cả phương tiện"
-        />
-
-        <input
-          type="date"
-          className="fuel-date-input"
-          value={filters.dateFrom}
-          onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
-          placeholder="Từ ngày"
-        />
-
-        <input
-          type="date"
-          className="fuel-date-input"
-          value={filters.dateTo}
-          onChange={(e) => handleFilterChange("dateTo", e.target.value)}
-          placeholder="Đến ngày"
-        />
-
-        <button className="fuel-new-btn" onClick={openModal}>
-          + Thêm phiếu
-        </button>
+      <div className="fuel-filters-container">
+        <div className="fuel-filters-row">
+          <div className="fuel-search-box">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo biển số xe..."
+              value={filters.keyword}
+              onChange={(e) => handleFilterChange("keyword", e.target.value)}
+            />
+          </div>
+          <CustomSelect
+            value={filters.vehicleId}
+            onChange={(value) => handleFilterChange("vehicleId", value)}
+            options={[
+              { value: "", label: "Tất cả phương tiện" },
+              ...vehicles.map((v) => ({
+                value: v.vehicleID,
+                label: `${v.licensePlate} - ${v.vehicleModel || v.vehicleType}`,
+              })),
+            ]}
+            placeholder="Tất cả phương tiện"
+          />
+        </div>
+        <div className="fuel-filters-row">
+          <CustomSelect
+            value={filters.day}
+            onChange={(value) => handleFilterChange("day", value)}
+            options={[
+              { value: "", label: "Tất cả ngày" },
+              ...Array.from({ length: 31 }, (_, i) => ({
+                value: String(i + 1),
+                label: `Ngày ${i + 1}`,
+              })),
+            ]}
+            placeholder="Chọn ngày"
+          />
+          <CustomSelect
+            value={filters.month}
+            onChange={(value) => handleFilterChange("month", value)}
+            options={[
+              { value: "", label: "Tất cả tháng" },
+              ...Array.from({ length: 12 }, (_, i) => ({
+                value: String(i + 1),
+                label: `Tháng ${i + 1}`,
+              })),
+            ]}
+            placeholder="Chọn tháng"
+          />
+          <CustomSelect
+            value={filters.year}
+            onChange={(value) => handleFilterChange("year", value)}
+            options={[
+              { value: "", label: "Tất cả năm" },
+              { value: "2024", label: "2024" },
+              { value: "2025", label: "2025" },
+              { value: "2026", label: "2026" },
+            ]}
+            placeholder="Chọn năm"
+          />
+          <input
+            type="number"
+            className="fuel-amount-input"
+            placeholder="Tổng tiền tối thiểu"
+            value={filters.minAmount}
+            onChange={(e) => handleFilterChange("minAmount", e.target.value)}
+          />
+          <input
+            type="number"
+            className="fuel-amount-input"
+            placeholder="Tổng tiền tối đa"
+            value={filters.maxAmount}
+            onChange={(e) => handleFilterChange("maxAmount", e.target.value)}
+          />
+          <button className="fuel-new-btn" onClick={openModal}>
+            + Thêm phiếu
+          </button>
+        </div>
       </div>
 
       <div className="fuel-list">

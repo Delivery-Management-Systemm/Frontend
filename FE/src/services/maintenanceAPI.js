@@ -11,11 +11,29 @@ class MaintenanceAPI {
         PageSize: params.pageSize || 10,
         SortBy: params.sortBy || "MaintenanceType",
         IsDescending: params.isDescending !== false,
+        ...(params.keyword && {
+          Keyword: params.keyword,
+        }),
         ...(params.maintenanceType && {
           MaintenanceType: params.maintenanceType,
         }),
         ...(params.maintenanceStatus && {
           MaintenanceStatus: params.maintenanceStatus,
+        }),
+        ...(params.day && {
+          Day: params.day,
+        }),
+        ...(params.month && {
+          Month: params.month,
+        }),
+        ...(params.year && {
+          Year: params.year,
+        }),
+        ...(params.minAmount && {
+          MinAmount: params.minAmount,
+        }),
+        ...(params.maxAmount && {
+          MaxAmount: params.maxAmount,
         }),
       });
 
@@ -129,6 +147,26 @@ class MaintenanceAPI {
       return data;
     } catch (error) {
       console.error("Error fetching maintenance statuses:", error);
+      throw error;
+    }
+  }
+
+  // Get maintenance by ID
+  async getMaintenanceById(id) {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/Maintenance/${id}`, {
+        method: "GET",
+        headers: API_CONFIG.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching maintenance detail:", error);
       throw error;
     }
   }

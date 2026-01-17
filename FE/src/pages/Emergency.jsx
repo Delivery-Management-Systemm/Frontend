@@ -202,17 +202,94 @@ export default function Emergency() {
   if (loading) {
     return (
       <div className="emergency-page">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
-            fontSize: "24px",
-            color: "#3b82f6",
-          }}
-        >
-          <div className="line-spinner"></div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+
+        <div className="emergency-header-simple">
+          <div>
+            <div className="emergency-header-title">Báo cáo khẩn cấp</div>
+            <div className="emergency-header-subtitle">
+              Xử lý các báo cáo khẩn cấp từ tài xế
+            </div>
+          </div>
+        </div>
+
+        <div className="emergency-stats-row">
+          <div className="em-stat em-stat-1">
+            <div className="em-stat-label">Báo cáo mới</div>
+            <div className="em-stat-value">...</div>
+          </div>
+          <div className="em-stat em-stat-2">
+            <div className="em-stat-label">Đang xử lý</div>
+            <div className="em-stat-value">...</div>
+          </div>
+          <div className="em-stat em-stat-3">
+            <div className="em-stat-label">Đã giải quyết</div>
+            <div className="em-stat-value">...</div>
+          </div>
+          <div className="em-stat em-stat-4">
+            <div className="em-stat-label">Khẩn cấp</div>
+            <div className="em-stat-value">...</div>
+          </div>
+        </div>
+
+        <div className="emergency-filters">
+          <CustomSelect
+            value=""
+            onChange={() => {}}
+            options={[{ value: "", label: "Tất cả trạng thái" }]}
+            placeholder="Tất cả trạng thái"
+          />
+
+          <CustomSelect
+            value=""
+            onChange={() => {}}
+            options={[{ value: "", label: "Tất cả mức độ" }]}
+            placeholder="Tất cả mức độ"
+          />
+
+          <button className="emergency-new-btn" disabled>
+            + Báo cáo mới
+          </button>
+        </div>
+
+        <div className="emergency-list">
+          <div className="emergency-table-card">
+            <div className="emergency-table-wrap">
+              <table className="emergency-table">
+                <thead>
+                  <tr>
+                    <th>Tiêu đề</th>
+                    <th>Mức độ</th>
+                    <th>Trạng thái</th>
+                    <th>Vị trí</th>
+                    <th>Phương tiện</th>
+                    <th>Ngày báo cáo</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -246,19 +323,19 @@ export default function Emergency() {
       )}
 
       <div className="emergency-stats-row">
-        <div className="em-stat">
+        <div className="em-stat em-stat-1">
           <div className="em-stat-label">Báo cáo mới</div>
           <div className="em-stat-value">{stats.newReports}</div>
         </div>
-        <div className="em-stat">
+        <div className="em-stat em-stat-2">
           <div className="em-stat-label">Đang xử lý</div>
           <div className="em-stat-value">{stats.processing}</div>
         </div>
-        <div className="em-stat">
+        <div className="em-stat em-stat-3">
           <div className="em-stat-label">Đã giải quyết</div>
           <div className="em-stat-value">{stats.resolved}</div>
         </div>
-        <div className="em-stat">
+        <div className="em-stat em-stat-4">
           <div className="em-stat-label">Khẩn cấp</div>
           <div className="em-stat-value">{stats.critical}</div>
         </div>

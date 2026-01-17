@@ -8,6 +8,10 @@ export const getTrips = async (params = {}) => {
     if (params.pageNumber) query.append("pageNumber", params.pageNumber);
     if (params.pageSize) query.append("pageSize", params.pageSize);
     if (params.tripStatus) query.append("tripStatus", params.tripStatus);
+    if (params.keyword) query.append("keyword", params.keyword);
+    if (params.day) query.append("day", params.day);
+    if (params.month) query.append("month", params.month);
+    if (params.year) query.append("year", params.year);
 
     const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip?${query}`, {
       method: "GET",
@@ -36,7 +40,8 @@ export const getTripStats = async () => {
       todayTrips: data.TodayTrips ?? data.todayTrips ?? data.TodayTrips,
       inProgress: data.InProgress ?? data.inProgress ?? data.InProgress,
       completed: data.Completed ?? data.completed ?? data.Completed,
-      totalDistance: data.TotalDistance ?? data.totalDistance ?? data.TotalDistance,
+      totalDistance:
+        data.TotalDistance ?? data.totalDistance ?? data.TotalDistance,
     };
   } catch (err) {
     console.error("Error fetching trip stats:", err);
@@ -63,10 +68,13 @@ export const getBookedTrips = async (params = {}) => {
     if (params.pageNumber) query.append("pageNumber", params.pageNumber);
     if (params.pageSize) query.append("pageSize", params.pageSize);
 
-    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/booked?${query}`, {
-      method: "GET",
-      headers: API_CONFIG.getAuthHeaders(),
-    });
+    const resp = await fetchWithRetry(
+      `${API_CONFIG.BASE_URL}/Trip/booked?${query}`,
+      {
+        method: "GET",
+        headers: API_CONFIG.getAuthHeaders(),
+      }
+    );
     const data = await resp.json();
     if (Array.isArray(data.objects)) return data.objects;
     if (Array.isArray(data)) return data;

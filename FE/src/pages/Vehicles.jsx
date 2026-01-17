@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./Vehicles.css";
@@ -54,6 +54,7 @@ export default function Vehicles() {
 
   // Filter state
   const [filters, setFilters] = useState({
+    keyword: "",
     vehicleStatus: "",
     vehicleType: "",
     fuelType: "",
@@ -105,6 +106,7 @@ export default function Vehicles() {
       const data = await getVehicles({
         pageNumber: pagination.currentPage,
         pageSize: pagination.pageSize,
+        keyword: filters.keyword,
         vehicleStatus: filters.vehicleStatus,
         vehicleType: filters.vehicleType,
         fuelType: filters.fuelType,
@@ -236,15 +238,117 @@ export default function Vehicles() {
   if (loading) {
     return (
       <div className="vehicles-page">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
-          }}
-        >
-          <div className="line-spinner"></div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+
+        <div className="vehicles-header-simple">
+          <div>
+            <div className="vehicles-header-title">Quản lý phương tiện</div>
+            <div className="vehicles-header-subtitle">
+              Quản lý xe và thiết bị vận chuyển
+            </div>
+          </div>
+        </div>
+
+        <div className="vehicles-stats-row">
+          <div className="vehicle-stat vehicle-stat-1">
+            <div className="vehicle-stat-label">Tổng số</div>
+            <div className="vehicle-stat-value">...</div>
+          </div>
+          <div className="vehicle-stat vehicle-stat-2">
+            <div className="vehicle-stat-label">Sẵn sàng</div>
+            <div className="vehicle-stat-value">...</div>
+          </div>
+          <div className="vehicle-stat vehicle-stat-3">
+            <div className="vehicle-stat-label">Đang dùng</div>
+            <div className="vehicle-stat-value">...</div>
+          </div>
+          <div className="vehicle-stat vehicle-stat-4">
+            <div className="vehicle-stat-label">Bảo trì</div>
+            <div className="vehicle-stat-value">...</div>
+          </div>
+        </div>
+
+        <div className="vehicles-filters-container">
+          <div className="vehicles-filters-row">
+            <div className="vehicles-search-box">
+              <FaSearch />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo biển số xe..."
+                value=""
+                onChange={() => {}}
+                disabled
+              />
+            </div>
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả trạng thái" }]}
+              placeholder="Tất cả trạng thái"
+            />
+          </div>
+          <div className="vehicles-filters-row">
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả loại xe" }]}
+              placeholder="Tất cả loại xe"
+            />
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả nhiên liệu" }]}
+              placeholder="Tất cả nhiên liệu"
+            />
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả hãng" }]}
+              placeholder="Tất cả hãng"
+            />
+            <button className="vehicles-new-btn" disabled>
+              + Thêm phương tiện
+            </button>
+          </div>
+        </div>
+
+        <div className="vehicles-list">
+          <div className="vehicles-table-card">
+            <div className="vehicles-table-wrap">
+              <table className="vehicles-table">
+                <thead>
+                  <tr>
+                    <th>Biển số</th>
+                    <th>Loại xe</th>
+                    <th>Model</th>
+                    <th>Năm SX</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan="6"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -278,60 +382,69 @@ export default function Vehicles() {
       )}
 
       <div className="vehicles-stats-row">
-        <div className="vehicle-stat">
+        <div className="vehicle-stat vehicle-stat-1">
           <div className="vehicle-stat-label">Tổng số</div>
           <div className="vehicle-stat-value">{stats.total}</div>
         </div>
-        <div className="vehicle-stat">
+        <div className="vehicle-stat vehicle-stat-2">
           <div className="vehicle-stat-label">Sẵn sàng</div>
           <div className="vehicle-stat-value">{stats.available}</div>
         </div>
-        <div className="vehicle-stat">
+        <div className="vehicle-stat vehicle-stat-3">
           <div className="vehicle-stat-label">Đang dùng</div>
           <div className="vehicle-stat-value">{stats.inUse}</div>
         </div>
-        <div className="vehicle-stat">
+        <div className="vehicle-stat vehicle-stat-4">
           <div className="vehicle-stat-label">Bảo trì</div>
           <div className="vehicle-stat-value">{stats.maintenance}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="vehicles-filters">
-        <CustomSelect
-          value={filters.vehicleStatus}
-          onChange={(value) => handleFilterChange("vehicleStatus", value)}
-          options={statusOptions}
-          placeholder="Tất cả trạng thái"
-        />
-
-        <CustomSelect
-          value={filters.vehicleType}
-          onChange={(value) => handleFilterChange("vehicleType", value)}
-          options={typeOptions}
-          placeholder="Tất cả loại xe"
-        />
-
-        <CustomSelect
-          value={filters.fuelType}
-          onChange={(value) => handleFilterChange("fuelType", value)}
-          options={fuelTypeOptions}
-          placeholder="Tất cả nhiên liệu"
-        />
-
-        <CustomSelect
-          value={filters.vehicleBrand}
-          onChange={(value) => handleFilterChange("vehicleBrand", value)}
-          options={brandOptions}
-          placeholder="Tất cả hãng"
-        />
-
-        <button
-          className="vehicles-new-btn"
-          onClick={() => setShowAddModal(true)}
-        >
-          + Thêm phương tiện
-        </button>
+      <div className="vehicles-filters-container">
+        <div className="vehicles-filters-row">
+          <div className="vehicles-search-box">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo biển số xe..."
+              value={filters.keyword}
+              onChange={(e) => handleFilterChange("keyword", e.target.value)}
+            />
+          </div>
+          <CustomSelect
+            value={filters.vehicleStatus}
+            onChange={(value) => handleFilterChange("vehicleStatus", value)}
+            options={statusOptions}
+            placeholder="Tất cả trạng thái"
+          />
+        </div>
+        <div className="vehicles-filters-row">
+          <CustomSelect
+            value={filters.vehicleType}
+            onChange={(value) => handleFilterChange("vehicleType", value)}
+            options={typeOptions}
+            placeholder="Tất cả loại xe"
+          />
+          <CustomSelect
+            value={filters.fuelType}
+            onChange={(value) => handleFilterChange("fuelType", value)}
+            options={fuelTypeOptions}
+            placeholder="Tất cả nhiên liệu"
+          />
+          <CustomSelect
+            value={filters.vehicleBrand}
+            onChange={(value) => handleFilterChange("vehicleBrand", value)}
+            options={brandOptions}
+            placeholder="Tất cả hãng"
+          />
+          <button
+            className="vehicles-new-btn"
+            onClick={() => setShowAddModal(true)}
+          >
+            + Thêm phương tiện
+          </button>
+        </div>
       </div>
 
       <div className="vehicles-list">
@@ -419,12 +532,7 @@ export default function Vehicles() {
                             const status = vehicle.vehicleStatus || "";
                             if (status === "available" || status === "Sẵn sàng")
                               return "Sẵn sàng";
-                            if (
-                              status === "in_use" ||
-                              status === "Đang dùng" ||
-                              status === "on_trip" ||
-                              status === "Đang chạy"
-                            )
+                            if (status === "in_use" || status === "Đang dùng")
                               return "Đang dùng";
                             if (
                               status === "maintenance" ||

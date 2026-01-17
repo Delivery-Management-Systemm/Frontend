@@ -24,7 +24,7 @@
   background: #fff;
   border-radius: 12px;
   padding: 24px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
 .account-card h3 {
@@ -49,6 +49,13 @@
   align-items: center;
   border-radius: 999px;
   font-size: 40px;
+  overflow: hidden;
+}
+
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .upload-btn {
@@ -90,7 +97,7 @@ label {
 input {
   padding: 10px 12px;
   width: 100%; /* Đảm bảo input chiếm đủ không gian */
-  
+
   /* border-radius: 8px; */ /* BỎ: Đã chuyển lên .input-wrapper */
   /* border: 1px solid #cbd5e1; */ /* BỎ: Đã chuyển lên .input-wrapper */
   border: none; /* XÓA border của input, chỉ giữ border của wrapper */
@@ -105,8 +112,8 @@ input:focus {
 
 /* [MỚI] Thêm lớp focus cho .input-wrapper */
 .input-wrapper:has(input:focus) {
-    border-color: #2563eb; /* Khi input bên trong focus, wrapper sẽ thay đổi border */
-    box-shadow: 0 0 0 1px #2563eb; /* Thêm shadow nhẹ cho hiệu ứng focus đẹp hơn */
+  border-color: #2563eb; /* Khi input bên trong focus, wrapper sẽ thay đổi border */
+  box-shadow: 0 0 0 1px #2563eb; /* Thêm shadow nhẹ cho hiệu ứng focus đẹp hơn */
 }
 
 .input-wrapper {
@@ -124,15 +131,15 @@ input:focus {
 .input-icon {
   position: absolute; /* VỊ TRÍ TUYỆT ĐỐI: Đặt icon bên trong wrapper */
   left: 12px; /* Đẩy icon cách lề trái 12px */
-  font-size: 16px; 
+  font-size: 16px;
   color: #64748b; /* Màu xám cho icon */
   top: 50%;
   transform: translateY(-50%); /* Căn giữa dọc */
   z-index: 2; /* Đảm bảo icon nằm trên input */
 }
 .input-wrapper:has(.input-icon) input {
-    /* Áp dụng padding-left lớn hơn chỉ khi icon TỒN TẠI bên trong wrapper */
-    padding-left: 40px; 
+  /* Áp dụng padding-left lớn hơn chỉ khi icon TỒN TẠI bên trong wrapper */
+  padding-left: 40px;
 }
 .save-btn {
   margin-top: 14px;
@@ -202,13 +209,13 @@ input:focus {
 
 .notification-row input[type="checkbox"] {
   /* Xóa mọi margin và border không cần thiết từ các rule input chung */
-  margin: 0; 
-  border: 1px solid #ccc; 
+  margin: 0;
+  border: 1px solid #ccc;
   /* Tùy chỉnh kích thước nếu cần, ví dụ 18px */
-  width: 18px; 
+  width: 18px;
   height: 18px;
   /* Đảm bảo nó không bị ảnh hưởng bởi các padding/styles khác của input thường */
-  padding: 0; 
+  padding: 0;
 }
 
 .account-otp-overlay {
@@ -272,4 +279,3 @@ input:focus {
   font-size: 12px;
   color: #94a3b8;
 }
-

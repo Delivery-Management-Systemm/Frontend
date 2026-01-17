@@ -28,8 +28,8 @@
 }
 
 .dashboard-logo-icon {
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   border-radius: 12px;
   background: linear-gradient(135deg, #2563eb, #0ea5e9);
   display: flex;
@@ -45,18 +45,18 @@
 
 .dashboard-logo-title {
   font-weight: 700;
-  font-size: 18px;
+  font-size: 20px;
 }
 
 .dashboard-logo-subtitle {
-  font-size: 13px;
+  font-size: 14px;
   color: #9ca3af;
 }
 
 .dashboard-nav {
   display: flex;
   flex-direction: column;
-  margin-top: 12px;
+  margin-top: -5px;
   flex: 1;
   justify-content: flex-start; /* stack items from top, footer will sit at bottom */
 }
@@ -71,7 +71,7 @@
   border: none;
   background: transparent;
   color: #cfe3ff;
-  font-size: 15px;
+  font-size: 16px;
   cursor: pointer;
   text-align: left;
   transition: background-color 160ms ease, color 160ms ease,
@@ -113,8 +113,8 @@
 }
 
 .dashboard-user-avatar {
-  width: 32px;
-  height: 32px;
+  width: 45px;
+  height: 45px;
   border-radius: 999px;
   background: #1d4ed8;
   display: flex;
@@ -123,6 +123,14 @@
   font-size: 16px;
   font-weight: 600;
   color: #ffffff;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.dashboard-user-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .role-badge {
@@ -130,10 +138,11 @@
   margin-top: 4px;
   background: #0ea5e9;
   color: #fff;
-  padding: 4px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 600;
+  width: fit-content;
 }
 
 .role-badge.role-admin {
@@ -155,10 +164,11 @@
   display: flex;
   flex-direction: column;
   flex: 1;
+  gap: 2px;
 }
 
 .dashboard-user-name {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
 }
 
@@ -167,47 +177,23 @@
   color: #9ca3af;
 }
 
-.dashboard-logout {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  background: transparent;
-  color: #f97316;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 160ms ease;
-}
-
-.dashboard-logout:hover {
-  background-color: rgba(249, 115, 22, 0.1);
-}
-
-.dashboard-logout-icon {
-  font-size: 14px;
-}
-
 .dashboard-profile-link {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px 12px;
+  display: inline-block;
+  width: auto;
+  margin-top: 2px;
+  padding: 0;
   border: none;
   background: transparent;
   color: #60a5fa;
-  font-size: 13px;
+  font-size: 12px;
   text-align: left;
   cursor: pointer;
-  border-radius: 8px;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition: color 160ms ease;
 }
 
 .dashboard-profile-link:hover {
-  background-color: rgba(96, 165, 250, 0.1);
-  color: #93c5fd;
+  color: #2563eb;
+  text-decoration: underline;
 }
 
 .dashboard-main {
@@ -234,4 +220,27 @@
   border-radius: 18px;
   padding: 32px;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+}
+
+.dashboard-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: #f97316;
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 160ms ease;
+}
+
+.dashboard-logout:hover {
+  background-color: rgba(249, 115, 22, 0.1);
+}
+
+.dashboard-logout-icon {
+  font-size: 14px;
 }

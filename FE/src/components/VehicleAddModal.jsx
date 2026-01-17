@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import CustomSelect from "./CustomSelect";
 import "./VehicleAddModal.css";
 
 export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
@@ -104,17 +105,19 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
 
           <div className="vehicle-modal-field">
             <label>Loại xe</label>
-            <select
+            <CustomSelect
               value={form.type}
-              onChange={(e) => update("type", e.target.value)}
-            >
-              <option>Xe tải nhỏ</option>
-              <option>Xe tải lớn</option>
-              <option>Xe container</option>
-              <option>Xe khách</option>
-              <option>Xe bán tải</option>
-              <option>Xe con</option>
-            </select>
+              onChange={(value) => update("type", value)}
+              options={[
+                { value: "Xe tải nhỏ", label: "Xe tải nhỏ" },
+                { value: "Xe tải lớn", label: "Xe tải lớn" },
+                { value: "Xe container", label: "Xe container" },
+                { value: "Xe khách", label: "Xe khách" },
+                { value: "Xe bán tải", label: "Xe bán tải" },
+                { value: "Xe con", label: "Xe con" },
+              ]}
+              placeholder="Chọn loại xe"
+            />
           </div>
 
           <div className="vehicle-modal-field">
@@ -157,22 +160,23 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
 
           <div className="vehicle-modal-field">
             <label>Trạng thái</label>
-            <select
+            <CustomSelect
               value={form.status}
-              onChange={(e) => update("status", e.target.value)}
-            >
-              <option>Sẵn sàng</option>
-              <option>Đang sử dụng</option>
-              <option>Bảo trì</option>
-              <option>Đang công tác</option>
-              <option>Hỏng</option>
-            </select>
+              onChange={(value) => update("status", value)}
+              options={[
+                { value: "Sẵn sàng", label: "Sẵn sàng" },
+                { value: "Đang dùng", label: "Đang dùng" },
+                { value: "Bảo trì", label: "Bảo trì" },
+              ]}
+              placeholder="Chọn trạng thái"
+            />
           </div>
 
           <div className="vehicle-modal-field">
             <label>Km đã chạy</label>
             <input
               type="number"
+              min="0"
               value={form.km}
               onChange={(e) => update("km", e.target.value)}
             />
@@ -180,15 +184,17 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
 
           <div className="vehicle-modal-field">
             <label>Loại nhiên liệu</label>
-            <select
+            <CustomSelect
               value={form.fuelType}
-              onChange={(e) => update("fuelType", e.target.value)}
-            >
-              <option>Diesel</option>
-              <option>Xăng</option>
-              <option>Điện</option>
-              <option>Hybrid</option>
-            </select>
+              onChange={(value) => update("fuelType", value)}
+              options={[
+                { value: "Diesel", label: "Diesel" },
+                { value: "Xăng", label: "Xăng" },
+                { value: "Điện", label: "Điện" },
+                { value: "Hybrid", label: "Hybrid" },
+              ]}
+              placeholder="Chọn loại nhiên liệu"
+            />
           </div>
 
           <div className="vehicle-modal-field">

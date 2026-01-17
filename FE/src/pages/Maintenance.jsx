@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiAlertTriangle } from "react-icons/fi";
-import { FaEye } from "react-icons/fa";
+import { FaEye, FaSearch } from "react-icons/fa";
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Pie } from "react-chartjs-2";
 import { toast, ToastContainer } from "react-toastify";
@@ -15,6 +15,7 @@ import CustomSelect from "../components/CustomSelect";
 import "./Maintenance.css";
 import "./TripManagement.css";
 import MaintenanceAddModal from "../components/MaintenanceAddModal";
+import MaintenanceDetailModal from "../components/MaintenanceDetailModal";
 
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -42,9 +43,19 @@ const Maintenance = () => {
 
   // Filter state
   const [filters, setFilters] = useState({
+    keyword: "",
     maintenanceType: "",
     maintenanceStatus: "",
+    day: "",
+    month: "",
+    year: "",
+    minAmount: "",
+    maxAmount: "",
   });
+
+  // Detail modal state
+  const [selectedRecordId, setSelectedRecordId] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -81,8 +92,14 @@ const Maintenance = () => {
       const recordsData = await getMaintenanceRecords({
         pageNumber: pagination.currentPage,
         pageSize: pagination.pageSize,
+        keyword: filters.keyword,
         maintenanceType: filters.maintenanceType,
         maintenanceStatus: filters.maintenanceStatus,
+        day: filters.day,
+        month: filters.month,
+        year: filters.year,
+        minAmount: filters.minAmount,
+        maxAmount: filters.maxAmount,
       });
 
       setRecords(recordsData.objects || recordsData || []);
@@ -257,52 +274,112 @@ const Maintenance = () => {
       )}
 
       <div className="maintenance-stats-row">
-        <div className="maint-stat">
+        <div className="maint-stat maint-stat-1">
           <div className="maint-stat-label">Tổng hóa đơn</div>
           <div className="maint-stat-value">{stats.totalInvoices || 0}</div>
         </div>
-        <div className="maint-stat">
+        <div className="maint-stat maint-stat-2">
           <div className="maint-stat-label">Tổng chi phí</div>
           <div className="maint-stat-value">{stats.totalCost || "0đ"}</div>
         </div>
-        <div className="maint-stat">
+        <div className="maint-stat maint-stat-3">
           <div className="maint-stat-label">Dịch vụ khả dụng</div>
           <div className="maint-stat-value">{stats.availableServices || 0}</div>
         </div>
-        <div className="maint-stat">
+        <div className="maint-stat maint-stat-4">
           <div className="maint-stat-label">Hoàn thành</div>
           <div className="maint-stat-value">{stats.completedInvoices || 0}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="maintenance-filters">
-        <CustomSelect
-          value={filters.maintenanceType}
-          onChange={(value) => handleFilterChange("maintenanceType", value)}
-          options={typeOptions}
-          placeholder="Tất cả loại bảo trì"
-        />
-
-        <CustomSelect
-          value={filters.maintenanceStatus}
-          onChange={(value) => handleFilterChange("maintenanceStatus", value)}
-          options={statusOptions}
-          placeholder="Tất cả trạng thái"
-        />
-
-        <button
-          className="maintenance-add-btn"
-          onClick={async () => {
-            setShowAddModal(true);
-            // Load services and vehicles when modal opens
-            if (services.length === 0 || vehicles.length === 0) {
-              await loadServicesAndVehicles();
-            }
-          }}
-        >
-          + Tạo hóa đơn mới
-        </button>
+      <div className="maintenance-filters-container">
+        <div className="maintenance-filters-row">
+          <div className="maintenance-search-box">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo mã hóa đơn hoặc KTV..."
+              value={filters.keyword}
+              onChange={(e) => handleFilterChange("keyword", e.target.value)}
+            />
+          </div>
+          <CustomSelect
+            value={filters.maintenanceType}
+            onChange={(value) => handleFilterChange("maintenanceType", value)}
+            options={typeOptions}
+            placeholder="Tất cả loại bảo trì"
+          />
+          <CustomSelect
+            value={filters.maintenanceStatus}
+            onChange={(value) => handleFilterChange("maintenanceStatus", value)}
+            options={statusOptions}
+            placeholder="Tất cả trạng thái"
+          />
+        </div>
+        <div className="maintenance-filters-row">
+          <CustomSelect
+            value={filters.day}
+            onChange={(value) => handleFilterChange("day", value)}
+            options={[
+              { value: "", label: "Tất cả ngày" },
+              ...Array.from({ length: 31 }, (_, i) => ({
+                value: String(i + 1),
+                label: `Ngày ${i + 1}`,
+              })),
+            ]}
+            placeholder="Chọn ngày"
+          />
+          <CustomSelect
+            value={filters.month}
+            onChange={(value) => handleFilterChange("month", value)}
+            options={[
+              { value: "", label: "Tất cả tháng" },
+              ...Array.from({ length: 12 }, (_, i) => ({
+                value: String(i + 1),
+                label: `Tháng ${i + 1}`,
+              })),
+            ]}
+            placeholder="Chọn tháng"
+          />
+          <CustomSelect
+            value={filters.year}
+            onChange={(value) => handleFilterChange("year", value)}
+            options={[
+              { value: "", label: "Tất cả năm" },
+              { value: "2024", label: "2024" },
+              { value: "2025", label: "2025" },
+              { value: "2026", label: "2026" },
+            ]}
+            placeholder="Chọn năm"
+          />
+          <input
+            type="number"
+            className="maintenance-amount-input"
+            placeholder="Tổng tiền tối thiểu"
+            value={filters.minAmount}
+            onChange={(e) => handleFilterChange("minAmount", e.target.value)}
+          />
+          <input
+            type="number"
+            className="maintenance-amount-input"
+            placeholder="Tổng tiền tối đa"
+            value={filters.maxAmount}
+            onChange={(e) => handleFilterChange("maxAmount", e.target.value)}
+          />
+          <button
+            className="maintenance-add-btn"
+            onClick={async () => {
+              setShowAddModal(true);
+              // Load services and vehicles when modal opens
+              if (services.length === 0 || vehicles.length === 0) {
+                await loadServicesAndVehicles();
+              }
+            }}
+          >
+            + Tạo hóa đơn mới
+          </button>
+        </div>
       </div>
 
       <div className="maintenance-content">
@@ -434,7 +511,8 @@ const Maintenance = () => {
                                   className="maintenance-icon-btn maintenance-icon-view"
                                   title="Xem chi tiết"
                                   onClick={() => {
-                                    /* TODO: Open detail modal */
+                                    setSelectedRecordId(record.id);
+                                    setShowDetailModal(true);
                                   }}
                                 >
                                   <FaEye />
@@ -469,6 +547,16 @@ const Maintenance = () => {
               onSave={handleCreateMaintenance}
               vehicles={vehicles}
               services={services}
+            />
+          )}
+
+          {showDetailModal && selectedRecordId && (
+            <MaintenanceDetailModal
+              recordId={selectedRecordId}
+              onClose={() => {
+                setShowDetailModal(false);
+                setSelectedRecordId(null);
+              }}
             />
           )}
         </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaUserCog, FaRoute, FaTimes } from "react-icons/fa";
+import { FaUserCog, FaRoute, FaTimes, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./DriverAssignment.css";
@@ -40,16 +40,27 @@ export default function DriverAssignment() {
 
   // Filter state
   const [filters, setFilters] = useState({
-    status: "pending",
+    keyword: "",
+    day: "",
+    month: "",
+    year: "",
   });
 
   useEffect(() => {
     loadTrips();
   }, [pagination.currentPage, pagination.pageSize, filters]);
 
+  // Load stats on mount, fallback to calculation if API not available
   useEffect(() => {
     loadStats();
   }, []);
+
+  // Recalculate stats when trips change (as fallback)
+  useEffect(() => {
+    if (trips.length > 0 && stats.total === 0) {
+      calculateStats();
+    }
+  }, [trips]);
 
   const loadTrips = async () => {
     try {
@@ -58,7 +69,10 @@ export default function DriverAssignment() {
       const queryParams = new URLSearchParams();
       queryParams.append("pageNumber", pagination.currentPage);
       queryParams.append("pageSize", pagination.pageSize);
-      if (filters.status) queryParams.append("status", filters.status);
+      if (filters.keyword) queryParams.append("keyword", filters.keyword);
+      if (filters.day) queryParams.append("day", filters.day);
+      if (filters.month) queryParams.append("month", filters.month);
+      if (filters.year) queryParams.append("year", filters.year);
 
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/Trip/booked?${queryParams}`,
@@ -95,22 +109,45 @@ export default function DriverAssignment() {
 
   const loadStats = async () => {
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/Trip/booked/stats`, {
-        headers: API_CONFIG.getAuthHeaders(),
-      });
+      // Load all trips without pagination to get accurate stats
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Trip/booked?pageNumber=1&pageSize=9999`,
+        {
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
+        const allTrips = data.objects || data.items || data || [];
+
+        // Calculate stats from all trips
+        const allStatuses = allTrips.map((t) => (t.status || "").toLowerCase());
         setStats({
-          total: data.total || 0,
-          pending: data.pending || 0,
-          confirmed: data.confirmed || 0,
-          assigned: data.assigned || 0,
+          total: allTrips.length,
+          pending: allStatuses.filter(
+            (s) => s === "pending" || s === "waiting" || s === "planned"
+          ).length,
+          confirmed: allStatuses.filter((s) => s === "confirmed").length,
+          assigned: allStatuses.filter((s) => s === "assigned").length,
         });
       }
     } catch (err) {
       console.error("Error loading stats:", err);
     }
+  };
+
+  const calculateStats = () => {
+    // This is now unused but kept for compatibility
+    const allStatuses = trips.map((t) => (t.status || "").toLowerCase());
+    setStats({
+      total: trips.length,
+      pending: allStatuses.filter(
+        (s) => s === "pending" || s === "waiting" || s === "planned"
+      ).length,
+      confirmed: allStatuses.filter((s) => s === "confirmed").length,
+      assigned: allStatuses.filter((s) => s === "assigned").length,
+    });
   };
 
   const openAssignModal = async (trip) => {
@@ -189,7 +226,12 @@ export default function DriverAssignment() {
       toast.success("Phân công thành công!");
       setShowAssignModal(false);
       await loadTrips();
-      await loadStats();
+      // Try to reload stats, fallback to calculation if fails
+      try {
+        await loadStats();
+      } catch {
+        calculateStats();
+      }
     } catch (err) {
       console.error("Error assigning:", err);
       toast.error("Không thể phân công. Vui lòng thử lại.");
@@ -261,15 +303,109 @@ export default function DriverAssignment() {
   if (loading) {
     return (
       <div className="assignment-page">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
-          }}
-        >
-          <div className="line-spinner"></div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+
+        <div className="assignment-header-simple">
+          <div>
+            <div className="assignment-header-title">Phân công tài xế</div>
+            <div className="assignment-header-subtitle">
+              Quản lý chuyến đi và phân công tài xế
+            </div>
+          </div>
+        </div>
+
+        <div className="assignment-stats-row">
+          <div className="assignment-stat assignment-stat-1">
+            <div className="assignment-stat-label">Tổng số</div>
+            <div className="assignment-stat-value">...</div>
+          </div>
+          <div className="assignment-stat assignment-stat-2">
+            <div className="assignment-stat-label">Chờ phân công</div>
+            <div className="assignment-stat-value">...</div>
+          </div>
+          <div className="assignment-stat assignment-stat-3">
+            <div className="assignment-stat-label">Đã xác nhận</div>
+            <div className="assignment-stat-value">...</div>
+          </div>
+          <div className="assignment-stat assignment-stat-4">
+            <div className="assignment-stat-label">Đã phân công</div>
+            <div className="assignment-stat-value">...</div>
+          </div>
+        </div>
+
+        <div className="assignment-filters-container">
+          <div className="assignment-filters-row">
+            <div className="assignment-search-box">
+              <FaSearch />
+              <input
+                type="text"
+                placeholder="Tìm kiếm theo tên, SĐT, email..."
+                value=""
+                onChange={() => {}}
+                disabled
+              />
+            </div>
+          </div>
+          <div className="assignment-filters-row">
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả ngày" }]}
+              placeholder="Chọn ngày"
+            />
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả tháng" }]}
+              placeholder="Chọn tháng"
+            />
+            <CustomSelect
+              value=""
+              onChange={() => {}}
+              options={[{ value: "", label: "Tất cả năm" }]}
+              placeholder="Chọn năm"
+            />
+          </div>
+        </div>
+
+        <div className="assignment-list">
+          <div className="assignment-table-card">
+            <div className="assignment-table-wrap">
+              <table className="assignment-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Khách hàng</th>
+                    <th>Liên hệ</th>
+                    <th>Lộ trình</th>
+                    <th>Thời gian</th>
+                    <th>Loại xe</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -315,32 +451,74 @@ export default function DriverAssignment() {
       )}
 
       <div className="assignment-stats-row">
-        <div className="assignment-stat">
+        <div className="assignment-stat assignment-stat-1">
           <div className="assignment-stat-label">Tổng số</div>
           <div className="assignment-stat-value">{stats.total}</div>
         </div>
-        <div className="assignment-stat">
+        <div className="assignment-stat assignment-stat-2">
           <div className="assignment-stat-label">Chờ phân công</div>
           <div className="assignment-stat-value">{stats.pending}</div>
         </div>
-        <div className="assignment-stat">
+        <div className="assignment-stat assignment-stat-3">
           <div className="assignment-stat-label">Đã xác nhận</div>
           <div className="assignment-stat-value">{stats.confirmed}</div>
         </div>
-        <div className="assignment-stat">
+        <div className="assignment-stat assignment-stat-4">
           <div className="assignment-stat-label">Đã phân công</div>
           <div className="assignment-stat-value">{stats.assigned}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="assignment-filters">
-        <CustomSelect
-          value={filters.status}
-          onChange={(value) => handleFilterChange("status", value)}
-          options={statusOptions}
-          placeholder="Tất cả trạng thái"
-        />
+      <div className="assignment-filters-container">
+        <div className="assignment-filters-row">
+          <div className="assignment-search-box">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, SĐT, email..."
+              value={filters.keyword}
+              onChange={(e) => handleFilterChange("keyword", e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="assignment-filters-row">
+          <CustomSelect
+            value={filters.day}
+            onChange={(value) => handleFilterChange("day", value)}
+            options={[
+              { value: "", label: "Tất cả ngày" },
+              ...Array.from({ length: 31 }, (_, i) => ({
+                value: String(i + 1),
+                label: `Ngày ${i + 1}`,
+              })),
+            ]}
+            placeholder="Chọn ngày"
+          />
+          <CustomSelect
+            value={filters.month}
+            onChange={(value) => handleFilterChange("month", value)}
+            options={[
+              { value: "", label: "Tất cả tháng" },
+              ...Array.from({ length: 12 }, (_, i) => ({
+                value: String(i + 1),
+                label: `Tháng ${i + 1}`,
+              })),
+            ]}
+            placeholder="Chọn tháng"
+          />
+          <CustomSelect
+            value={filters.year}
+            onChange={(value) => handleFilterChange("year", value)}
+            options={[
+              { value: "", label: "Tất cả năm" },
+              { value: "2024", label: "2024" },
+              { value: "2025", label: "2025" },
+              { value: "2026", label: "2026" },
+            ]}
+            placeholder="Chọn năm"
+          />
+        </div>
       </div>
 
       <div className="assignment-list">
@@ -355,8 +533,6 @@ export default function DriverAssignment() {
                   <th>Lộ trình</th>
                   <th>Thời gian</th>
                   <th>Loại xe</th>
-                  <th>Phân công</th>
-                  <th>Trạng thái</th>
                   <th>Hành động</th>
                 </tr>
               </thead>
@@ -373,7 +549,7 @@ export default function DriverAssignment() {
                 ) : trips.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan="7"
                       style={{
                         textAlign: "center",
                         padding: "40px",
@@ -427,43 +603,14 @@ export default function DriverAssignment() {
                           {trip.requestedVehicleType || "-"}
                         </div>
                       </td>
-                      <td className="assignment-td">
-                        {trip.assignedVehiclePlate ? (
-                          <>
-                            <div className="assignment-assigned-plate">
-                              {trip.assignedVehiclePlate}
-                            </div>
-                            {trip.assignedDriverName && (
-                              <div className="assignment-assigned-driver">
-                                {trip.assignedDriverName}
-                              </div>
-                            )}
-                          </>
-                        ) : (
-                          <div className="assignment-not-assigned">
-                            Chưa phân công
-                          </div>
-                        )}
-                      </td>
-                      <td className="assignment-td">
-                        <span
-                          className={`assignment-status-badge status-${(
-                            trip.status || "unknown"
-                          ).toLowerCase()}`}
-                        >
-                          {getStatusLabel(trip.status)}
-                        </span>
-                      </td>
                       <td className="assignment-td assignment-td-actions">
                         <div className="assignment-actions">
-                          {!trip.assignedVehiclePlate && (
-                            <button
-                              className="assignment-btn-assign"
-                              onClick={() => openAssignModal(trip)}
-                            >
-                              <FaRoute /> Phân công
-                            </button>
-                          )}
+                          <button
+                            className="assignment-btn-assign"
+                            onClick={() => openAssignModal(trip)}
+                          >
+                            <FaRoute /> Phân công
+                          </button>
                         </div>
                       </td>
                     </tr>

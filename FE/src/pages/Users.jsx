@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash, FaUser } from "react-icons/fa";
+import { FaEdit, FaTrash, FaUser, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./Users.css";
@@ -13,13 +13,31 @@ const normalizeRole = (role) => (role || "").toLowerCase();
 const getRoleClass = (role) => {
   const normalized = normalizeRole(role);
   if (normalized === "admin") return "role-admin";
-  if (normalized === "manager") return "role-manager";
+  if (normalized === "staff") return "role-staff";
+  if (normalized === "driver") return "role-driver";
   return "role-staff";
 };
 
 const formatRoleLabel = (role) => {
-  const normalized = normalizeRole(role) || "staff";
-  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+  const normalized = normalizeRole(role);
+  const roleMap = {
+    admin: "Quản trị",
+    staff: "Nhân viên",
+    driver: "Tài xế",
+  };
+  return roleMap[normalized] || "Nhân viên";
+};
+
+const getDepartmentClass = (department) => {
+  if (!department) return "dept-default";
+  const dept = department.toLowerCase();
+  if (dept.includes("it") || dept.includes("công nghệ")) return "dept-it";
+  if (dept.includes("operation") || dept.includes("vận hành"))
+    return "dept-operations";
+  if (dept.includes("logistic") || dept.includes("hậu cần"))
+    return "dept-logistics";
+  if (dept.includes("hr") || dept.includes("nhân sự")) return "dept-hr";
+  return "dept-default";
 };
 
 export default function Users() {
@@ -42,7 +60,7 @@ export default function Users() {
   // Filter state
   const [filters, setFilters] = useState({
     role: "",
-    department: "",
+    keyword: "",
   });
 
   // Modal state
@@ -72,22 +90,15 @@ export default function Users() {
     try {
       setTableLoading(true);
 
-      console.log("Loading users...");
-      console.log("Filters:", filters);
-      console.log("Pagination:", pagination);
-
       const usersData = await userAPI.getAllUsers({
         pageNumber: pagination.currentPage,
         pageSize: pagination.pageSize,
         role: filters.role,
-        department: filters.department,
+        keyword: filters.keyword,
       });
-
-      console.log("Users data received:", usersData);
 
       // Handle different response structures
       const usersList = usersData.objects || usersData.items || usersData || [];
-      console.log("Users list:", usersList);
 
       setUsers(Array.isArray(usersList) ? usersList : []);
       setPagination((prev) => ({
@@ -159,27 +170,134 @@ export default function Users() {
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
   };
 
-  const stats = {
-    total: users.length,
-    admin: users.filter((u) => (u.role || "").toLowerCase() === "admin").length,
-    manager: users.filter((u) => (u.role || "").toLowerCase() === "manager").length,
-    staff: users.filter((u) => (u.role || "").toLowerCase() === "staff" || !u.role).length,
+  // Load stats once on mount
+  useEffect(() => {
+    loadStats();
+  }, []);
+
+  // Stats state - tổng thể không phụ thuộc pagination
+  const [stats, setStats] = useState({
+    total: 0,
+    admin: 0,
+    staff: 0,
+    driver: 0,
+  });
+
+  const loadStats = async () => {
+    try {
+      // Load all users without pagination to get accurate stats
+      const data = await userAPI.getAllUsers({
+        pageNumber: 1,
+        pageSize: 9999, // Get all
+      });
+
+      const allUsers = data.objects || data.items || data || [];
+
+      setStats({
+        total: allUsers.length,
+        admin: allUsers.filter((u) => (u.role || "").toLowerCase() === "admin")
+          .length,
+        staff: allUsers.filter((u) => (u.role || "").toLowerCase() === "staff")
+          .length,
+        driver: allUsers.filter(
+          (u) => (u.role || "").toLowerCase() === "driver"
+        ).length,
+      });
+    } catch (err) {
+      console.error("Error loading stats:", err);
+    }
   };
 
   if (loading) {
     return (
       <div className="users-page">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
-            fontSize: "24px",
-            color: "#3b82f6",
-          }}
-        >
-          <div className="line-spinner"></div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+
+        <div className="users-header-simple">
+          <div>
+            <div className="users-header-title">Quản lý tài khoản</div>
+            <div className="users-header-subtitle">
+              Quản lý người dùng trong hệ thống
+            </div>
+          </div>
+        </div>
+
+        <div className="users-stats-row">
+          <div className="user-stat user-stat-1">
+            <div className="user-stat-label">Tổng số</div>
+            <div className="user-stat-value">...</div>
+          </div>
+          <div className="user-stat user-stat-2">
+            <div className="user-stat-label">Admin</div>
+            <div className="user-stat-value">...</div>
+          </div>
+          <div className="user-stat user-stat-3">
+            <div className="user-stat-label">Staff</div>
+            <div className="user-stat-value">...</div>
+          </div>
+          <div className="user-stat user-stat-4">
+            <div className="user-stat-label">Driver</div>
+            <div className="user-stat-value">...</div>
+          </div>
+        </div>
+
+        <div className="users-filters">
+          <div className="users-search-box">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo tên, email, SĐT..."
+              value=""
+              onChange={() => {}}
+              disabled
+            />
+          </div>
+          <CustomSelect
+            value=""
+            onChange={() => {}}
+            options={[{ value: "", label: "Tất cả vai trò" }]}
+            placeholder="Tất cả vai trò"
+          />
+        </div>
+
+        <div className="users-list">
+          <div className="users-table-card">
+            <div className="users-table-wrap">
+              <table className="users-table">
+                <thead>
+                  <tr>
+                    <th>Tên</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Vai trò</th>
+                    <th>Phòng ban</th>
+                    <th>Ngày đăng ký</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -213,26 +331,35 @@ export default function Users() {
       )}
 
       <div className="users-stats-row">
-        <div className="user-stat">
+        <div className="user-stat user-stat-1">
           <div className="user-stat-label">Tổng số</div>
           <div className="user-stat-value">{stats.total}</div>
         </div>
-        <div className="user-stat">
+        <div className="user-stat user-stat-2">
           <div className="user-stat-label">Admin</div>
           <div className="user-stat-value">{stats.admin}</div>
         </div>
-        <div className="user-stat">
-          <div className="user-stat-label">Manager</div>
-          <div className="user-stat-value">{stats.manager}</div>
-        </div>
-        <div className="user-stat">
+        <div className="user-stat user-stat-3">
           <div className="user-stat-label">Staff</div>
           <div className="user-stat-value">{stats.staff}</div>
+        </div>
+        <div className="user-stat user-stat-4">
+          <div className="user-stat-label">Driver</div>
+          <div className="user-stat-value">{stats.driver}</div>
         </div>
       </div>
 
       {/* Filters */}
       <div className="users-filters">
+        <div className="users-search-box">
+          <FaSearch />
+          <input
+            type="text"
+            placeholder="Tìm kiếm theo tên, email, SĐT..."
+            value={filters.keyword}
+            onChange={(e) => handleFilterChange("keyword", e.target.value)}
+          />
+        </div>
         <CustomSelect
           value={filters.role}
           onChange={(value) => handleFilterChange("role", value)}
@@ -312,9 +439,17 @@ export default function Users() {
                         </span>
                       </td>
                       <td className="users-td">
-                        <div className="users-dept-text">
-                          {user.department || "-"}
-                        </div>
+                        {user.department ? (
+                          <span
+                            className={`users-dept-badge ${getDepartmentClass(
+                              user.department
+                            )}`}
+                          >
+                            {user.department}
+                          </span>
+                        ) : (
+                          <span className="users-dept-text">-</span>
+                        )}
                       </td>
                       <td className="users-td">
                         <div className="users-date-cell">
@@ -398,7 +533,3 @@ export default function Users() {
     </div>
   );
 }
-
-
-
-

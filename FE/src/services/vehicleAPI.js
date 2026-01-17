@@ -10,6 +10,7 @@ class VehicleAPI {
       if (params.pageNumber)
         queryParams.append("pageNumber", params.pageNumber);
       if (params.pageSize) queryParams.append("pageSize", params.pageSize);
+      if (params.keyword) queryParams.append("keyword", params.keyword);
       if (params.vehicleStatus)
         queryParams.append("vehicleStatus", params.vehicleStatus);
       if (params.vehicleType)

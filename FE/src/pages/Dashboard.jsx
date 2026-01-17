@@ -70,6 +70,12 @@ const MENU_ITEMS = [
     roles: ["admin", "staff"],
   },
   {
+    key: "assignments",
+    label: "Phân công tài xế",
+    icon: <FaUserFriends />,
+    roles: ["admin", "staff"],
+  },
+  {
     key: "emergency",
     label: "Báo cáo khẩn cấp",
     icon: <FaExclamationTriangle />,
@@ -86,12 +92,6 @@ const MENU_ITEMS = [
     label: "Nhiên liệu",
     icon: <FaGasPump />,
     roles: ["admin", "user"],
-  },
-  {
-    key: "assignments",
-    label: "Phân công tài xế",
-    icon: <FaUserFriends />,
-    roles: ["admin", "staff"],
   },
   {
     key: "account-management",
@@ -156,7 +156,9 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
           </div>
           <div className="dashboard-logo-text">
             <span className="dashboard-logo-title">FMS</span>
-            <span className="dashboard-logo-subtitle">Fleet Management</span>
+            <span className="dashboard-logo-subtitle">
+              Hệ thống quản lý đội xe
+            </span>
           </div>
         </div>
 
@@ -175,7 +177,21 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
 
         <div className="dashboard-sidebar-footer">
           <div className="dashboard-user">
-            <div className="dashboard-user-avatar">{initials}</div>
+            <div className="dashboard-user-avatar">
+              {currentUser?.avatar ? (
+                <img
+                  src={currentUser.avatar}
+                  alt="Avatar"
+                  className="dashboard-user-avatar-img"
+                />
+              ) : (
+                <img
+                  src="/default_avt.jpg"
+                  alt="Default Avatar"
+                  className="dashboard-user-avatar-img"
+                />
+              )}
+            </div>
             <div className="dashboard-user-info">
               <span className="dashboard-user-name">
                 {currentUser?.fullName || "Người dùng"}
@@ -187,17 +203,17 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
               >
                 {ROLE_LABELS[role] || "Người dùng"}
               </span>
+              <button
+                className="dashboard-profile-link"
+                onClick={() => setActiveMenu("account")}
+              >
+                Thông tin hồ sơ
+              </button>
             </div>
             <button className="dashboard-logout" onClick={onLogout}>
               <FaSignOutAlt />
             </button>
           </div>
-          <button
-            className="dashboard-profile-link"
-            onClick={() => setActiveMenu("account")}
-          >
-            Thông tin hồ sơ
-          </button>
         </div>
       </aside>
 

@@ -16,6 +16,17 @@ class DriverAPI {
       if (params.isDescending !== undefined)
         queryParams.append("isDescending", params.isDescending);
 
+      // New filter params
+      if (params.keyword) queryParams.append("keyword", params.keyword);
+      if (params.minRating) queryParams.append("minRating", params.minRating);
+      if (params.maxRating) queryParams.append("maxRating", params.maxRating);
+      if (params.minExperienceYears)
+        queryParams.append("minExperienceYears", params.minExperienceYears);
+      if (params.maxExperienceYears)
+        queryParams.append("maxExperienceYears", params.maxExperienceYears);
+      if (params.licenseClass)
+        queryParams.append("licenseClass", params.licenseClass);
+
       const response = await fetchWithRetry(
         `${API_CONFIG.BASE_URL}/Driver?${queryParams}`,
         {

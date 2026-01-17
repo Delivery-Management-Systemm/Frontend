@@ -13,8 +13,7 @@ class UserAPI {
       if (params.role) queryParams.append("role", params.role);
       if (params.department)
         queryParams.append("department", params.department);
-      if (params.searchTerm)
-        queryParams.append("searchTerm", params.searchTerm);
+      if (params.keyword) queryParams.append("keyword", params.keyword);
 
       const response = await fetchWithRetry(
         `${API_CONFIG.BASE_URL}/User/all?${queryParams}`,

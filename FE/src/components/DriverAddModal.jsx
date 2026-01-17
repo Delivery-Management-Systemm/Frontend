@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./DriverAddModal.css";
+import CustomSelect from "./CustomSelect";
 
 const LICENSE_OPTIONS = [
   "Bằng B1",
@@ -96,11 +97,11 @@ export default function DriverAddModal({ onClose, onSubmit, driver = null }) {
   return (
     <div className="driver-modal-overlay">
       <div className="driver-modal-container">
-
-        <h2 className="driver-modal-title">{driver ? "Cập nhật tài xế" : "Thêm tài xế mới"}</h2>
+        <h2 className="driver-modal-title">
+          {driver ? "Cập nhật tài xế" : "Thêm tài xế mới"}
+        </h2>
 
         <div className="driver-modal-grid">
-
           <div className="driver-modal-field">
             <label>Họ và tên</label>
             <input
@@ -146,7 +147,9 @@ export default function DriverAddModal({ onClose, onSubmit, driver = null }) {
                   <button
                     key={lbl}
                     type="button"
-                    className={"driver-license-chip " + (active ? "active" : "")}
+                    className={
+                      "driver-license-chip " + (active ? "active" : "")
+                    }
                     onClick={() => toggleLicense(lbl)}
                   >
                     {lbl}
@@ -158,14 +161,16 @@ export default function DriverAddModal({ onClose, onSubmit, driver = null }) {
 
           <div className="driver-modal-field">
             <label>Ca làm việc</label>
-            <select
+            <CustomSelect
               value={form.shift}
-              onChange={(e) => update("shift", e.target.value)}
-            >
-              <option>Ca sáng</option>
-              <option>Ca chiều</option>
-              <option>Ca đêm</option>
-            </select>
+              onChange={(value) => update("shift", value)}
+              options={[
+                { value: "Ca sáng", label: "Ca sáng" },
+                { value: "Ca chiều", label: "Ca chiều" },
+                { value: "Ca đêm", label: "Ca đêm" },
+              ]}
+              placeholder="Chọn ca làm việc"
+            />
           </div>
 
           <div className="driver-modal-field">
@@ -191,34 +196,35 @@ export default function DriverAddModal({ onClose, onSubmit, driver = null }) {
 
           <div className="driver-modal-field">
             <label>Trạng thái</label>
-            <select
+            <CustomSelect
               value={form.status}
-              onChange={(e) => update("status", e.target.value)}
-            >
-              <option>Sẵn sàng</option>
-              <option>Đang lái</option>
-              <option>Đang công tác</option>
-              <option>Nghỉ phép</option>
-            </select>
+              onChange={(value) => update("status", value)}
+              options={[
+                { value: "Sẵn sàng", label: "Sẵn sàng" },
+                { value: "Đang lái", label: "Đang lái" },
+                { value: "Đang công tác", label: "Đang công tác" },
+                { value: "Nghỉ phép", label: "Nghỉ phép" },
+              ]}
+              placeholder="Chọn trạng thái"
+            />
           </div>
-
         </div>
 
-        {error ? <div className="driver-modal-error" role="alert">{error}</div> : null}
+        {error ? (
+          <div className="driver-modal-error" role="alert">
+            {error}
+          </div>
+        ) : null}
 
         <div className="driver-modal-actions">
           <button className="driver-modal-cancel" onClick={onClose}>
             Hủy
           </button>
 
-          <button
-            className="driver-modal-submit"
-            onClick={handleSubmit}
-          >
+          <button className="driver-modal-submit" onClick={handleSubmit}>
             {driver ? "Cập nhật" : "Thêm tài xế"}
           </button>
         </div>
-
       </div>
     </div>
   );

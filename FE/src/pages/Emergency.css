@@ -60,7 +60,7 @@
   font-size: 13px;
 }
 .emergency-new-btn {
-  background: #ef4444;
+  background: #16a34a;
   color: #fff;
   padding: 10px 14px;
   border-radius: 10px;
@@ -79,6 +79,22 @@
   border: 1px solid #a0a0a0;
   border-radius: 10px;
   padding: 16px;
+}
+
+.em-stat-1 {
+  background: #dcfce7;
+}
+
+.em-stat-2 {
+  background: #dbeafe;
+}
+
+.em-stat-3 {
+  background: #fef08a;
+}
+
+.em-stat-4 {
+  background: #fecaca;
 }
 .em-stat-label {
   color: #6b7280;
@@ -295,7 +311,7 @@
 }
 
 .emergency-new-btn {
-  background: #ef4444;
+  background: #16a34a;
   color: #fff;
   padding: 12px 16px;
   border-radius: 8px;
@@ -309,7 +325,7 @@
 }
 
 .emergency-new-btn:hover {
-  background: #dc2626;
+  background: #15803d;
 }
 
 /* Emergency actions */

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
+import { FaEdit, FaTrash, FaEye, FaSearch } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./Drivers.css";
@@ -48,6 +48,12 @@ export default function Drivers() {
   // Filter state
   const [filters, setFilters] = useState({
     driverStatus: "",
+    keyword: "",
+    minRating: "",
+    maxRating: "",
+    minExperience: "",
+    maxExperience: "",
+    licenseClass: "",
   });
 
   // Load drivers from API
@@ -81,11 +87,23 @@ export default function Drivers() {
     try {
       setTableLoading(true);
 
-      const data = await getDrivers({
+      const params = {
         pageNumber: pagination.currentPage,
         pageSize: pagination.pageSize,
         driverStatus: filters.driverStatus,
-      });
+      };
+
+      // Add optional filters
+      if (filters.keyword) params.keyword = filters.keyword;
+      if (filters.minRating) params.minRating = Number(filters.minRating);
+      if (filters.maxRating) params.maxRating = Number(filters.maxRating);
+      if (filters.minExperience)
+        params.minExperienceYears = Number(filters.minExperience);
+      if (filters.maxExperience)
+        params.maxExperienceYears = Number(filters.maxExperience);
+      if (filters.licenseClass) params.licenseClass = filters.licenseClass;
+
+      const data = await getDrivers(params);
 
       const driversList = data.objects || data.items || data || [];
       // normalize to array
@@ -247,15 +265,86 @@ export default function Drivers() {
   if (loading) {
     return (
       <div className="drivers-page">
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            height: "200px",
-          }}
-        >
-          <div className="line-spinner"></div>
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
+
+        <div className="drivers-header-simple">
+          <div>
+            <div className="drivers-header-title">Quản lý tài xế</div>
+            <div className="drivers-header-subtitle">
+              Quản lý thông tin và lịch trình tài xế
+            </div>
+          </div>
+        </div>
+
+        <div className="drivers-stats-row">
+          <div className="driver-stat driver-stat-1">
+            <div className="driver-stat-label">Tổng số</div>
+            <div className="driver-stat-value">...</div>
+          </div>
+          <div className="driver-stat driver-stat-2">
+            <div className="driver-stat-label">Sẵn sàng</div>
+            <div className="driver-stat-value">...</div>
+          </div>
+          <div className="driver-stat driver-stat-3">
+            <div className="driver-stat-label">Đang chạy</div>
+            <div className="driver-stat-value">...</div>
+          </div>
+          <div className="driver-stat driver-stat-4">
+            <div className="driver-stat-label">Nghỉ</div>
+            <div className="driver-stat-value">...</div>
+          </div>
+        </div>
+
+        <div className="drivers-filters">
+          <CustomSelect
+            value=""
+            onChange={() => {}}
+            options={[{ value: "", label: "Tất cả trạng thái" }]}
+            placeholder="Tất cả trạng thái"
+          />
+          <button className="drivers-new-btn" disabled>
+            + Thêm tài xế
+          </button>
+        </div>
+
+        <div className="drivers-list">
+          <div className="drivers-table-card">
+            <div className="drivers-table-wrap">
+              <table className="drivers-table">
+                <thead>
+                  <tr>
+                    <th>Tài xế</th>
+                    <th>Liên hệ</th>
+                    <th>Bằng lái</th>
+                    <th>Kinh nghiệm</th>
+                    <th>Đánh giá</th>
+                    <th>Trạng thái</th>
+                    <th>Hành động</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td
+                      colSpan="7"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -289,39 +378,124 @@ export default function Drivers() {
       )}
 
       <div className="drivers-stats-row">
-        <div className="driver-stat">
+        <div className="driver-stat driver-stat-1">
           <div className="driver-stat-label">Tổng số</div>
           <div className="driver-stat-value">{stats.total}</div>
         </div>
-        <div className="driver-stat">
+        <div className="driver-stat driver-stat-2">
           <div className="driver-stat-label">Sẵn sàng</div>
           <div className="driver-stat-value">{stats.available}</div>
         </div>
-        <div className="driver-stat">
+        <div className="driver-stat driver-stat-3">
           <div className="driver-stat-label">Đang chạy</div>
           <div className="driver-stat-value">{stats.onTrip}</div>
         </div>
-        <div className="driver-stat">
+        <div className="driver-stat driver-stat-4">
           <div className="driver-stat-label">Nghỉ</div>
           <div className="driver-stat-value">{stats.offline}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="drivers-filters">
-        <CustomSelect
-          value={filters.driverStatus}
-          onChange={(value) => handleFilterChange("driverStatus", value)}
-          options={statusOptions}
-          placeholder="Tất cả trạng thái"
-        />
+      <div className="drivers-filters-container">
+        {/* Row 1: Search + Status */}
+        <div className="drivers-filters-row">
+          <div className="drivers-search-box">
+            <FaSearch />
+            <input
+              type="text"
+              placeholder="Tìm theo tên tài xế, SĐT, email..."
+              value={filters.keyword}
+              onChange={(e) => handleFilterChange("keyword", e.target.value)}
+            />
+          </div>
 
-        <button
-          className="drivers-new-btn"
-          onClick={() => setShowAddModal(true)}
-        >
-          + Thêm tài xế
-        </button>
+          <CustomSelect
+            value={filters.driverStatus}
+            onChange={(value) => handleFilterChange("driverStatus", value)}
+            options={statusOptions}
+            placeholder="Tất cả trạng thái"
+          />
+        </div>
+
+        {/* Row 2: License + Experience + Rating Min + Rating Max + Add Button */}
+        <div className="drivers-filters-row">
+          <CustomSelect
+            value={filters.licenseClass}
+            onChange={(value) => handleFilterChange("licenseClass", value)}
+            options={[
+              { value: "", label: "Tất cả bằng lái" },
+              { value: "A1", label: "Bằng A1 - Xe mô tô ≤ 125cc" },
+              { value: "A", label: "Bằng A - Xe mô tô > 125cc" },
+              { value: "B1", label: "Bằng B1 - Ô tô cá nhân" },
+              { value: "B", label: "Bằng B - Ô tô ≤ 9 chỗ" },
+              { value: "C1", label: "Bằng C1 - Xe tải 3.5-7.5 tấn" },
+              { value: "C", label: "Bằng C - Xe tải > 7.5 tấn" },
+              { value: "D1", label: "Bằng D1 - Xe khách ≤ 16 chỗ" },
+              { value: "D2", label: "Bằng D2 - Xe khách 17-29 chỗ" },
+              { value: "D", label: "Bằng D - Xe khách ≥ 30 chỗ" },
+              { value: "BE", label: "Bằng BE - Ô tô B kéo rơ-moóc" },
+              { value: "C1E", label: "Bằng C1E - Xe tải C1 kéo rơ-moóc" },
+              { value: "CE", label: "Bằng CE - Xe tải nặng kéo rơ-moóc" },
+              { value: "D1E", label: "Bằng D1E - Xe khách nhỏ kéo rơ-moóc" },
+              { value: "D2E", label: "Bằng D2E - Xe khách trung kéo rơ-moóc" },
+              { value: "DE", label: "Bằng DE - Xe khách lớn kéo rơ-moóc" },
+            ]}
+            placeholder="Tất cả bằng lái"
+          />
+
+          <CustomSelect
+            value={filters.minExperience}
+            onChange={(value) => handleFilterChange("minExperience", value)}
+            options={[
+              { value: "", label: "Tất cả kinh nghiệm" },
+              ...Array.from({ length: 50 }, (_, i) => ({
+                value: String(i + 1),
+                label: `${i + 1} năm trở lên`,
+              })),
+            ]}
+            placeholder="Tất cả kinh nghiệm"
+          />
+
+          <input
+            type="number"
+            className="drivers-filter-input"
+            placeholder="Đánh giá tối thiểu"
+            value={filters.minRating}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "" || (Number(val) >= 0 && Number(val) <= 5)) {
+                handleFilterChange("minRating", val);
+              }
+            }}
+            min="0"
+            max="5"
+            step="0.1"
+          />
+
+          <input
+            type="number"
+            className="drivers-filter-input"
+            placeholder="Đánh giá tối đa"
+            value={filters.maxRating}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val === "" || (Number(val) >= 0 && Number(val) <= 5)) {
+                handleFilterChange("maxRating", val);
+              }
+            }}
+            min="0"
+            max="5"
+            step="0.1"
+          />
+
+          <button
+            className="drivers-new-btn"
+            onClick={() => setShowAddModal(true)}
+          >
+            + Thêm tài xế
+          </button>
+        </div>
       </div>
 
       <div className="drivers-list">
@@ -367,21 +541,23 @@ export default function Drivers() {
                     <tr key={driver.driverID} className="drivers-tr">
                       <td className="drivers-td">
                         <div className="drivers-name-cell">
-                         <div className="drivers-avatar">
+                          <div className="drivers-avatar">
                             {driver.avatar ? (
-                              <img 
-                                src={driver.avatar} 
-                                alt={driver.name} 
+                              <img
+                                src={driver.avatar}
+                                alt={driver.name}
                                 className="drivers-avatar-img"
                                 onError={(e) => {
-                                  // Fallback nếu link ảnh lỗi
-                                  e.target.onerror = null; 
-                                  e.target.style.display = 'none';
-                                  e.target.parentNode.innerText = driver.name?.charAt(0).toUpperCase() || "D";
+                                  e.target.onerror = null;
+                                  e.target.src = "/default_avt.jpg";
                                 }}
                               />
                             ) : (
-                              (driver.name && driver.name.charAt(0).toUpperCase()) || "D"
+                              <img
+                                src="/default_avt.jpg"
+                                alt="Default Avatar"
+                                className="drivers-avatar-img"
+                              />
                             )}
                           </div>
                           <div>

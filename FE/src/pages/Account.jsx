@@ -282,7 +282,21 @@ const Account = ({ currentUser, onUpdateUser }) => {
           <h3>Ảnh đại diện</h3>
 
           <div className="avatar-box">
-            <div className="avatar-circle">👤</div>
+            <div className="avatar-circle">
+              {currentUser?.avatar ? (
+                <img
+                  src={currentUser.avatar}
+                  alt="Avatar"
+                  className="avatar-img"
+                />
+              ) : (
+                <img
+                  src="/default_avt.jpg"
+                  alt="Default Avatar"
+                  className="avatar-img"
+                />
+              )}
+            </div>
 
             <label className="upload-btn">
               <span>Thay đổi ảnh</span>
@@ -528,7 +542,9 @@ const Account = ({ currentUser, onUpdateUser }) => {
                 Xác nhận
               </button>
             </div>
-            <p className="account-otp-hint">Mã OTP có hiệu lực trong 10 phút.</p>
+            <p className="account-otp-hint">
+              Mã OTP có hiệu lực trong 10 phút.
+            </p>
           </div>
         </div>
       )}
