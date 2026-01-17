@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+﻿import React, { useEffect, useMemo, useState } from "react";
 import {
   MapContainer,
   Marker,
@@ -7,6 +7,7 @@ import {
   useMap,
   useMapEvents,
 } from "react-leaflet";
+import L from "leaflet";
 import "./AddBookingModal.css";
 import {
   buildRouteOptions,
@@ -17,13 +18,25 @@ import {
 } from "../services/routingService";
 
 const vehicleOptions = [
-  { key: "small_truck", label: "Xe tai nho" },
-  { key: "big_truck", label: "Xe tai lon" },
+  { key: "small_truck", label: "Xe tải nhỏ" },
+  { key: "big_truck", label: "Xe tải lớn" },
   { key: "container", label: "Xe container" },
-  { key: "bus", label: "Xe khach" },
+  { key: "bus", label: "Xe khách" },
 ];
 
 const defaultCenter = [10.8231, 106.6297];
+const pickupIcon = L.divIcon({
+  className: "route-marker route-marker--pickup",
+  html: "<span class=\"route-marker__dot\">P</span>",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
+const deliveryIcon = L.divIcon({
+  className: "route-marker route-marker--delivery",
+  html: "<span class=\"route-marker__dot\">D</span>",
+  iconSize: [28, 28],
+  iconAnchor: [14, 28],
+});
 
 function MapClickHandler({ onPick }) {
   useMapEvents({
@@ -128,7 +141,7 @@ export default function AddBookingModal({ onClose, onSave }) {
   const handleLocateAddress = async (target) => {
     const query = target === "pickup" ? form.pickup : form.delivery;
     if (!query.trim()) {
-      setRouteError("Vui long nhap dia chi.");
+      setRouteError("Vui lòng nhập địa chỉ.");
       return;
     }
     setRouteError("");
@@ -144,13 +157,13 @@ export default function AddBookingModal({ onClose, onSave }) {
       }
       setMapCenter([coords.lat, coords.lon]);
     } catch (error) {
-      setRouteError("Khong the tim dia chi. Vui long thu lai.");
+      setRouteError("Không thể tìm địa chỉ. Vui lòng thử lại.");
     }
   };
 
   const handleGenerateRoutes = async () => {
     if (!form.pickup.trim() || !form.delivery.trim()) {
-      setRouteError("Vui long nhap diem dau va diem cuoi.");
+      setRouteError("Vui lòng nhập điểm đầu và điểm cuối.");
       return;
     }
 
@@ -170,10 +183,10 @@ export default function AddBookingModal({ onClose, onSave }) {
       setDeliveryCoord({ lat: end.lat, lon: end.lon });
       setMapCenter([(start.lat + end.lat) / 2, (start.lon + end.lon) / 2]);
       if (options.length === 0) {
-        setRouteError("Khong tim thay tuyen phu hop.");
+        setRouteError("Không tìm thấy tuyến phù hợp.");
       }
     } catch (error) {
-      setRouteError("Khong the tinh tuyen. Vui long thu lai.");
+      setRouteError("Không thể tính tuyến. Vui lòng thử lại.");
       setRoutes([]);
       setSelectedRouteId("");
     } finally {
@@ -202,12 +215,12 @@ export default function AddBookingModal({ onClose, onSave }) {
       !form.delivery.trim() ||
       !form.date
     ) {
-      alert("Vui long dien day du thong tin bat buoc");
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc.");
       return;
     }
 
     if (routes.length > 0 && !selectedRoute) {
-      alert("Vui long chon tuyen duong");
+      alert("Vui lòng chọn tuyến đường.");
       return;
     }
 
@@ -250,20 +263,20 @@ export default function AddBookingModal({ onClose, onSave }) {
   return (
     <div className="addbooking-overlay">
       <div className="addbooking-container">
-        <h3 className="addbooking-title">Dat lich moi</h3>
+        <h3 className="addbooking-title">Đặt lịch moi</h3>
         <form className="addbooking-form" onSubmit={handleSubmit}>
           <div className="grid two">
             <div>
-              <label>Ten khach hang</label>
+              <label>Tên khách hàng</label>
               <input
                 className="input"
                 value={form.customer}
                 onChange={(e) => update("customer", e.target.value)}
-                placeholder="Nguyen Van A"
+                placeholder="Nguyễn Văn A"
               />
             </div>
             <div>
-              <label>So dien thoai</label>
+              <label>Số điện thoại</label>
               <input
                 className="input"
                 value={form.contact}
@@ -283,43 +296,43 @@ export default function AddBookingModal({ onClose, onSave }) {
             />
           </div>
 
-          <h4 className="section-title">Thong tin chuyen di</h4>
+          <h4 className="section-title">Thông tin chuyến đi</h4>
           <div>
-            <label>Diem dau</label>
+            <label>Điểm đầu</label>
             <input
               className="input"
               value={form.pickup}
               onChange={(e) => update("pickup", e.target.value)}
-              placeholder="Nhap diem dau"
+              placeholder="Nhập điểm đầu"
             />
             <button
               type="button"
               className="btn-link"
               onClick={() => handleLocateAddress("pickup")}
             >
-              Dinh vi diem dau tren ban do
+              Định vị điểm đầu trên bản đồ
             </button>
           </div>
           <div className="mt-3">
-            <label>Diem cuoi</label>
+            <label>Điểm cuối</label>
             <input
               className="input"
               value={form.delivery}
               onChange={(e) => update("delivery", e.target.value)}
-              placeholder="Nhap diem cuoi"
+              placeholder="Nhập điểm cuối"
             />
             <button
               type="button"
               className="btn-link"
               onClick={() => handleLocateAddress("delivery")}
             >
-              Dinh vi diem cuoi tren ban do
+              Định vị điểm cuối trên bản đồ
             </button>
           </div>
 
           <div className="route-map mt-3">
             <div className="route-map-toolbar">
-              <span>Chon diem tren ban do:</span>
+              <span>Chọn điểm trên bản đồ:</span>
               <button
                 type="button"
                 className={`btn btn-secondary ${
@@ -327,7 +340,7 @@ export default function AddBookingModal({ onClose, onSave }) {
                 }`}
                 onClick={() => setActivePoint("pickup")}
               >
-                Diem dau
+                Điểm đầu
               </button>
               <button
                 type="button"
@@ -336,9 +349,9 @@ export default function AddBookingModal({ onClose, onSave }) {
                 }`}
                 onClick={() => setActivePoint("delivery")}
               >
-                Diem cuoi
+                Điểm cuối
               </button>
-              <span className="route-hint">Click ban do de chon diem.</span>
+              <span className="route-hint">Click bản đồ để chọn điểm.</span>
             </div>
             <div className="route-map-frame">
               <MapContainer
@@ -358,10 +371,16 @@ export default function AddBookingModal({ onClose, onSave }) {
                   center={mapCenter}
                 />
                 {pickupCoord ? (
-                  <Marker position={[pickupCoord.lat, pickupCoord.lon]} />
+                  <Marker
+                    position={[pickupCoord.lat, pickupCoord.lon]}
+                    icon={pickupIcon}
+                  />
                 ) : null}
                 {deliveryCoord ? (
-                  <Marker position={[deliveryCoord.lat, deliveryCoord.lon]} />
+                  <Marker
+                    position={[deliveryCoord.lat, deliveryCoord.lon]}
+                    icon={deliveryIcon}
+                  />
                 ) : null}
                 {routeLine.length > 0 ? (
                   <Polyline positions={routeLine} />
@@ -378,10 +397,10 @@ export default function AddBookingModal({ onClose, onSave }) {
                 onClick={handleGenerateRoutes}
                 disabled={loadingRoutes}
               >
-                {loadingRoutes ? "Dang tinh tuyen..." : "Tao tuyen goi y"}
+                {loadingRoutes ? "Đang tính tuyến..." : "Tạo tuyến gợi ý"}
               </button>
               <span className="route-hint">
-                Go y tuyen dua tren quang duong, giao thong va chi phi uoc tinh.
+                Gợi ý tuyến dựa trên quãng đường, giao thông và chi phí ước tính.
               </span>
             </div>
 
@@ -404,15 +423,15 @@ export default function AddBookingModal({ onClose, onSave }) {
                     />
                     <div className="route-option-body">
                       <div className="route-title">
-                        Tuyen {idx + 1}: {route.distanceKm} km - {route.durationMin} phut
+                        Tuyến {idx + 1}: {route.distanceKm} km - {route.durationMin} phút
                       </div>
                       <div className="route-total">
-                        Tong chi phi: {formatVnd(route.costs.total)}
+                        Tổng chi phí: {formatVnd(route.costs.total)}
                       </div>
                       <div className="route-breakdown">
-                        Nhien lieu: {formatVnd(route.costs.fuel)} - Cao toc:{" "}
-                        {formatVnd(route.costs.toll)} - Pha:{" "}
-                        {formatVnd(route.costs.ferry)} - Thoi gian:{" "}
+                        Nhiên liệu: {formatVnd(route.costs.fuel)} - Cao tốc:{" "}
+                        {formatVnd(route.costs.toll)} - Phà:{" "}
+                        {formatVnd(route.costs.ferry)} - Thời gian:{" "}
                         {formatVnd(route.costs.time)}
                       </div>
                     </div>
@@ -424,7 +443,7 @@ export default function AddBookingModal({ onClose, onSave }) {
 
           <div className="grid two mt-3">
             <div>
-              <label>Ngay dat lich</label>
+              <label>Ngày đặt lịch</label>
               <input
                 className="input"
                 type="date"
@@ -433,7 +452,7 @@ export default function AddBookingModal({ onClose, onSave }) {
               />
             </div>
             <div>
-              <label>Gio dat lich</label>
+              <label>Giờ đặt lịch</label>
               <input
                 className="input"
                 type="time"
@@ -445,7 +464,7 @@ export default function AddBookingModal({ onClose, onSave }) {
 
           <div className="grid two mt-3">
             <div>
-              <label>Loai phuong tien</label>
+              <label>Loại phương tiện</label>
               <select
                 className="input"
                 value={form.vehicleTypeKey}
@@ -459,38 +478,38 @@ export default function AddBookingModal({ onClose, onSave }) {
               </select>
             </div>
             <div>
-              <label>So hanh khach</label>
+              <label>Số hành khách</label>
               <input className="input" type="number" min="0" placeholder="0" />
             </div>
           </div>
 
           <div className="mt-3">
-            <label>Hang hoa</label>
+            <label>Hàng hóa</label>
             <input
               className="input"
               value={form.vehicleNote}
               onChange={(e) => update("vehicleNote", e.target.value)}
-              placeholder="Mo ta hang hoa"
+              placeholder="Mô tả hàng hóa"
             />
           </div>
 
           <div className="mt-3">
-            <label>Ghi chu</label>
+            <label>Ghi chú</label>
             <textarea
               className="input"
               rows={4}
               value={form.notes}
               onChange={(e) => update("notes", e.target.value)}
-              placeholder="Ghi chu them ve chuyen di"
+              placeholder="Ghi chú thêm về chuyến đi"
             />
           </div>
 
           <div className="mt-4 actions">
             <button type="button" className="btn btn-ghost" onClick={onClose}>
-              Huy
+              Hủy
             </button>
             <button type="submit" className="btn btn-primary">
-              Dat lich
+              Đặt lịch
             </button>
           </div>
         </form>
@@ -498,4 +517,5 @@ export default function AddBookingModal({ onClose, onSave }) {
     </div>
   );
 }
+
 

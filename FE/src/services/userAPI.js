@@ -82,6 +82,30 @@ class UserAPI {
     }
   }
 
+  // Register (create user)
+  async register(userData) {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/register`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify(userData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error registering user:", error);
+      throw error;
+    }
+  }
+
   // Forgot password (send OTP)
   async forgotPassword(email) {
     try {
