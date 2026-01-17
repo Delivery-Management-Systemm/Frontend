@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+﻿import React, { useState, useEffect } from "react";
 import "./UserEditModal.css";
 
 export default function UserEditModal({ user, onClose, onSave }) {
@@ -31,7 +31,6 @@ export default function UserEditModal({ user, onClose, onSave }) {
       return;
     }
 
-    // Format data for API - match backend DTO
     const userData = {
       FullName: form.fullName,
       Email: form.email,
@@ -88,9 +87,9 @@ export default function UserEditModal({ user, onClose, onSave }) {
                 onChange={(e) => update("role", e.target.value)}
               >
                 <option value="">-- Chọn vai trò --</option>
-                <option value="Admin">Admin</option>
-                <option value="Manager">Manager</option>
-                <option value="Staff">Staff</option>
+                <option value="admin">Quản trị viên</option>
+                <option value="staff">Nhân viên</option>
+                <option value="driver">Tài xế</option>
               </select>
             </div>
           </div>
@@ -118,4 +117,3 @@ export default function UserEditModal({ user, onClose, onSave }) {
     </div>
   );
 }
-
