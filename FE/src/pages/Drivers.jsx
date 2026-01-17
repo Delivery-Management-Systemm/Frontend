@@ -338,10 +338,22 @@ export default function Drivers() {
                     <tr key={driver.driverID} className="drivers-tr">
                       <td className="drivers-td">
                         <div className="drivers-name-cell">
-                          <div className="drivers-avatar">
-                            {(driver.name &&
-                              driver.name.charAt(0).toUpperCase()) ||
-                              "D"}
+                         <div className="drivers-avatar">
+                            {driver.avatar ? (
+                              <img 
+                                src={driver.avatar} 
+                                alt={driver.name} 
+                                className="drivers-avatar-img"
+                                onError={(e) => {
+                                  // Fallback nếu link ảnh lỗi
+                                  e.target.onerror = null; 
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerText = driver.name?.charAt(0).toUpperCase() || "D";
+                                }}
+                              />
+                            ) : (
+                              (driver.name && driver.name.charAt(0).toUpperCase()) || "D"
+                            )}
                           </div>
                           <div>
                             <div
