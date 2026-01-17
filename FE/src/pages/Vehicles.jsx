@@ -30,6 +30,14 @@ export default function Vehicles() {
   const [confirmMessage, setConfirmMessage] = useState("");
   const [confirmTitle, setConfirmTitle] = useState("Xác nhận");
 
+  // Stats state - tổng thể không phụ thuộc pagination
+  const [stats, setStats] = useState({
+    total: 0,
+    available: 0,
+    inUse: 0,
+    maintenance: 0,
+  });
+
   // Options state
   const [statusOptions, setStatusOptions] = useState([]);
   const [typeOptions, setTypeOptions] = useState([]);
@@ -56,6 +64,11 @@ export default function Vehicles() {
   useEffect(() => {
     loadVehicles();
   }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  // Load stats once on mount
+  useEffect(() => {
+    loadStats();
+  }, []);
 
   // Load options on mount
   useEffect(() => {
@@ -116,6 +129,39 @@ export default function Vehicles() {
     } finally {
       setLoading(false);
       setTableLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      // Load all vehicles without pagination to get accurate stats
+      const data = await getVehicles({
+        pageNumber: 1,
+        pageSize: 9999, // Get all
+      });
+
+      const allVehicles = data.objects || data.items || data || [];
+
+      setStats({
+        total: allVehicles.length,
+        available: allVehicles.filter(
+          (v) =>
+            (v.vehicleStatus || "").toLowerCase() === "available" ||
+            (v.vehicleStatus || "") === "Sẵn sàng"
+        ).length,
+        inUse: allVehicles.filter(
+          (v) =>
+            (v.vehicleStatus || "").toLowerCase() === "in_use" ||
+            (v.vehicleStatus || "") === "Đang dùng"
+        ).length,
+        maintenance: allVehicles.filter(
+          (v) =>
+            (v.vehicleStatus || "").toLowerCase() === "maintenance" ||
+            (v.vehicleStatus || "") === "Bảo trì"
+        ).length,
+      });
+    } catch (err) {
+      console.error("Error loading stats:", err);
     }
   };
 
@@ -185,25 +231,6 @@ export default function Vehicles() {
   const handleFilterChange = (filterType, value) => {
     setFilters((prev) => ({ ...prev, [filterType]: value }));
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  };
-
-  const stats = {
-    total: vehicles.length,
-    available: vehicles.filter(
-      (v) =>
-        (v.vehicleStatus || "").toLowerCase() === "available" ||
-        (v.vehicleStatus || "") === "Sẵn sàng"
-    ).length,
-    inUse: vehicles.filter(
-      (v) =>
-        (v.vehicleStatus || "").toLowerCase() === "in_use" ||
-        (v.vehicleStatus || "") === "Đang dùng"
-    ).length,
-    maintenance: vehicles.filter(
-      (v) =>
-        (v.vehicleStatus || "").toLowerCase() === "maintenance" ||
-        (v.vehicleStatus || "") === "Bảo trì"
-    ).length,
   };
 
   if (loading) {

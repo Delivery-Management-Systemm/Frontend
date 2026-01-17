@@ -94,12 +94,6 @@ const MENU_ITEMS = [
     roles: ["admin", "staff"],
   },
   {
-    key: "account",
-    label: "Thông tin cá nhân",
-    icon: <FaUserCircle />,
-    roles: ["admin", "staff", "driver"],
-  },
-  {
     key: "account-management",
     label: "Quản lý tài khoản",
     icon: <FaUserCircle />,
@@ -118,6 +112,10 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
 
   useEffect(() => {
     if (!menuItems.length) {
+      return;
+    }
+    // Allow "account" page even if not in menu
+    if (activeMenu === "account") {
       return;
     }
     const isAllowed = menuItems.some((item) => item.key === activeMenu);
@@ -190,13 +188,15 @@ export default function Dashboard({ currentUser, onLogout, onUpdateUser }) {
                 {ROLE_LABELS[role] || "Người dùng"}
               </span>
             </div>
-          </div>
-
-          <button className="dashboard-logout" onClick={onLogout}>
-            <span className="dashboard-logout-icon">
+            <button className="dashboard-logout" onClick={onLogout}>
               <FaSignOutAlt />
-            </span>
-            <span>Đăng xuất</span>
+            </button>
+          </div>
+          <button
+            className="dashboard-profile-link"
+            onClick={() => setActiveMenu("account")}
+          >
+            Thông tin hồ sơ
           </button>
         </div>
       </aside>

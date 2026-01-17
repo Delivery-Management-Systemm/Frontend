@@ -1,77 +1,43 @@
-// src/pages/FuelManagement.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { FaChartLine, FaDollarSign, FaGasPump, FaPlus, FaSearch, FaTint, FaTimes } from "react-icons/fa";
+import {
+  FaChartLine,
+  FaDollarSign,
+  FaGasPump,
+  FaPlus,
+  FaTint,
+  FaTimes,
+  FaTrash,
+} from "react-icons/fa";
 import "./FuelManagement.css";
+import Pagination from "../components/Pagination";
+import CustomSelect from "../components/CustomSelect";
 import ConfirmModal from "../components/ConfirmModal";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { ensureSeedVehicles, getVehicles, setFuelRecords, makeId } from "../services/fuelStorage";
-
-const SORT_OPTIONS = [
-  { value: "newest", label: "Mới nhất" },
-  { value: "oldest", label: "Cũ nhất" },
-  { value: "cost-desc", label: "Tổng tiền cao" },
-  { value: "cost-asc", label: "Tổng tiền thấp" },
-];
+import { API_CONFIG } from "../config/api";
 
 export default function FuelManagement() {
-  const [vehicles, setVehiclesState] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
   const [records, setRecords] = useState([]);
   const [drivers, setDrivers] = useState([]);
- 
-  // helper to try multiple backend bases and return parsed JSON
-  async function tryFetchEndpoints(path, options) {
-    const bases = ["http://localhost:5064", "", "http://localhost:5000", "https://localhost:5064", "https://localhost:5001"];
-    const attempts = [];
-    for (const base of bases) {
-      const url = base + path;
-      try {
-        const res = await fetch(url, options);
-        const ct = (res.headers.get("content-type") || "").toLowerCase();
-        if (!res.ok) {
-          // try to extract error body
-          let bodyText = "";
-          try {
-            if (ct.includes("application/json")) {
-              const json = await res.json();
-              bodyText = JSON.stringify(json);
-            } else {
-              bodyText = await res.text();
-            }
-          } catch { /* ignore */ }
-          const msg = `HTTP ${res.status} ${bodyText ? "- " + bodyText : ""}`;
-          attempts.push({ url, ok: false, reason: msg });
-          console.warn("Fetch non-ok:", url, res.status, bodyText);
-          continue;
-        }
+  const [loading, setLoading] = useState(true);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-        if (ct.includes("application/json")) {
-          const json = await res.json();
-          return json;
-        } else if (res.status === 204) {
-          return null;
-        } else {
-          const text = await res.text().catch(() => "");
-          attempts.push({ url, ok: true, reason: `non-json content-type: ${ct} body: ${text}` });
-          console.warn("Fetch non-json response, skipping:", url, ct);
-          continue;
-        }
-      } catch (err) {
-        const reason = err?.message || String(err);
-        attempts.push({ url, ok: false, reason });
-        console.warn("Fetch error:", url, reason);
-        continue;
-      }
-    }
-    const details = attempts.map(a => `${a.url} -> ${a.reason}`).join("; ");
-    throw new Error(`All endpoints failed for ${path}. Attempts: ${details}`);
-  }
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
 
-  const [query, setQuery] = useState("");
-  const [vehicleFilter, setVehicleFilter] = useState("all");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  // Filter state
+  const [filters, setFilters] = useState({
+    vehicleId: "",
+    dateFrom: "",
+    dateTo: "",
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState({
@@ -86,104 +52,141 @@ export default function FuelManagement() {
   const [formError, setFormError] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
 
+  // Stats state - tổng thể không phụ thuộc pagination
+  const [stats, setStats] = useState({
+    totalCost: 0,
+    totalLiters: 0,
+    count: 0,
+    average: 0,
+  });
+
+  // Load vehicles and drivers on mount
   useEffect(() => {
-    async function tryFetchEndpoints(path, options) {
-      const bases = [
-        "",
-        "https://localhost:5064",
-        "http://localhost:5064",
-        "https://localhost:5001",
-        "http://localhost:5000",
-      ];
-      for (const base of bases) {
-        const url = base + path;
-        try {
-          const res = await fetch(url, options);
-          if (res.ok) {
-            return await res.json();
-          } else {
-            // non-ok response, log and continue
-            console.warn("Fetch non-ok:", url, res.status);
-          }
-        } catch (err) {
-          console.warn("Fetch error:", url, err.message);
+    loadVehiclesAndDrivers();
+    loadStats();
+  }, []);
+
+  // Load fuel records when filters or pagination change
+  useEffect(() => {
+    loadFuelRecords();
+  }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  const loadVehiclesAndDrivers = async () => {
+    try {
+      // Load vehicles
+      const vRes = await fetch(
+        `${API_CONFIG.BASE_URL}/Vehicle?pageNumber=1&pageSize=100`,
+        {
+          headers: API_CONFIG.getAuthHeaders(),
         }
+      );
+      if (vRes.ok) {
+        const vData = await vRes.json();
+        const items = vData.objects || [];
+        setVehicles(items);
       }
-      throw new Error("All endpoints failed for " + path);
+
+      // Load drivers
+      const dRes = await fetch(
+        `${API_CONFIG.BASE_URL}/Driver?pageNumber=1&pageSize=100`,
+        {
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+      if (dRes.ok) {
+        const dData = await dRes.json();
+        const ditems = dData.objects || [];
+        setDrivers(ditems);
+      }
+    } catch (err) {
+      console.error("Error loading vehicles/drivers:", err);
     }
+  };
 
-    async function loadData() {
-      // vehicles: try backend then fallback to seeded
-      try {
-        const vdata = await tryFetchEndpoints("/api/vehicle?pageNumber=1&pageSize=50");
-        const items = Array.isArray(vdata?.objects) ? vdata.objects : [];
-        const mapped = items.map((v) => ({
-          id: v.vehicleID,
-          name: v.vehicleModel ?? v.vehicleType ?? `Xe ${v.vehicleID}`,
-          plate: v.licensePlate,
-        }));
-        if (mapped.length > 0) setVehiclesState(mapped);
-        else setVehiclesState(ensureSeedVehicles());
-      } catch (err) {
-        console.error("Failed to load vehicles:", err.message);
-        setVehiclesState(ensureSeedVehicles());
+  const loadFuelRecords = async () => {
+    try {
+      setTableLoading(true);
+
+      const queryParams = new URLSearchParams();
+      queryParams.append("pageNumber", pagination.currentPage);
+      queryParams.append("pageSize", pagination.pageSize);
+      if (filters.vehicleId) queryParams.append("vehicleId", filters.vehicleId);
+      if (filters.dateFrom) queryParams.append("fromDate", filters.dateFrom);
+      if (filters.dateTo) queryParams.append("toDate", filters.dateTo);
+
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/FuelRecord?${queryParams}`,
+        {
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // drivers: try backend
-      try {
-        const ddata = await tryFetchEndpoints("/api/driver?pageNumber=1&pageSize=50");
-        const ditems = Array.isArray(ddata?.objects) ? ddata.objects : [];
-        const dmapped = ditems.map((d) => ({
-          id: d.driverID ?? d.DriverID,
-          name: d.name ?? d.Name ?? d.fullName ?? d.FullName,
-        }));
-        if (dmapped.length > 0) setDrivers(dmapped);
-      } catch (err) {
-        console.warn("Failed to load drivers:", err.message);
-      }
+      const data = await response.json();
+      const recordsList = data.objects || [];
+      setRecords(recordsList);
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: data.total || 0,
+        totalPages: Math.ceil((data.total || 0) / prev.pageSize),
+      }));
 
-      // fuel records
-      try {
-        const fdata = await tryFetchEndpoints("/api/fuelrecord?pageNumber=1&pageSize=50");
-        const items = Array.isArray(fdata?.objects) ? fdata.objects : [];
-        const mapped = items.map((fr) => ({
-          id: fr.fuelRecordID,
-          date: (fr.fuelTime || "").slice(0, 10),
-          vehicleId: fr.vehicleID,
-          vehiclePlate: fr.vehiclePlate, // convenience if available
-          liters: fr.fuelAmount,
-          unitPrice: fr.fuelAmount ? Math.round((fr.fuelCost / fr.fuelAmount) * 100) / 100 : 0,
-          cost: fr.fuelCost,
-          odometer: fr.currentKm,
-          station: fr.reFuelLocation,
-          note: fr.note ?? "",
-          createdAt: fr.fuelTime,
-          updatedAt: fr.fuelTime,
-        }));
-        setRecords(mapped);
-      } catch (err) {
-        console.error("Failed to load fuel records:", err.message);
-        setRecords([]);
-      }
+      setError(null);
+    } catch (err) {
+      console.error("Error loading fuel records:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      setRecords([]);
+    } finally {
+      setLoading(false);
+      setTableLoading(false);
     }
+  };
 
-    loadData();
-  }, []);
+  const loadStats = async () => {
+    try {
+      // Load all fuel records without pagination to get accurate stats
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/FuelRecord?pageNumber=1&pageSize=9999`,
+        {
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
 
-  useEffect(() => {
-    const vs = getVehicles();
-    if (Array.isArray(vs) && vs.length) setVehiclesState(vs);
-  }, []);
+      if (response.ok) {
+        const data = await response.json();
+        const allRecords = data.objects || [];
 
-  function persist(next) {
-    setRecords(next);
-    setFuelRecords(next);
-  }
+        const totalCost = allRecords.reduce(
+          (s, r) => s + (Number(r.fuelCost) || 0),
+          0
+        );
+        const totalLiters = allRecords.reduce(
+          (s, r) => s + (Number(r.fuelAmount) || 0),
+          0
+        );
+        const count = allRecords.length;
+        const average = count ? Math.round(totalCost / count) : 0;
+
+        setStats({
+          totalCost,
+          totalLiters,
+          count,
+          average,
+        });
+      }
+    } catch (err) {
+      console.error("Error loading stats:", err);
+    }
+  };
 
   function resetForm() {
     setForm({
-      vehicleId: vehicles[0]?.id ?? "",
+      vehicleId: vehicles[0]?.vehicleID ?? "",
       date: new Date().toISOString().slice(0, 10),
       odometer: "",
       liters: "",
@@ -203,7 +206,7 @@ export default function FuelManagement() {
     setIsModalOpen(false);
   }
 
-  function handleCreate(e) {
+  async function handleCreate(e) {
     e.preventDefault();
     setFormError("");
 
@@ -213,81 +216,70 @@ export default function FuelManagement() {
 
     if (!form.vehicleId) return setFormError("Vui lòng chọn phương tiện.");
     if (!form.date) return setFormError("Vui lòng chọn ngày đổ xăng.");
-    if (!Number.isFinite(liters) || liters <= 0) return setFormError("Số lít phải > 0.");
-    if (!Number.isFinite(unitPrice) || unitPrice <= 0) return setFormError("Đơn giá phải > 0.");
-    if (!Number.isFinite(odometer) || odometer <= 0) return setFormError("Số km phải > 0.");
+    if (!Number.isFinite(liters) || liters <= 0)
+      return setFormError("Số lít phải > 0.");
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0)
+      return setFormError("Đơn giá phải > 0.");
+    if (!Number.isFinite(odometer) || odometer <= 0)
+      return setFormError("Số km phải > 0.");
     if (!form.station.trim()) return setFormError("Vui lòng nhập trạm xăng.");
 
     const cost = Math.round(liters * unitPrice);
 
-    (async () => {
+    try {
+      // Try to get vehicle detail to find assigned driver
+      let driverId = null;
       try {
-        // try get vehicle detail to find assigned driver
-        let driverId = null;
-        try {
-          const vdetail = await tryFetchEndpoints(`/api/vehicle/${form.vehicleId}`);
-          if (vdetail) {
-            driverId = vdetail.assignedDriverId ?? vdetail.AssignedDriverId ?? vdetail.assignedDriverID ?? vdetail.AssignedDriverID ?? vdetail.driverID ?? vdetail.DriverID ?? vdetail.VehicleID ?? null;
-            // prefer DriverID-like fields
-            if (vdetail.assignedDriverId) driverId = vdetail.assignedDriverId;
-            else if (vdetail.AssignedDriverId) driverId = vdetail.AssignedDriverId;
-            else if (vdetail.assignedDriverID) driverId = vdetail.assignedDriverID;
-            else if (vdetail.AssignedDriverID) driverId = vdetail.AssignedDriverID;
-            else if (vdetail.driverID) driverId = vdetail.driverID;
-            else if (vdetail.DriverID) driverId = vdetail.DriverID;
-            else if (vdetail.DriverId) driverId = vdetail.DriverId;
+        const vRes = await fetch(
+          `${API_CONFIG.BASE_URL}/Vehicle/${form.vehicleId}`,
+          {
+            headers: API_CONFIG.getAuthHeaders(),
           }
-        } catch (err) {
-          // ignore
+        );
+        if (vRes.ok) {
+          const vdetail = await vRes.json();
+          driverId = vdetail.driverID || vdetail.DriverID || null;
         }
-        // if no driver found, auto-pick first available driver from drivers list
-        if (!driverId && Array.isArray(drivers) && drivers.length > 0) {
-          driverId = drivers[0].id;
-        }
-        const payload = {
-          VehicleID: Number(form.vehicleId),
-          DriverID: driverId ? Number(driverId) : undefined,
-          TripID: null,
-          FuelTime: new Date(form.date).toISOString(),
-          ReFuelLocation: form.station.trim(),
-          FuelAmount: liters,
-          FuelCost: cost,
-          CurrentKm: odometer
-        };
-
-        const created = await tryFetchEndpoints("/api/fuelrecord", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!created) throw new Error("Create failed");
-        const mapped = {
-          id: created.fuelRecordID,
-          date: (created.fuelTime || "").slice(0,10),
-          vehicleId: created.vehicleID,
-          vehiclePlate: created.vehiclePlate ?? null,
-          liters: created.fuelAmount,
-          unitPrice: created.fuelAmount ? Math.round((created.fuelCost / created.fuelAmount) * 100) / 100 : 0,
-          cost: created.fuelCost,
-          odometer: created.currentKm,
-          station: created.reFuelLocation,
-          note: created.note ?? "",
-          createdAt: created.fuelTime,
-          updatedAt: created.fuelTime,
-        };
-        persist([mapped, ...records]);
-        setIsModalOpen(false);
-        toast.success("Tạo phiếu thành công");
       } catch (err) {
-        setFormError(err.message || "Failed to create fuel record");
-        toast.error(err.message || "Failed to create fuel record");
+        // ignore
       }
-    })();
+
+      // If no driver found, auto-pick first available driver
+      if (!driverId && drivers.length > 0) {
+        driverId = drivers[0].driverID;
+      }
+
+      const payload = {
+        vehicleID: Number(form.vehicleId),
+        driverID: driverId ? Number(driverId) : undefined,
+        tripID: null,
+        fuelTime: new Date(form.date).toISOString(),
+        reFuelLocation: form.station.trim(),
+        fuelAmount: liters,
+        fuelCost: cost,
+        currentKm: odometer,
+      };
+
+      const response = await fetch(`${API_CONFIG.BASE_URL}/FuelRecord`, {
+        method: "POST",
+        headers: API_CONFIG.getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await loadFuelRecords();
+      setIsModalOpen(false);
+      toast.success("Tạo phiếu thành công!");
+    } catch (err) {
+      setFormError(err.message || "Failed to create fuel record");
+      toast.error(err.message || "Không thể tạo phiếu. Vui lòng thử lại.");
+    }
   }
 
   function handleDelete(id) {
-    console.log("[FuelManagement] handleDelete called for id=", id);
-    // open confirmation modal (do not use native confirm)
     setConfirmTargetId(id);
     setConfirmOpen(true);
   }
@@ -295,75 +287,45 @@ export default function FuelManagement() {
   async function onConfirmDelete() {
     const id = confirmTargetId;
     setConfirmOpen(false);
-    console.log("[FuelManagement] onConfirmDelete executing for id=", id);
+    setDeletingId(id);
+
     try {
-      await tryFetchEndpoints(`/api/fuelrecord/${id}`, { method: "DELETE" });
-      const remaining = records.filter((r) => r.id !== id);
-        persist(remaining);
-        toast.success("Xóa phiếu thành công");
+      const response = await fetch(`${API_CONFIG.BASE_URL}/FuelRecord/${id}`, {
+        method: "DELETE",
+        headers: API_CONFIG.getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      await loadFuelRecords();
+      toast.success("Xóa phiếu thành công!");
     } catch (err) {
-      console.error("[FuelManagement] delete failed:", err);
-        toast.error("Xóa thất bại: " + (err?.message || "Lỗi khi gọi server"));
+      console.error("Error deleting fuel record:", err);
+      toast.error("Không thể xóa phiếu. Vui lòng thử lại.");
     } finally {
       setConfirmTargetId(null);
+      setDeletingId(null);
     }
   }
 
-  const nowMonth = new Date().toISOString().slice(0, 7);
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, currentPage: newPage }));
+  };
 
-  const monthRecords = useMemo(
-    () => records.filter((r) => (r.date || "").slice(0, 7) === nowMonth),
-    [records, nowMonth]
-  );
+  const handlePageSizeChange = (newPageSize) => {
+    setPagination((prev) => ({
+      ...prev,
+      pageSize: newPageSize,
+      currentPage: 1,
+    }));
+  };
 
-  const monthTotalCost = useMemo(
-    () => monthRecords.reduce((s, r) => s + (Number(r.cost) || 0), 0),
-    [monthRecords]
-  );
-  const monthTotalLiters = useMemo(
-    () => monthRecords.reduce((s, r) => s + (Number(r.liters) || 0), 0),
-    [monthRecords]
-  );
-  const monthCount = monthRecords.length;
-  const monthAverage = monthCount ? Math.round(monthTotalCost / monthCount) : 0;
-
-  const filtered = useMemo(() => {
-    let data = [...records];
-
-    if (vehicleFilter !== "all") {
-      data = data.filter((r) => r.vehicleId === vehicleFilter);
-    }
-
-    if (dateFrom) {
-      data = data.filter((r) => (r.date || "") >= dateFrom);
-    }
-
-    if (dateTo) {
-      data = data.filter((r) => (r.date || "") <= dateTo);
-    }
-
-    const q = query.trim().toLowerCase();
-    if (q) {
-      data = data.filter((r) => {
-        const vehicle = vehicles.find((v) => v.id === r.vehicleId);
-        const vehicleText = vehicle ? `${vehicle.name} ${vehicle.plate}`.toLowerCase() : "";
-        return (
-          vehicleText.includes(q) ||
-          (r.station || "").toLowerCase().includes(q) ||
-          (r.note || "").toLowerCase().includes(q)
-        );
-      });
-    }
-
-    data.sort((a, b) => {
-      if (sortBy === "oldest") return (a.date || "").localeCompare(b.date || "");
-      if (sortBy === "cost-desc") return (Number(b.cost) || 0) - (Number(a.cost) || 0);
-      if (sortBy === "cost-asc") return (Number(a.cost) || 0) - (Number(b.cost) || 0);
-      return (b.date || "").localeCompare(a.date || "");
-    });
-
-    return data;
-  }, [records, vehicleFilter, dateFrom, dateTo, query, sortBy, vehicles]);
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prev) => ({ ...prev, [filterType]: value }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  };
 
   const modalTotal = useMemo(() => {
     const liters = Number(form.liters) || 0;
@@ -371,164 +333,244 @@ export default function FuelManagement() {
     return Math.round(liters * unitPrice);
   }, [form.liters, form.unitPrice]);
 
+  if (loading) {
+    return (
+      <div className="fuel-page">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "200px",
+          }}
+        >
+          <div className="line-spinner"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fuel-page">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop={false} closeOnClick rtl={false} pauseOnFocusLoss draggable pauseOnHover />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
 
-      <div className="fuel-hero">
-        <div className="fuel-hero-left">
-          <div className="fuel-hero-icon">
-            <FaTint />
-          </div>
-          <div>
-            <h2 className="fuel-hero-title">Nhiên liệu</h2>
-            <p className="fuel-hero-subtitle">Theo dõi và quản lý các phiếu đổ xăng cho phương tiện</p>
+      <div className="fuel-header-simple">
+        <div>
+          <div className="fuel-header-title">Quản lý nhiên liệu</div>
+          <div className="fuel-header-subtitle">
+            Theo dõi và quản lý các phiếu đổ xăng cho phương tiện
           </div>
         </div>
+      </div>
 
-        <button className="fuel-primary-btn" type="button" onClick={openModal}>
-          <FaPlus />
-          Thêm phiếu
+      {error && (
+        <div
+          className="error-message"
+          style={{
+            background: "#fee",
+            color: "#c33",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            border: "1px solid #fcc",
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="fuel-stats-row">
+        <div className="fuel-stat">
+          <div className="fuel-stat-label">Tổng chi phí</div>
+          <div className="fuel-stat-value">{formatMoney(stats.totalCost)}</div>
+        </div>
+        <div className="fuel-stat">
+          <div className="fuel-stat-label">Tổng lít</div>
+          <div className="fuel-stat-value">
+            {formatNumber(stats.totalLiters)} L
+          </div>
+        </div>
+        <div className="fuel-stat">
+          <div className="fuel-stat-label">Số phiếu</div>
+          <div className="fuel-stat-value">{stats.count}</div>
+        </div>
+        <div className="fuel-stat">
+          <div className="fuel-stat-label">Trung bình / phiếu</div>
+          <div className="fuel-stat-value">{formatMoney(stats.average)}</div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="fuel-filters">
+        <CustomSelect
+          value={filters.vehicleId}
+          onChange={(value) => handleFilterChange("vehicleId", value)}
+          options={[
+            { value: "", label: "Tất cả phương tiện" },
+            ...vehicles.map((v) => ({
+              value: v.vehicleID,
+              label: `${v.licensePlate} - ${v.vehicleModel || v.vehicleType}`,
+            })),
+          ]}
+          placeholder="Tất cả phương tiện"
+        />
+
+        <input
+          type="date"
+          className="fuel-date-input"
+          value={filters.dateFrom}
+          onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+          placeholder="Từ ngày"
+        />
+
+        <input
+          type="date"
+          className="fuel-date-input"
+          value={filters.dateTo}
+          onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+          placeholder="Đến ngày"
+        />
+
+        <button className="fuel-new-btn" onClick={openModal}>
+          + Thêm phiếu
         </button>
       </div>
 
-      <div className="fuel-stats-grid">
-        <div className="fuel-stat-card">
-          <div className="fuel-stat-icon green">
-            <FaDollarSign />
+      <div className="fuel-list">
+        <div className="fuel-table-card">
+          <div className="fuel-table-wrap">
+            <table className="fuel-table">
+              <thead>
+                <tr>
+                  <th>Ngày</th>
+                  <th>Biển số</th>
+                  <th>Odometer (km)</th>
+                  <th>Số lít</th>
+                  <th>Đơn giá</th>
+                  <th>Tổng tiền</th>
+                  <th>Trạm xăng</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableLoading ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                ) : records.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      style={{
+                        textAlign: "center",
+                        padding: "40px",
+                        color: "#6b7280",
+                      }}
+                    >
+                      Không có phiếu đổ xăng nào
+                    </td>
+                  </tr>
+                ) : (
+                  records.map((record) => {
+                    const vehicle = vehicles.find(
+                      (v) => v.vehicleID === record.vehicleID
+                    );
+                    const unitPrice = record.fuelAmount
+                      ? Math.round(
+                          (record.fuelCost / record.fuelAmount) * 100
+                        ) / 100
+                      : 0;
+                    return (
+                      <tr key={record.fuelRecordID} className="fuel-tr">
+                        <td className="fuel-td">
+                          {new Date(record.fuelTime).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </td>
+                        <td className="fuel-td">
+                          {vehicle?.licensePlate || "-"}
+                        </td>
+                        <td className="fuel-td">
+                          {formatNumber(record.currentKm)}
+                        </td>
+                        <td className="fuel-td">
+                          {formatNumber(record.fuelAmount)} L
+                        </td>
+                        <td className="fuel-td">{formatMoney(unitPrice)}</td>
+                        <td className="fuel-td">
+                          {formatMoney(record.fuelCost)}
+                        </td>
+                        <td className="fuel-td">
+                          {record.reFuelLocation || "-"}
+                        </td>
+                        <td className="fuel-td fuel-td-actions">
+                          <div className="fuel-actions">
+                            <button
+                              className="fuel-icon-btn fuel-icon-delete"
+                              title="Xóa"
+                              onClick={() => handleDelete(record.fuelRecordID)}
+                              disabled={deletingId === record.fuelRecordID}
+                            >
+                              {deletingId === record.fuelRecordID ? (
+                                "..."
+                              ) : (
+                                <FaTrash />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
-          <div className="fuel-stat-label">Tổng chi tháng này</div>
-          <div className="fuel-stat-value">{formatMoney(monthTotalCost)}</div>
-        </div>
-
-        <div className="fuel-stat-card">
-          <div className="fuel-stat-icon blue">
-            <FaGasPump />
-          </div>
-          <div className="fuel-stat-label">Tổng lít tháng này</div>
-          <div className="fuel-stat-value">{formatNumber(monthTotalLiters)} L</div>
-        </div>
-
-        <div className="fuel-stat-card">
-          <div className="fuel-stat-icon purple">
-            <FaTint />
-          </div>
-          <div className="fuel-stat-label">Số phiếu tháng này</div>
-          <div className="fuel-stat-value">{formatNumber(monthCount)}</div>
-        </div>
-
-        <div className="fuel-stat-card">
-          <div className="fuel-stat-icon orange">
-            <FaChartLine />
-          </div>
-          <div className="fuel-stat-label">Trung bình / phiếu</div>
-          <div className="fuel-stat-value">{formatMoney(monthAverage)}</div>
         </div>
       </div>
 
-      <div className="fuel-panel">
-        <div className="fuel-panel-row">
-          <div className="fuel-field">
-            <span className="fuel-field-label">Tìm kiếm</span>
-            <div className="fuel-input-with-icon">
-              <FaSearch />
-              <input
-                className="fuel-input"
-                placeholder="Biển số / trạm / ghi chú"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-          </div>
+      {/* Pagination */}
+      {pagination.totalItems > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+        />
+      )}
 
-          <div className="fuel-field">
-            <span className="fuel-field-label">Phương tiện</span>
-            <select className="fuel-input" value={vehicleFilter} onChange={(e) => setVehicleFilter(e.target.value)}>
-              <option value="all">Tất cả xe</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.name} ({v.plate})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="fuel-field">
-            <span className="fuel-field-label">Từ ngày</span>
-            <input className="fuel-input" type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
-          </div>
-
-          <div className="fuel-field">
-            <span className="fuel-field-label">Đến ngày</span>
-            <input className="fuel-input" type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
-          </div>
-        </div>
-
-        <div className="fuel-panel-row">
-          <div className="fuel-field">
-            <span className="fuel-field-label">Sắp xếp</span>
-            <select className="fuel-input" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              {SORT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="fuel-table">
-        <div className="fuel-table-head">
-          <div>NGÀY</div>
-          <div>BIỂN SỐ</div>
-          <div>ODOMETER (KM)</div>
-          <div>LÍT</div>
-          <div>ĐƠN GIÁ</div>
-          <div>TỔNG TIỀN</div>
-          <div>TRẠM</div>
-          <div>GHI CHÚ</div>
-          <div>HÀNH ĐỘNG</div>
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="fuel-empty">
-            <div className="fuel-empty-icon">
-              <FaTint />
-            </div>
-            <div className="fuel-empty-text">Chưa có phiếu đổ xăng nào</div>
-          </div>
-        ) : (
-          filtered.map((record) => {
-            const vehicle = vehicles.find((v) => v.id === record.vehicleId);
-            const unitPrice = record.unitPrice || (record.liters ? record.cost / record.liters : 0);
-            return (
-              <div key={record.id} className="fuel-table-row">
-                <div>{record.date}</div>
-                <div>{vehicle?.plate || record.vehiclePlate || "--"}</div>
-                <div>{record.odometer == null ? "--" : formatNumber(record.odometer)}</div>
-                <div>{formatNumber(record.liters)} L</div>
-                <div>{formatMoney(unitPrice)}</div>
-                <div>{formatMoney(record.cost)}</div>
-                <div>{record.station || "--"}</div>
-                <div className="fuel-note-cell">{record.note || "--"}</div>
-                <div>
-                  <button className="fuel-link-btn" type="button" onClick={() => handleDelete(record.id)}>
-                    Xóa
-                  </button>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {isModalOpen ? (
+      {isModalOpen && (
         <div className="fuel-modal-backdrop" onClick={closeModal}>
-          <div className="fuel-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+          <div
+            className="fuel-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="fuel-modal-header">
               <h3>Thêm phiếu đổ xăng</h3>
-              <button className="fuel-icon-btn" type="button" onClick={closeModal}>
+              <button
+                className="fuel-icon-btn-close"
+                type="button"
+                onClick={closeModal}
+              >
                 <FaTimes />
               </button>
             </div>
@@ -541,12 +583,14 @@ export default function FuelManagement() {
                 <select
                   className="fuel-input"
                   value={form.vehicleId}
-                  onChange={(e) => setForm((prev) => ({ ...prev, vehicleId: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, vehicleId: e.target.value }))
+                  }
                 >
                   <option value="">Chọn phương tiện</option>
                   {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name} ({v.plate})
+                    <option key={v.vehicleID} value={v.vehicleID}>
+                      {v.licensePlate} - {v.vehicleModel || v.vehicleType}
                     </option>
                   ))}
                 </select>
@@ -561,7 +605,9 @@ export default function FuelManagement() {
                     className="fuel-input"
                     type="date"
                     value={form.date}
-                    onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, date: e.target.value }))
+                    }
                   />
                 </div>
 
@@ -574,7 +620,9 @@ export default function FuelManagement() {
                     inputMode="numeric"
                     placeholder="Ví dụ: 15000"
                     value={form.odometer}
-                    onChange={(e) => setForm((prev) => ({ ...prev, odometer: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, odometer: e.target.value }))
+                    }
                   />
                 </div>
 
@@ -587,7 +635,9 @@ export default function FuelManagement() {
                     inputMode="decimal"
                     placeholder="Ví dụ: 50"
                     value={form.liters}
-                    onChange={(e) => setForm((prev) => ({ ...prev, liters: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({ ...prev, liters: e.target.value }))
+                    }
                   />
                 </div>
 
@@ -600,7 +650,12 @@ export default function FuelManagement() {
                     inputMode="numeric"
                     placeholder="Ví dụ: 24000"
                     value={form.unitPrice}
-                    onChange={(e) => setForm((prev) => ({ ...prev, unitPrice: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((prev) => ({
+                        ...prev,
+                        unitPrice: e.target.value,
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -608,7 +663,9 @@ export default function FuelManagement() {
               <div className="fuel-modal-field">
                 <label>Tổng tiền</label>
                 <div className="fuel-total">{formatMoney(modalTotal)}</div>
-                <div className="fuel-total-hint">Được tính tự động: Số lít × Đơn giá</div>
+                <div className="fuel-total-hint">
+                  Được tính tự động: Số lít × Đơn giá
+                </div>
               </div>
 
               <div className="fuel-modal-field">
@@ -619,7 +676,9 @@ export default function FuelManagement() {
                   className="fuel-input"
                   placeholder="Ví dụ: Petrolimex Nguyễn Văn Linh"
                   value={form.station}
-                  onChange={(e) => setForm((prev) => ({ ...prev, station: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, station: e.target.value }))
+                  }
                 />
               </div>
 
@@ -629,14 +688,20 @@ export default function FuelManagement() {
                   className="fuel-input"
                   placeholder="Thêm ghi chú nếu cần..."
                   value={form.note}
-                  onChange={(e) => setForm((prev) => ({ ...prev, note: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((prev) => ({ ...prev, note: e.target.value }))
+                  }
                 />
               </div>
 
-              {formError ? <div className="fuel-form-error">{formError}</div> : null}
+              {formError && <div className="fuel-form-error">{formError}</div>}
 
               <div className="fuel-modal-actions">
-                <button className="fuel-secondary-btn" type="button" onClick={closeModal}>
+                <button
+                  className="fuel-secondary-btn"
+                  type="button"
+                  onClick={closeModal}
+                >
                   Hủy
                 </button>
                 <button className="fuel-primary-btn" type="submit">
@@ -646,11 +711,12 @@ export default function FuelManagement() {
             </form>
           </div>
         </div>
-      ) : null}
+      )}
+
       <ConfirmModal
         open={confirmOpen}
         title="Xác nhận xóa"
-        message="Bạn có chắc muốn xóa phiếu đổ xăng này? Hành động này sẽ xóa vĩnh viễn."
+        message="Bạn có chắc muốn xóa phiếu đổ xăng này?"
         onConfirm={onConfirmDelete}
         onCancel={() => setConfirmOpen(false)}
       />
@@ -667,5 +733,3 @@ function formatNumber(n) {
   const v = Number(n || 0);
   return v.toLocaleString("vi-VN");
 }
-
-

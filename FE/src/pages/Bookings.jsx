@@ -1,270 +1,442 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { FaCalendarAlt, FaSearch, FaPlus, FaEye, FaMapMarkerAlt, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
-import { MapContainer, Marker, Polyline, TileLayer } from "react-leaflet";
+import React, { useState, useEffect } from "react";
+import { FaEye, FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./Bookings.css";
-import AddBookingModal from "../components/AddBookingModal";
-import { getBookedTrips } from "../services/tripAPI";
-
-function formatDate(iso) {
-  try {
-    const d = new Date(iso);
-    return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
-  } catch {
-    return iso || "";
-  }
-}
+import Pagination from "../components/Pagination";
+import CustomSelect from "../components/CustomSelect";
+import { API_CONFIG } from "../config/api";
 
 export default function Bookings() {
-  const [search, setSearch] = useState("");
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [tableLoading, setTableLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Stats state - tổng thể không phụ thuộc pagination
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+  });
+
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    pageSize: 10,
+    totalItems: 0,
+    totalPages: 0,
+  });
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    status: "",
+    dateFrom: "",
+    dateTo: "",
+  });
+
+  // Load bookings from API
   useEffect(() => {
-    loadBooked();
+    loadBookings();
+  }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  // Load stats once on mount
+  useEffect(() => {
+    loadStats();
   }, []);
 
-  const loadBooked = async () => {
-    setLoading(true);
+  const loadBookings = async () => {
     try {
-      const data = await getBookedTrips({ pageNumber: 1, pageSize: 1000 });
-      const normalized = (data || []).map((b) => {
-        const statusRaw = (b.Status || b.status || "").toString().toLowerCase();
-        let status = "done";
-        if (statusRaw.includes("plan") || statusRaw.includes("wait")) status = "pending";
-        else if (statusRaw.includes("confirm")) status = "confirmed";
-        else if (statusRaw.includes("assign")) status = "assigned";
-        return {
-          id: b.TripID || b.tripID || b.Id,
-          customer: b.CustomerName || b.customerName || b.Customer || "",
-          contact: b.CustomerPhone || b.customerPhone || b.Contact || "",
-          email: b.CustomerEmail || b.customerEmail || "",
-          route:
-            (b.PickupLocation || b.pickupLocation || "") +
-            (b.dropoffLocation ? " → " + b.dropoffLocation : ""),
-          date: b.scheduledDate ? formatDate(b.ScheduledDate) : b.Date || "",
-          time: b.scheduledTime || b.Time || "",
-          vehicleType: b.RequestedVehicleType || b.requestedVehicleType || "",
-          vehicleNote: b.RequestedCargo || b.requestedCargo || "",
-          assigned: b.AssignedVehiclePlate || b.assignedVehiclePlate || null,
-          assignedDriver: b.AssignedDriverName || b.assignedDriverName || null,
-          status,
-          routeMeta: b.RouteGeometryJson || b.routeMeta || null,
-        };
-      });
-      setBookings(normalized);
+      setTableLoading(true);
+
+      const queryParams = new URLSearchParams();
+      queryParams.append("pageNumber", pagination.currentPage);
+      queryParams.append("pageSize", pagination.pageSize);
+      if (filters.status) queryParams.append("status", filters.status);
+      if (filters.dateFrom) queryParams.append("fromDate", filters.dateFrom);
+      if (filters.dateTo) queryParams.append("toDate", filters.dateTo);
+
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/Trip/booked?${queryParams}`,
+        {
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const bookingsList = data.objects || data.items || data || [];
+      setBookings(Array.isArray(bookingsList) ? bookingsList : []);
+      setPagination((prev) => ({
+        ...prev,
+        totalItems: data.total || bookingsList.length || 0,
+        totalPages: Math.ceil(
+          (data.total || bookingsList.length || 0) / prev.pageSize
+        ),
+      }));
+
+      setError(null);
     } catch (err) {
-      console.error("Error loading booked trips:", err);
+      console.error("Error loading bookings:", err);
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
       setBookings([]);
     } finally {
       setLoading(false);
+      setTableLoading(false);
     }
   };
 
-  const filtered = bookings.filter((b) =>
-    [b.customer, b.contact, b.email, b.route, b.vehicleType]
-      .join(" ")
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  );
+  const loadStats = async () => {
+    try {
+      const response = await fetch(`${API_CONFIG.BASE_URL}/Trip/booked/stats`, {
+        headers: API_CONFIG.getAuthHeaders(),
+      });
 
-  const stats = {
-    pending: bookings.filter((b) => b.status === "pending").length,
-    confirmed: bookings.filter((b) => b.status === "confirmed").length,
-    assigned: bookings.filter((b) => b.status === "assigned").length,
-    done: bookings.filter((b) => b.status === "done").length,
+      if (response.ok) {
+        const data = await response.json();
+        setStats({
+          total: data.total || 0,
+          pending: data.pending || 0,
+          confirmed: data.confirmed || 0,
+          completed: data.completed || 0,
+        });
+      }
+    } catch (err) {
+      console.error("Error loading stats:", err);
+    }
   };
 
-  const routeLine = useMemo(() => {
-    const geometry = selectedBooking?.routeMeta?.geometry;
-    if (!geometry || !geometry.coordinates) return [];
-    return geometry.coordinates.map((coord) => [coord[1], coord[0]]);
-  }, [selectedBooking]);
+  const handlePageChange = (newPage) => {
+    setPagination((prev) => ({ ...prev, currentPage: newPage }));
+  };
 
-  const startPoint = routeLine.length ? routeLine[0] : null;
-  const endPoint = routeLine.length ? routeLine[routeLine.length - 1] : null;
+  const handlePageSizeChange = (newPageSize) => {
+    setPagination((prev) => ({
+      ...prev,
+      pageSize: newPageSize,
+      currentPage: 1,
+    }));
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    setFilters((prev) => ({ ...prev, [filterType]: value }));
+    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("vi-VN");
+    } catch {
+      return dateString;
+    }
+  };
+
+  const formatTime = (timeString) => {
+    if (!timeString) return "-";
+    try {
+      // If it's a full datetime, extract time
+      if (timeString.includes("T")) {
+        const date = new Date(timeString);
+        return date.toLocaleTimeString("vi-VN", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+      }
+      return timeString;
+    } catch {
+      return timeString;
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    const statusMap = {
+      pending: "Chờ xác nhận",
+      waiting: "Chờ xác nhận",
+      confirmed: "Đã xác nhận",
+      assigned: "Đã phân công",
+      completed: "Hoàn thành",
+      done: "Hoàn thành",
+      cancelled: "Đã hủy",
+    };
+    return statusMap[status?.toLowerCase()] || status || "Không rõ";
+  };
+
+  const statusOptions = [
+    { value: "", label: "Tất cả trạng thái" },
+    { value: "pending", label: "Chờ xác nhận" },
+    { value: "confirmed", label: "Đã xác nhận" },
+    { value: "assigned", label: "Đã phân công" },
+    { value: "completed", label: "Hoàn thành" },
+  ];
+
+  if (loading) {
+    return (
+      <div className="bookings-page">
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "200px",
+          }}
+        >
+          <div className="line-spinner"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bookings-page">
-      <div className="bookings-header">
-        <div className="bookings-header-left">
-          <div className="bookings-icon">
-            <FaCalendarAlt />
-          </div>
-          <div>
-            <div className="bookings-title">Lịch đặt trước</div>
-            <div className="bookings-sub">Quản lý các chuyến đã được đặt lịch</div>
-          </div>
-        </div>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
 
-        <button className="bookings-add" onClick={() => setShowAddModal(true)}>
-          <FaPlus /> Đặt lịch mới
-        </button>
-      </div>
-
-      <div className="bookings-stats">
-        <div className="stat-card">
-          <div className="stat-label">Chờ xác nhận</div>
-          <div className="stat-value">{stats.pending}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Đã xác nhận</div>
-          <div className="stat-value">{stats.confirmed}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Đã phân công</div>
-          <div className="stat-value">{stats.assigned}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-label">Hoàn thành</div>
-          <div className="stat-value">{stats.done}</div>
+      <div className="bookings-header-simple">
+        <div>
+          <div className="bookings-header-title">Lịch đặt trước</div>
+          <div className="bookings-header-subtitle">
+            Quản lý các chuyến đã được đặt lịch
+          </div>
         </div>
       </div>
 
-      <div className="bookings-card">
-        <div className="bookings-table-header">
-          <div className="search-box">
-            <FaSearch />
-            <input
-              placeholder="Tìm kiếm khách hàng, SĐT, tuyến..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="bookings-table-wrap">
-          <table className="bookings-table">
-            <thead>
-              <tr>
-                <th>KHÁCH HÀNG</th>
-                <th>LIÊN HỆ</th>
-                <th>LỘ TRÌNH</th>
-                <th>THỜI GIAN</th>
-                <th>LOẠI XE</th>
-                <th>PHÂN CÔNG</th>
-                <th>TRẠNG THÁI</th>
-                <th>THAO TÁC</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filtered.map((b, idx) => (
-                <tr key={b.id ?? b.TripID ?? `booking-${idx}`}>
-                  <td className="td-customer">
-                    <div className="cust-name">{b.customer}</div>
-                    <div className="cust-id">ID: {b.id}</div>
-                  </td>
-                  <td className="td-contact">
-                    <div>{b.contact}</div>
-                    <div className="cust-email">{b.email}</div>
-                  </td>
-                  <td className="td-route">
-                    <div className="route-text">{b.route}</div>
-                  </td>
-                  <td className="td-time">
-                    <div>{b.date}</div>
-                    <div>{b.time}</div>
-                  </td>
-                  <td className="td-type">
-                    <div className="type-title">{b.vehicleType}</div>
-                    <div className="type-note">{b.vehicleNote}</div>
-                  </td>
-                  <td className="td-assign">
-                    {b.assigned ? (
-                      <>
-                        <div className="assign-plate">{b.assigned}</div>
-                        <div className="assign-driver">{b.assignedDriver}</div>
-                      </>
-                    ) : (
-                      <div className="assign-none">Chưa phân công</div>
-                    )}
-                  </td>
-                  <td className="td-status">
-                    <span className={`badge badge-${b.status}`}>{b.status === "pending" ? "Chờ xác nhận" : b.status === "confirmed" ? "Đã xác nhận" : b.status === "assigned" ? "Đã phân công" : "Hoàn thành"}</span>
-                  </td>
-                  <td className="td-actions">
-                    <button
-                      className="btn-icon btn-icon--view"
-                      title="Xem"
-                      onClick={() => setSelectedBooking(b)}
-                    >
-                      <FaEye />
-                    </button>
-                    {b.status === "pending" && (
-                      <>
-                        <button className="btn-icon btn-icon--confirm" title="Xác nhận">
-                          <FaCheckCircle />
-                        </button>
-                        <button className="btn-icon btn-icon--reject" title="Từ chối">
-                          <FaTimesCircle />
-                        </button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {selectedBooking ? (
-        <div className="bookings-card bookings-map-card">
-          <div className="bookings-map-header">
-            <div>
-              <div className="bookings-map-title">Tuyen duong da chon</div>
-              <div className="bookings-map-sub">
-                {selectedBooking.route}
-              </div>
-            </div>
-            <button
-              type="button"
-              className="btn-icon btn-icon--view"
-              onClick={() => setSelectedBooking(null)}
-              title="Dong"
-            >
-              ✕
-            </button>
-          </div>
-
-          {routeLine.length === 0 ? (
-            <div className="bookings-map-empty">
-              Chua co du lieu tuyen duong cho lich dat truoc nay.
-            </div>
-          ) : (
-            <div className="bookings-map-frame">
-              <MapContainer
-                center={startPoint || [21.0285, 105.8542]}
-                zoom={11}
-                scrollWheelZoom={false}
-                className="bookings-map-canvas"
-              >
-                <TileLayer
-                  attribution='&copy; OpenStreetMap contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                {startPoint ? <Marker position={startPoint} /> : null}
-                {endPoint ? <Marker position={endPoint} /> : null}
-                <Polyline positions={routeLine} />
-              </MapContainer>
-            </div>
-          )}
-        </div>
-      ) : null}
-      {showAddModal && (
-        <AddBookingModal
-          onClose={() => setShowAddModal(false)}
-          onSave={(booking) => {
-            setBookings((prev) => [booking, ...prev]);
-            setShowAddModal(false);
-            setSelectedBooking(booking);
+      {error && (
+        <div
+          className="error-message"
+          style={{
+            background: "#fee",
+            color: "#c33",
+            padding: "12px",
+            borderRadius: "8px",
+            marginBottom: "16px",
+            border: "1px solid #fcc",
           }}
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="bookings-stats-row">
+        <div className="booking-stat">
+          <div className="booking-stat-label">Tổng số</div>
+          <div className="booking-stat-value">{stats.total}</div>
+        </div>
+        <div className="booking-stat">
+          <div className="booking-stat-label">Chờ xác nhận</div>
+          <div className="booking-stat-value">{stats.pending}</div>
+        </div>
+        <div className="booking-stat">
+          <div className="booking-stat-label">Đã xác nhận</div>
+          <div className="booking-stat-value">{stats.confirmed}</div>
+        </div>
+        <div className="booking-stat">
+          <div className="booking-stat-label">Hoàn thành</div>
+          <div className="booking-stat-value">{stats.completed}</div>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bookings-filters">
+        <CustomSelect
+          value={filters.status}
+          onChange={(value) => handleFilterChange("status", value)}
+          options={statusOptions}
+          placeholder="Tất cả trạng thái"
+        />
+
+        <input
+          type="date"
+          className="bookings-date-input"
+          value={filters.dateFrom}
+          onChange={(e) => handleFilterChange("dateFrom", e.target.value)}
+          placeholder="Từ ngày"
+        />
+
+        <input
+          type="date"
+          className="bookings-date-input"
+          value={filters.dateTo}
+          onChange={(e) => handleFilterChange("dateTo", e.target.value)}
+          placeholder="Đến ngày"
+        />
+      </div>
+
+      <div className="bookings-list">
+        <div className="bookings-table-card">
+          <div className="bookings-table-wrap">
+            <table className="bookings-table">
+              <thead>
+                <tr>
+                  <th>Khách hàng</th>
+                  <th>Liên hệ</th>
+                  <th>Lộ trình</th>
+                  <th>Thời gian</th>
+                  <th>Loại xe</th>
+                  <th>Phân công</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableLoading ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      style={{ textAlign: "center", padding: "40px" }}
+                    >
+                      <div className="line-spinner"></div>
+                    </td>
+                  </tr>
+                ) : bookings.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="8"
+                      style={{
+                        textAlign: "center",
+                        padding: "40px",
+                        color: "#6b7280",
+                      }}
+                    >
+                      Không có lịch đặt trước nào
+                    </td>
+                  </tr>
+                ) : (
+                  bookings.map((booking) => (
+                    <tr key={booking.tripID} className="bookings-tr">
+                      <td className="bookings-td">
+                        <div className="booking-customer-name">
+                          {booking.customerName || "-"}
+                        </div>
+                        <div className="booking-customer-id">
+                          ID: {booking.tripID}
+                        </div>
+                      </td>
+                      <td className="bookings-td">
+                        <div>{booking.customerPhone || "-"}</div>
+                        <div className="booking-email">
+                          {booking.customerEmail || "-"}
+                        </div>
+                      </td>
+                      <td className="bookings-td">
+                        <div
+                          className="booking-route"
+                          title={`${booking.pickupLocation || ""} → ${
+                            booking.dropoffLocation || ""
+                          }`}
+                        >
+                          {booking.pickupLocation || "-"}
+                          {booking.dropoffLocation && (
+                            <>
+                              {" → "}
+                              {booking.dropoffLocation}
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="bookings-td">
+                        <div>{formatDate(booking.scheduledDate)}</div>
+                        <div className="booking-time">
+                          {formatTime(booking.scheduledTime)}
+                        </div>
+                      </td>
+                      <td className="bookings-td">
+                        <div className="booking-vehicle-type">
+                          {booking.requestedVehicleType || "-"}
+                        </div>
+                        {booking.requestedCargo && (
+                          <div className="booking-cargo">
+                            {booking.requestedCargo}
+                          </div>
+                        )}
+                      </td>
+                      <td className="bookings-td">
+                        {booking.assignedVehiclePlate ? (
+                          <>
+                            <div className="booking-assigned-plate">
+                              {booking.assignedVehiclePlate}
+                            </div>
+                            {booking.assignedDriverName && (
+                              <div className="booking-assigned-driver">
+                                {booking.assignedDriverName}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="booking-not-assigned">
+                            Chưa phân công
+                          </div>
+                        )}
+                      </td>
+                      <td className="bookings-td">
+                        <span
+                          className={`bookings-status-badge status-${(
+                            booking.status || "unknown"
+                          ).toLowerCase()}`}
+                        >
+                          {getStatusLabel(booking.status)}
+                        </span>
+                      </td>
+                      <td className="bookings-td bookings-td-actions">
+                        <div className="bookings-actions">
+                          <button
+                            className="bookings-icon-btn bookings-icon-view"
+                            title="Xem chi tiết"
+                          >
+                            <FaEye />
+                          </button>
+                          {booking.status?.toLowerCase() === "pending" && (
+                            <>
+                              <button
+                                className="bookings-icon-btn bookings-icon-confirm"
+                                title="Xác nhận"
+                              >
+                                <FaCheckCircle />
+                              </button>
+                              <button
+                                className="bookings-icon-btn bookings-icon-reject"
+                                title="Từ chối"
+                              >
+                                <FaTimesCircle />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {pagination.totalItems > 0 && (
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.totalItems}
+          itemsPerPage={pagination.pageSize}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
         />
       )}
     </div>
   );
 }
-
-

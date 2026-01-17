@@ -26,6 +26,14 @@ export default function Drivers() {
   const [confirmMessage, setConfirmMessage] = useState("");
   const [confirmTitle, setConfirmTitle] = useState("Xác nhận");
 
+  // Stats state - tổng thể không phụ thuộc pagination
+  const [stats, setStats] = useState({
+    total: 0,
+    available: 0,
+    onTrip: 0,
+    offline: 0,
+  });
+
   // Options state
   const [statusOptions, setStatusOptions] = useState([]);
 
@@ -46,6 +54,11 @@ export default function Drivers() {
   useEffect(() => {
     loadDrivers();
   }, [pagination.currentPage, pagination.pageSize, filters]);
+
+  // Load stats once on mount
+  useEffect(() => {
+    loadStats();
+  }, []);
 
   // Load options on mount
   useEffect(() => {
@@ -103,6 +116,33 @@ export default function Drivers() {
     } finally {
       setLoading(false);
       setTableLoading(false);
+    }
+  };
+
+  const loadStats = async () => {
+    try {
+      // Load all drivers without pagination to get accurate stats
+      const data = await getDrivers({
+        pageNumber: 1,
+        pageSize: 9999, // Get all
+      });
+
+      const allDrivers = data.objects || data.items || data || [];
+
+      setStats({
+        total: allDrivers.length,
+        available: allDrivers.filter(
+          (d) => (d.status || d.driverStatus) === "available"
+        ).length,
+        onTrip: allDrivers.filter(
+          (d) => (d.status || d.driverStatus) === "on_trip"
+        ).length,
+        offline: allDrivers.filter(
+          (d) => (d.status || d.driverStatus) === "offline"
+        ).length,
+      });
+    } catch (err) {
+      console.error("Error loading stats:", err);
     }
   };
 
@@ -202,17 +242,6 @@ export default function Drivers() {
   const handleFilterChange = (filterType, value) => {
     setFilters((prev) => ({ ...prev, [filterType]: value }));
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  };
-
-  const stats = {
-    total: drivers.length,
-    available: drivers.filter(
-      (d) => (d.status || d.driverStatus) === "available"
-    ).length,
-    onTrip: drivers.filter((d) => (d.status || d.driverStatus) === "on_trip")
-      .length,
-    offline: drivers.filter((d) => (d.status || d.driverStatus) === "offline")
-      .length,
   };
 
   if (loading) {
