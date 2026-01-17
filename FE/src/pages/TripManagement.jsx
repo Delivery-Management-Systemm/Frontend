@@ -496,118 +496,132 @@ const TripManagement = () => {
             ) : orders.length === 0 ? (
               <div className="order-card">Chưa có đơn hàng nào.</div>
             ) : (
-              orders.map((o) => (
-                <div className="order-card" key={o.id}>
-                  <div className="order-card-top">
-                    <div>
-                      <div className="order-id">
-                        {o.id}{" "}
-                        <span className={`order-badge order-${o.status}`}>
-                          {o.status === "in_transit"
-                            ? "Đang vận chuyển"
-                            : o.status === "delivered"
-                            ? "Đã giao"
-                            : "Đang chờ"}
-                        </span>
+              orders.map((o) => {
+                const nextStepIndex = Array.isArray(o.steps)
+                  ? o.steps.findIndex((s) => !s.done)
+                  : -1;
+                const completedCount = Array.isArray(o.steps)
+                  ? o.steps.reduce((c, s) => c + (s.done ? 1 : 0), 0)
+                  : 0;
+                const segments = Array.isArray(o.steps) ? Math.max(o.steps.length - 1, 1) : 1;
+                const progressPercent = Math.round((Math.min(completedCount, segments) / segments) * 100);
+                return (
+                  <div className="order-card" key={o.id}>
+                    <div className="order-card-top">
+                      <div className="order-left">
+                        <div className="order-id">
+                          {o.id}{" "}
+                          <span className={`order-badge order-${o.status}`}>
+                            {o.status === "in_transit"
+                              ? "Đang vận chuyển"
+                              : o.status === "delivered"
+                              ? "Đã giao"
+                              : "Đang chờ"}
+                          </span>
+                        </div>
+                        <div className="cust-label">Khách hàng</div>
+                        <div className="order-customer">{o.customer}</div>
+                        <div className="order-contact">{o.contact}</div>
                       </div>
-                      <div className="order-customer">{o.customer}</div>
-                      <div className="order-contact">{o.contact}</div>
-                    </div>
-                    <div className="order-vehicle">
-                      <div className="ov-label">Phương tiện / Tài xế</div>
-                      <div className="ov-main">{o.vehicle}</div>
-                      <div className="ov-sub">{o.driver}</div>
-                    </div>
-                  </div>
 
-                  <div className="order-locations">
-                    <div className="loc">
-                      <MdLocationOn className="loc-icon" />
-                      <div>
-                        <div className="loc-title">Điểm lấy hàng</div>
-                        <div className="loc-text">{o.pickup}</div>
-                      </div>
-                    </div>
-                    <div className="loc">
-                      <MdLocationOn className="loc-icon loc-dest" />
-                      <div>
-                        <div className="loc-title">Điểm giao hàng</div>
-                        <div className="loc-text">{o.dropoff}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="order-steps">
-                    <div className="steps-track">
-                      {o.steps.map((s, idx) => (
-                        <div
-                          className={`step ${
-                            s.key === "delivered" ? "deliver-step" : ""
-                          }`}
-                          key={s.key}
+                      <div className="order-right">
+                        <div className="order-vehicle">
+                          <div className="ov-label">Phương tiện / Tài xế</div>
+                          <div className="ov-main">{o.vehicle}</div>
+                          <div className="ov-sub">{o.driver}</div>
+                        </div>
+                        <button
+                          className="order-detail-btn"
+                          onClick={() => {
+                            /* open trip detail for this trip (reuse existing modal) */
+                            setSelectedTripId(orderTrip?.tripID || null);
+                          }}
                         >
+                          Chi tiết
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="order-locations">
+                      <div className="loc">
+                        <MdLocationOn className="loc-icon" />
+                        <div>
+                          <div className="loc-title">Điểm lấy hàng</div>
+                          <div className="loc-text">{o.pickup}</div>
+                        </div>
+                      </div>
+                      <div className="loc">
+                        <MdLocationOn className="loc-icon loc-dest" />
+                        <div>
+                          <div className="loc-title">Điểm giao hàng</div>
+                          <div className="loc-text">{o.dropoff}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="order-steps">
+                      <div className="steps-track" style={{ ["--progress"]: `${progressPercent}%` }}>
+                        {o.steps.map((s, idx) => (
                           <div
-                            className={`step-node ${s.done ? "done" : ""} ${
-                              s.key === "delivered" && !s.done
-                                ? "pending-delivered"
-                                : ""
-                            } ${
-                              s.key === "delivered" && s.done
-                                ? "done-delivered"
-                                : ""
-                            }`}
+                            className={`step ${s.key === "delivered" ? "deliver-step" : ""}`}
+                            key={s.key}
                           >
-                            {s.done ? (
-                              <FaCheckCircle />
-                            ) : s.key === "phone" ? (
-                              <FaPhone />
-                            ) : (
-                              <FaClock />
+                            <div className="step-wrapper">
+                              <div
+                                className={`step-card ${s.done ? "done" : ""} ${s.key}`}
+                              >
+                                <div
+                                  className={`step-node ${s.key} ${s.done ? "done" : ""} ${s.key === "delivered" && s.done ? "done-delivered" : ""}`}
+                                >
+                                  {s.done ? (
+                                    <FaCheckCircle />
+                                  ) : s.key === "phone" ? (
+                                    <FaPhone />
+                                  ) : (
+                                    <FaClock />
+                                  )}
+                                </div>
+                              </div>
+
+                              {idx < o.steps.length - 1 && (
+                                <div
+                                  className={`connector ${s.done ? "done" : ""}`}
+                                />
+                              )}
+                            </div>
+
+                            <div className="step-label">{s.label}</div>
+                            {s.time ? (
+                              <div className={`step-time ${s.done ? "done" : ""}`}>{s.time}</div>
+                            ) : null}
+
+                            {/* only allow action on the next pending step */}
+                            {idx === nextStepIndex && !s.done && (
+                              <div className="step-action">
+                                {s.key === "delivered" ? (
+                                  <button
+                                    className="btn-complete"
+                                    onClick={() => handleConfirmOrderStep(o.id, s.key)}
+                                  >
+                                    Hoàn thành
+                                  </button>
+                                ) : (
+                                  <button
+                                    className="btn btn-primary"
+                                    onClick={() => handleConfirmOrderStep(o.id, s.key)}
+                                  >
+                                    Xác nhận
+                                  </button>
+                                )}
+                              </div>
                             )}
                           </div>
-
-                          {idx < o.steps.length - 1 && (
-                            <div
-                              className={`connector ${s.done ? "done" : ""}`}
-                            />
-                          )}
-
-                          <div className="step-label">{s.label}</div>
-                          {s.time ? (
-                            <div className="step-time">{s.time}</div>
-                          ) : null}
-
-                          {s.key === "phone" && !s.done && (
-                            <div className="step-action">
-                              <button
-                                className="btn btn-primary"
-                                onClick={() =>
-                                  handleConfirmOrderStep(o.id, s.key)
-                                }
-                              >
-                                Xác nhận
-                              </button>
-                            </div>
-                          )}
-
-                          {s.key === "delivered" && !s.done && (
-                            <div className="step-action">
-                              <button
-                                className="btn-complete"
-                                onClick={() =>
-                                  handleConfirmOrderStep(o.id, s.key)
-                                }
-                              >
-                                Hoàn thành
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
