@@ -71,7 +71,14 @@ class UserAPI {
       );
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let message = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          message = errorData?.error || errorData?.message || message;
+        } catch {
+          // ignore json parse errors
+        }
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -174,6 +181,90 @@ class UserAPI {
       return data;
     } catch (error) {
       console.error("Error updating user:", error);
+      throw error;
+    }
+  }
+
+  // Set email for first login
+  async setFirstLoginEmail(phone, password, email) {
+    try {
+      const response = await fetchWithRetry(
+        `${API_CONFIG.BASE_URL}/User/first-login/email`,
+        {
+          method: "POST",
+          headers: API_CONFIG.DEFAULT_HEADERS,
+          body: JSON.stringify({ phone, password, email }),
+        }
+      );
+
+      if (!response.ok) {
+        let message = `HTTP error! status: ${response.status}`;
+        try {
+          const errorData = await response.json();
+          message = errorData?.error || errorData?.message || message;
+        } catch {
+          // ignore json parse errors
+        }
+        throw new Error(message);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error setting first login email:", error);
+      throw error;
+    }
+  }
+
+  // Upload avatar
+  async uploadAvatar(userId, file) {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const headers = API_CONFIG.getAuthHeaders();
+      delete headers["Content-Type"];
+
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/User/upload/${userId}`,
+        {
+          method: "POST",
+          headers,
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      throw error;
+    }
+  }
+
+  // Delete avatar
+  async deleteAvatar(userId) {
+    try {
+      const response = await fetch(
+        `${API_CONFIG.BASE_URL}/User/delete/${userId}`,
+        {
+          method: "DELETE",
+          headers: API_CONFIG.getAuthHeaders(),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error deleting avatar:", error);
       throw error;
     }
   }
