@@ -15,7 +15,6 @@ const Login = ({ onLogin }) => {
   const [forgotError, setForgotError] = useState("");
   const [forgotMessage, setForgotMessage] = useState("");
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [pendingLogin, setPendingLogin] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -37,10 +36,8 @@ const Login = ({ onLogin }) => {
         return;
       }
       if (message === "FIRST_LOGIN_EMAIL_REQUIRED") {
-        setPendingLogin({ phone, password });
-        openForgot("set-email");
-        setForgotMessage(
-          "Tài khoản chưa có email. Vui lòng cập nhật email để tiếp tục xác minh."
+        setError(
+          "Tài khoản chưa có email để xác minh. Vui lòng liên hệ quản trị viên."
         );
         return;
       }
@@ -63,36 +60,6 @@ const Login = ({ onLogin }) => {
     setForgotOpen(false);
     setForgotError("");
     setForgotMessage("");
-    setPendingLogin(null);
-  };
-
-  const handleSetFirstLoginEmail = async () => {
-    if (!pendingLogin?.phone || !pendingLogin?.password) {
-      setForgotError("Không đủ thông tin đăng nhập để cập nhật email.");
-      return;
-    }
-    if (!forgotEmail.trim()) {
-      setForgotError("Vui lòng nhập email.");
-      return;
-    }
-
-    setForgotLoading(true);
-    setForgotError("");
-    setForgotMessage("");
-    try {
-      await userAPI.setFirstLoginEmail(
-        pendingLogin.phone,
-        pendingLogin.password,
-        forgotEmail.trim()
-      );
-      await userAPI.forgotPassword(forgotEmail.trim());
-      setForgotStep("verify");
-      setForgotMessage("Đã gửi OTP tới email. Vui lòng kiểm tra hộp thư.");
-    } catch (err) {
-      setForgotError(err?.message || "Không thể cập nhật email.");
-    } finally {
-      setForgotLoading(false);
-    }
   };
 
   const handleSendOtp = async () => {
@@ -316,30 +283,7 @@ const Login = ({ onLogin }) => {
             </div>
 
             <div className="login-modal-body">
-              {forgotStep === "set-email" ? (
-                <>
-                  <p className="login-modal-text">
-                    Nhập email để cập nhật tài khoản và nhận mã OTP.
-                  </p>
-                  <div className="login-input-wrapper">
-                    <input
-                      type="email"
-                      className="login-input"
-                      placeholder="Email"
-                      value={forgotEmail}
-                      onChange={(event) => setForgotEmail(event.target.value)}
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    className="login-submit"
-                    onClick={handleSetFirstLoginEmail}
-                    disabled={forgotLoading}
-                  >
-                    Cập nhật email
-                  </button>
-                </>
-              ) : forgotStep === "request" ? (
+              {forgotStep === "request" ? (
                 <>
                   <p className="login-modal-text">
                     Nhập email tài khoản để nhận mã OTP.
