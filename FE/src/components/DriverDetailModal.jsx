@@ -113,7 +113,7 @@ export default function DriverDetailModal({ driverId, onClose }) {
                     <span className="dd-label">Loại bằng:</span>
                     <span className="dd-value">
                       {driver.licenses
-                        ?.map((l) => l.licenseClass || l.LicenseClass)
+                        ?.map((l) => l.licenseClass || l.licenseClassName)
                         .join(", ") ||
                         driver.Licenses?.map(
                           (l) => l.licenseClass || l.LicenseClass
