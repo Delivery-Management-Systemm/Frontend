@@ -20,6 +20,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  color: #000; /* force black text */
 }
 
 .booking-detail-modal-header {
@@ -33,7 +34,7 @@
 .booking-detail-modal-header h2 {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: #000;
   margin: 0;
 }
 
@@ -102,6 +103,8 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+  max-width: 760px;
+  margin: 0 auto;
 }
 
 .booking-detail-item {
@@ -116,13 +119,56 @@
 
 .booking-detail-item label {
   font-size: 13px;
-  color: #6b7280;
+  color: #000;
   font-weight: 500;
 }
 
 .booking-detail-item span {
   font-size: 14px;
-  color: #111827;
+  color: #000;
+}
+
+/* Inputs */
+.booking-detail-item input,
+.booking-detail-item select,
+.booking-detail-item textarea {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  color: #000;
+  height: 44px;
+  box-sizing: border-box;
+}
+.booking-detail-item textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.booking-detail-item input::placeholder,
+.booking-detail-item textarea::placeholder {
+  color: #9ca3af;
+}
+
+/* Action buttons */
+.booking-ghost {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  padding: 10px 18px;
+  border-radius: 8px;
+  color: #374151;
+  cursor: pointer;
+  margin-right: 8px;
+}
+.booking-primary {
+  background: #2563eb;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+}
+.booking-primary:hover {
+  background: #1d4ed8;
 }
 
 .assigned-vehicle,

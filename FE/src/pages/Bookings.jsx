@@ -1,12 +1,5 @@
-﻿import React, { useState, useEffect } from "react";
-import {
-  FaEye,
-  FaCheckCircle,
-  FaTimesCircle,
-  FaSearch,
-  FaBan,
-  FaTrash,
-} from "react-icons/fa";
+import React, { useState, useEffect } from "react";
+import { FaEye, FaSearch, FaBan, FaTrash } from "react-icons/fa";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "./Bookings.css";
@@ -58,6 +51,8 @@ export default function Bookings() {
   useEffect(() => {
     loadStats();
   }, []);
+
+  // using BookingDetailModal in create mode when selectedBookingId === "new"
 
   const loadBookings = async () => {
     try {
@@ -190,12 +185,6 @@ export default function Bookings() {
     setConfirmOpen(true);
   };
 
-  const promptDeleteBooking = (tripId) => {
-    setConfirmTarget(tripId);
-    setConfirmAction("delete");
-    setConfirmOpen(true);
-  };
-
   const handleConfirm = () => {
     if (confirmAction === "cancel") {
       handleCancelBooking(confirmTarget);
@@ -241,16 +230,17 @@ export default function Bookings() {
   };
 
   const getStatusLabel = (status) => {
+    const normalized = (status || "").toString().trim().toLowerCase();
     const statusMap = {
-      pending: "Chờ xác nhận",
-      waiting: "Chờ xác nhận",
-      confirmed: "Đã xác nhận",
-      assigned: "Đã phân công",
-      completed: "Hoàn thành",
-      done: "Hoàn thành",
-      cancelled: "Đã hủy",
+      pending: "Chờ Xác Nhận",
+      waiting: "Chờ Xác Nhận",
+      confirmed: "Đã Xác Nhận",
+      assigned: "Đã Phân Công",
+      completed: "Hoàn Thành",
+      done: "Hoàn Thành",
+      cancelled: "Đã Hủy",
     };
-    return statusMap[status?.toLowerCase()] || status || "Không rõ";
+    return statusMap[normalized] || status || "Không rõ";
   };
 
   const statusOptions = [
@@ -474,6 +464,9 @@ export default function Bookings() {
             ]}
             placeholder="Chọn năm"
           />
+          <button className="bookings-new-btn" onClick={() => setSelectedBookingId("new")}>
+            + Đặt lịch mới
+          </button>
         </div>
       </div>
 
@@ -579,13 +572,6 @@ export default function Bookings() {
                           >
                             <FaBan />
                           </button>
-                          <button
-                            className="bookings-icon-btn bookings-icon-delete"
-                            title="Xóa"
-                            onClick={() => promptDeleteBooking(booking.tripID)}
-                          >
-                            <FaTrash />
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -611,15 +597,14 @@ export default function Bookings() {
       {selectedBookingId && (
         <BookingDetailModal
           bookingId={selectedBookingId}
-          onClose={() => setSelectedBookingId(null)}
+          onClose={async () => {
+            setSelectedBookingId(null);
+            await loadBookings();
+            await loadStats();
+          }}
         />
       )}
-      {addBookingOpen && (
-        <AddBookingModal
-          onClose={() => setAddBookingOpen(false)}
-          onSave={handleBookingSaved}
-        />
-      )}
+      {/* 'Đặt lịch mới' uses BookingDetailModal in create mode (bookingId === "new") */}
 
       <ConfirmModal
         open={confirmOpen}
