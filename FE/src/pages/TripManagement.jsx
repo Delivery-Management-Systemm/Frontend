@@ -165,7 +165,14 @@ const TripManagement = () => {
       // Backend now handles search, so no need to filter again here
       const searchFiltered = filteredTrips;
 
-      setTrips(searchFiltered);
+      // Sort ascending by trip id (support both tripID and id)
+      const sorted = (searchFiltered || []).slice().sort((a, b) => {
+        const aid = Number(a.tripID ?? a.id ?? 0);
+        const bid = Number(b.tripID ?? b.id ?? 0);
+        return aid - bid;
+      });
+
+      setTrips(sorted);
       setPagination((prev) => ({
         ...prev,
         totalItems: data.total || searchFiltered.length || 0,

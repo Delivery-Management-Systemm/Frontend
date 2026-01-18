@@ -16,6 +16,8 @@ import {
   getRouteAlternatives,
   reverseGeocode,
 } from "../services/routingService";
+import { API_CONFIG } from "../config/api";
+import { toast } from "react-toastify";
 
 const vehicleOptions = [
   { key: "small_truck", label: "Xe tải nhỏ" },
@@ -90,6 +92,8 @@ export default function AddBookingModal({ onClose, onSave }) {
   const [mapCenter, setMapCenter] = useState(defaultCenter);
 
   const update = (field, value) => setForm((p) => ({ ...p, [field]: value }));
+  const [formError, setFormError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const when = useMemo(() => {
     if (!form.date) return null;
@@ -161,6 +165,13 @@ export default function AddBookingModal({ onClose, onSave }) {
     }
   };
 
+  // clear form error when user types
+  useEffect(() => {
+    if (formError == null) return;
+    const clear = setTimeout(() => setFormError(null), 6000);
+    return () => clearTimeout(clear);
+  }, [formError]);
+
   const handleGenerateRoutes = async () => {
     if (!form.pickup.trim() || !form.delivery.trim()) {
       setRouteError("Vui lòng nhập điểm đầu và điểm cuối.");
@@ -206,7 +217,7 @@ export default function AddBookingModal({ onClose, onSave }) {
     setSelectedRouteId(stillSelected ? stillSelected.id : options[0].id);
   }, [rawRoutes, form.vehicleTypeKey, when, selectedRouteId]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (
       !form.customer.trim() ||
@@ -215,7 +226,9 @@ export default function AddBookingModal({ onClose, onSave }) {
       !form.delivery.trim() ||
       !form.date
     ) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc.");
+      const msg = "Vui lòng nhập đầy đủ thông tin!!!!";
+      setFormError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -224,46 +237,80 @@ export default function AddBookingModal({ onClose, onSave }) {
       return;
     }
 
-    const typeLabel =
-      vehicleOptions.find((item) => item.key === form.vehicleTypeKey)?.label ||
-      form.vehicleTypeKey;
+    try {
+      setFormError(null);
+      setSubmitting(true);
+      // Build payload similar to backend DTO
+      let scheduledIso = null;
+      try {
+        const time = form.time || "00:00";
+        const dt = new Date(`${form.date}T${time}`);
+        if (!isNaN(dt)) scheduledIso = dt.toISOString();
+      } catch {}
 
-    const booking = {
-      id: "c" + Date.now(),
-      customer: form.customer,
-      contact: form.contact,
-      email: form.email,
-      route: `${form.pickup} -> ${form.delivery}`,
-      startLocation: form.pickup,
-      endLocation: form.delivery,
-      date: form.date,
-      time: form.time,
-      vehicleType: typeLabel,
-      vehicleNote: form.vehicleNote,
-      notes: form.notes,
-      assigned: null,
-      assignedDriver: null,
-      status: "pending",
-      routeMeta: selectedRoute
+      const routeMeta = selectedRoute
         ? {
-            id: selectedRoute.id,
             distanceKm: selectedRoute.distanceKm,
             durationMin: selectedRoute.durationMin,
-            trafficFactor: selectedRoute.trafficFactor,
-            trafficLabel: selectedRoute.trafficLabel,
-            costs: selectedRoute.costs,
             geometry: selectedRoute.geometry,
           }
-        : null,
-    };
+        : null;
 
-    if (onSave) onSave(booking);
+      const payload = {
+        customerName: form.customer || null,
+        customerPhone: form.contact || null,
+        customerEmail: form.email || null,
+        startLocation: form.pickup || null,
+        endLocation: form.delivery || null,
+        scheduledStartTime: scheduledIso,
+        requestedVehicleType:
+          vehicleOptions.find((item) => item.key === form.vehicleTypeKey)?.label ||
+          form.vehicleTypeKey ||
+          null,
+        requestedPassengers: null,
+        requestedCargo: form.vehicleNote || form.notes || null,
+        notes: form.notes || null,
+        VehicleID: null,
+        startTime: null,
+        endTime: null,
+        totalDistanceKm: routeMeta ? routeMeta.distanceKm : null,
+        totalFuelConsumed: null,
+        tripStatus: "planned",
+        estimatedDurationMin: routeMeta ? routeMeta.durationMin : null,
+        actualDurationMin: null,
+        routeGeometryJson:
+          routeMeta && routeMeta.geometry ? JSON.stringify(routeMeta.geometry) : null,
+        estimatedDistanceKm: routeMeta ? routeMeta.distanceKm : null,
+      };
+
+      const resp = await fetch(`${API_CONFIG.BASE_URL}/Trip/booked`, {
+        method: "POST",
+        headers: API_CONFIG.getAuthHeaders(),
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) {
+        const txt = await resp.text();
+        throw new Error(txt || "Không thể tạo lịch");
+      }
+
+      toast.success("Tạo lịch thành công!");
+      if (onSave) await onSave();
+      onClose();
+    } catch (err) {
+      console.error("Error creating booking:", err);
+      const msg = err.message || "Lỗi khi tạo lịch";
+      setFormError(msg);
+      toast.error(msg);
+    }
+    finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <div className="addbooking-overlay">
       <div className="addbooking-container">
-        <h3 className="addbooking-title">Đặt lịch moi</h3>
+        <h3 className="addbooking-title">Đặt lịch mới</h3>
         <form className="addbooking-form" onSubmit={handleSubmit}>
           <div className="grid two">
             <div>

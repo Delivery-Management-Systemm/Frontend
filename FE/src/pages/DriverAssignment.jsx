@@ -87,7 +87,13 @@ export default function DriverAssignment() {
 
       const data = await response.json();
       const tripsList = data.objects || data.items || data || [];
-      setTrips(Array.isArray(tripsList) ? tripsList : []);
+      const arr = Array.isArray(tripsList) ? tripsList : [];
+      arr.sort((a, b) => {
+        const aid = Number(a.tripID ?? a.id ?? 0);
+        const bid = Number(b.tripID ?? b.id ?? 0);
+        return aid - bid;
+      });
+      setTrips(arr);
       setPagination((prev) => ({
         ...prev,
         totalItems: data.total || tripsList.length || 0,
