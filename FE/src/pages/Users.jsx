@@ -206,10 +206,12 @@ export default function Users() {
           FullName: formData.fullName,
           Phone: formData.phone,
           Email: formData.email,
+          BirthPlace: formData.birthPlace,
+          BirthDate: formData.birthDate,
           Password: formData.password,
           GPLX: formData.driverLicense.gplx,
-          ExperienceYears: 0,
-          DriverStatus: "available",
+          ExperienceYears: Number(formData.experienceYears) || 0,
+          DriverStatus: formData.driverStatus || "available",
           Licenses: licenses.map((license) => ({
             LicenseClassID: license.licenseClassId,
             ExpiryDate: license.expiryDate,
@@ -220,6 +222,9 @@ export default function Users() {
           FullName: formData.fullName,
           Phone: formData.phone,
           Password: formData.password,
+          Email: formData.email,
+          BirthPlace: formData.birthPlace,
+          BirthDate: formData.birthDate,
         };
 
         const created = await userAPI.register(registerPayload);

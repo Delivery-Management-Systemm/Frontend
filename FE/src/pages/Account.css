@@ -65,10 +65,39 @@
   border-radius: 8px;
   cursor: pointer;
 }
+.upload-btn.is-loading {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.avatar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.avatar-delete {
+  background: #fff;
+  border: 1px solid #fca5a5;
+  color: #b91c1c;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.avatar-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
 .avatar-note {
   font-size: 12px;
   color: #64748b;
+}
+
+.avatar-error {
+  font-size: 12px;
+  color: #dc2626;
 }
 
 .divider {

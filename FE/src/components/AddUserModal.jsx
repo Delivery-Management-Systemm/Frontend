@@ -1,10 +1,16 @@
-﻿import React, { useState } from "react";
+import React, { useState } from "react";
 import "./AddUserModal.css";
 
 const roleOptions = [
   { value: "staff", label: "Nhân viên" },
   { value: "driver", label: "Tài xế" },
   { value: "admin", label: "Quản trị viên" },
+];
+
+const driverStatusOptions = [
+  { value: "available", label: "Sẵn sàng" },
+  { value: "on_trip", label: "Đang chạy" },
+  { value: "offline", label: "Offline" },
 ];
 
 const licenseOptions = [
@@ -34,8 +40,12 @@ export default function AddUserModal({ onClose, onSave }) {
     fullName: "",
     email: "",
     phone: "",
+    birthPlace: "",
+    birthDate: "",
     role: "staff",
     gplx: "",
+    experienceYears: 0,
+    driverStatus: "available",
     licenses: [emptyLicense()],
   });
   const [error, setError] = useState("");
@@ -72,7 +82,13 @@ export default function AddUserModal({ onClose, onSave }) {
     event.preventDefault();
     setError("");
 
-    if (!form.password.trim() || !form.fullName.trim() || !form.phone.trim()) {
+    if (
+      !form.password.trim() ||
+      !form.fullName.trim() ||
+      !form.phone.trim() ||
+      !form.birthPlace.trim() ||
+      !form.birthDate
+    ) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc.");
       return;
     }
@@ -104,7 +120,11 @@ export default function AddUserModal({ onClose, onSave }) {
         fullName: form.fullName.trim(),
         email: form.email.trim(),
         phone: form.phone.trim(),
+        birthPlace: form.birthPlace.trim(),
+        birthDate: form.birthDate,
         role: form.role,
+        experienceYears: Number(form.experienceYears) || 0,
+        driverStatus: form.driverStatus,
         driverLicense: isDriver
           ? {
               gplx: form.gplx.trim(),
@@ -146,9 +166,20 @@ export default function AddUserModal({ onClose, onSave }) {
                 placeholder="••••••••"
               />
             </div>
+            <div>
+              <label>
+                Số điện thoại <span className="required">*</span>
+              </label>
+              <input
+                className="input"
+                value={form.phone}
+                onChange={(event) => update("phone", event.target.value)}
+                placeholder="0123456789"
+              />
+            </div>
           </div>
 
-          <div className="user-add-grid mt-3">
+          <div className="user-add-grid two mt-3">
             <div>
               <label>
                 Họ và tên <span className="required">*</span>
@@ -160,9 +191,6 @@ export default function AddUserModal({ onClose, onSave }) {
                 placeholder="Nguyễn Văn A"
               />
             </div>
-          </div>
-
-          <div className="user-add-grid two mt-3">
             <div>
               <label>Email</label>
               <input
@@ -173,15 +201,29 @@ export default function AddUserModal({ onClose, onSave }) {
                 placeholder="email@example.com"
               />
             </div>
+          </div>
+
+          <div className="user-add-grid two mt-3">
             <div>
               <label>
-                Số điện thoại <span className="required">*</span>
+                Nơi sinh <span className="required">*</span>
               </label>
               <input
                 className="input"
-                value={form.phone}
-                onChange={(event) => update("phone", event.target.value)}
-                placeholder="0123456789"
+                value={form.birthPlace}
+                onChange={(event) => update("birthPlace", event.target.value)}
+                placeholder="TP. Hồ Chí Minh"
+              />
+            </div>
+            <div>
+              <label>
+                Ngày sinh <span className="required">*</span>
+              </label>
+              <input
+                className="input"
+                type="date"
+                value={form.birthDate}
+                onChange={(event) => update("birthDate", event.target.value)}
               />
             </div>
           </div>
@@ -255,7 +297,8 @@ export default function AddUserModal({ onClose, onSave }) {
                   + Thêm bằng
                 </button>
               </div>
-              <div className="user-add-grid mt-3">
+
+              <div className="user-add-grid two mt-3">
                 <div>
                   <label>
                     Số GPLX <span className="required">*</span>
@@ -266,6 +309,34 @@ export default function AddUserModal({ onClose, onSave }) {
                     onChange={(event) => update("gplx", event.target.value)}
                     placeholder="VD: 0123456789"
                   />
+                </div>
+                <div>
+                  <label>Kinh nghiệm (năm)</label>
+                  <input
+                    className="input"
+                    type="number"
+                    min="0"
+                    value={form.experienceYears}
+                    onChange={(event) => update("experienceYears", event.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="user-add-grid mt-3">
+                <div>
+                  <label>Trạng thái</label>
+                  <select
+                    className="input"
+                    value={form.driverStatus}
+                    onChange={(event) => update("driverStatus", event.target.value)}
+                  >
+                    {driverStatusOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>

@@ -1,5 +1,18 @@
-﻿import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import "./UserEditModal.css";
+
+const formatDateInput = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      return trimmed.slice(0, 10);
+    }
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+};
 
 export default function UserEditModal({ user, onClose, onSave }) {
   const [form, setForm] = useState({
@@ -8,16 +21,20 @@ export default function UserEditModal({ user, onClose, onSave }) {
     phone: "",
     role: "",
     department: "",
+    birthPlace: "",
+    birthDate: "",
   });
 
   useEffect(() => {
     if (user) {
       setForm({
-        fullName: user.fullName || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        role: user.role || "",
-        department: user.department || "",
+        fullName: user.fullName || user.FullName || "",
+        email: user.email || user.Email || "",
+        phone: user.phone || user.Phone || "",
+        role: user.role || user.Role || "",
+        department: user.department || user.Department || "",
+        birthPlace: user.birthPlace || user.BirthPlace || "",
+        birthDate: formatDateInput(user.birthDate || user.BirthDate || ""),
       });
     }
   }, [user]);
@@ -26,18 +43,23 @@ export default function UserEditModal({ user, onClose, onSave }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.fullName.trim() || !form.email.trim()) {
-      alert("Vui lòng điền đầy đủ thông tin bắt buộc");
+    if (!form.fullName.trim() || !form.phone.trim()) {
+      alert("Vui lòng điền đầy đủ thông tin bắt buộc.");
       return;
     }
 
     const userData = {
-      FullName: form.fullName,
-      Email: form.email,
-      Phone: form.phone,
+      FullName: form.fullName.trim(),
+      Email: form.email.trim(),
+      Phone: form.phone.trim(),
       Role: form.role,
-      Department: form.department,
+      Department: form.department.trim(),
+      BirthPlace: form.birthPlace.trim(),
     };
+
+    if (form.birthDate) {
+      userData.BirthDate = form.birthDate;
+    }
 
     if (onSave) onSave(userData);
   };
@@ -58,25 +80,25 @@ export default function UserEditModal({ user, onClose, onSave }) {
               />
             </div>
             <div>
-              <label>Email *</label>
+              <label>Số điện thoại *</label>
               <input
                 className="input"
-                type="email"
-                value={form.email}
-                onChange={(e) => update("email", e.target.value)}
-                placeholder="email@example.com"
+                value={form.phone}
+                onChange={(e) => update("phone", e.target.value)}
+                placeholder="0901234567"
               />
             </div>
           </div>
 
           <div className="grid two mt-3">
             <div>
-              <label>Số điện thoại</label>
+              <label>Email</label>
               <input
                 className="input"
-                value={form.phone}
-                onChange={(e) => update("phone", e.target.value)}
-                placeholder="0901234567"
+                type="email"
+                value={form.email}
+                onChange={(e) => update("email", e.target.value)}
+                placeholder="email@example.com"
               />
             </div>
             <div>
@@ -91,6 +113,27 @@ export default function UserEditModal({ user, onClose, onSave }) {
                 <option value="staff">Nhân viên</option>
                 <option value="driver">Tài xế</option>
               </select>
+            </div>
+          </div>
+
+          <div className="grid two mt-3">
+            <div>
+              <label>Nơi sinh</label>
+              <input
+                className="input"
+                value={form.birthPlace}
+                onChange={(e) => update("birthPlace", e.target.value)}
+                placeholder="TP. Hồ Chí Minh"
+              />
+            </div>
+            <div>
+              <label>Ngày sinh</label>
+              <input
+                className="input"
+                type="date"
+                value={form.birthDate}
+                onChange={(e) => update("birthDate", e.target.value)}
+              />
             </div>
           </div>
 
