@@ -7,6 +7,7 @@ import Pagination from "../components/Pagination";
 import BookingDetailModal from "../components/BookingDetailModal";
 import ConfirmModal from "../components/ConfirmModal";
 import CustomSelect from "../components/CustomSelect";
+import AddBookingModal from "../components/AddBookingModal";
 import { API_CONFIG } from "../config/api";
 
 export default function Bookings() {
@@ -18,6 +19,7 @@ export default function Bookings() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmTarget, setConfirmTarget] = useState(null);
+  const [addBookingOpen, setAddBookingOpen] = useState(false);
 
   // Stats state - tổng thể không phụ thuộc pagination
   const [stats, setStats] = useState({
@@ -194,6 +196,12 @@ export default function Bookings() {
     setConfirmAction(null);
   };
 
+  const handleBookingSaved = async () => {
+    setAddBookingOpen(false);
+    await loadBookings();
+    await loadStats();
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     try {
@@ -265,6 +273,13 @@ export default function Bookings() {
               Quản lý các chuyến đã được đặt lịch
             </div>
           </div>
+          <button
+            type="button"
+            className="bookings-new-btn"
+            onClick={() => setAddBookingOpen(true)}
+          >
+            Đặt lịch trước
+          </button>
         </div>
 
         <div className="bookings-stats-row">
@@ -368,6 +383,13 @@ export default function Bookings() {
             Quản lý các chuyến đã được đặt lịch
           </div>
         </div>
+        <button
+          type="button"
+          className="bookings-new-btn"
+          onClick={() => setAddBookingOpen(true)}
+        >
+          Đặt lịch trước
+        </button>
       </div>
 
       {error && (
@@ -538,14 +560,14 @@ export default function Bookings() {
                         <div className="bookings-actions">
                           <button
                             className="bookings-icon-btn bookings-icon-view"
-                            title="Xem chi tiết"
+                            title="Xem chi tiáº¿t"
                             onClick={() => setSelectedBookingId(booking.tripID)}
                           >
                             <FaEye />
                           </button>
                           <button
                             className="bookings-icon-btn bookings-icon-cancel"
-                            title="Hủy lịch"
+                            title="Há»§y lá»‹ch"
                             onClick={() => promptCancelBooking(booking.tripID)}
                           >
                             <FaBan />
@@ -606,3 +628,10 @@ export default function Bookings() {
     </div>
   );
 }
+
+
+
+
+
+
+

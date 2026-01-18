@@ -6,6 +6,8 @@ import "./Users.css";
 import Pagination from "../components/Pagination";
 import CustomSelect from "../components/CustomSelect";
 import UserEditModal from "../components/UserEditModal";
+import AddUserModal from "../components/AddUserModal";
+import driverAPI from "../services/driverAPI";
 import userAPI from "../services/userAPI";
 
 const normalizeRole = (role) => (role || "").toLowerCase();
@@ -21,7 +23,7 @@ const getRoleClass = (role) => {
 const formatRoleLabel = (role) => {
   const normalized = normalizeRole(role);
   const roleMap = {
-    admin: "Quản trị",
+    admin: "Quản trị viên",
     staff: "Nhân viên",
     driver: "Tài xế",
   };
@@ -40,16 +42,17 @@ const getDepartmentClass = (department) => {
   return "dept-default";
 };
 
+const resolveUserId = (user) =>
+  user?.userID ?? user?.UserID ?? user?.id ?? user?.userId ?? null;
+
 export default function Users() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Options state
   const [roleOptions, setRoleOptions] = useState([]);
 
-  // Pagination state
   const [pagination, setPagination] = useState({
     currentPage: 1,
     pageSize: 10,
@@ -57,24 +60,32 @@ export default function Users() {
     totalPages: 0,
   });
 
-  // Filter state
   const [filters, setFilters] = useState({
     role: "",
     keyword: "",
   });
 
-  // Modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  // Load users from API
+  const [stats, setStats] = useState({
+    total: 0,
+    admin: 0,
+    staff: 0,
+    driver: 0,
+  });
+
   useEffect(() => {
     loadUsers();
   }, [pagination.currentPage, pagination.pageSize, filters]);
 
-  // Load options on mount
   useEffect(() => {
     loadOptions();
+  }, []);
+
+  useEffect(() => {
+    loadStats();
   }, []);
 
   const loadOptions = async () => {
@@ -89,7 +100,6 @@ export default function Users() {
   const loadUsers = async () => {
     try {
       setTableLoading(true);
-
       const usersData = await userAPI.getAllUsers({
         pageNumber: pagination.currentPage,
         pageSize: pagination.pageSize,
@@ -97,7 +107,6 @@ export default function Users() {
         keyword: filters.keyword,
       });
 
-      // Handle different response structures
       const usersList = usersData.objects || usersData.items || usersData || [];
 
       setUsers(Array.isArray(usersList) ? usersList : []);
@@ -120,6 +129,30 @@ export default function Users() {
     }
   };
 
+  const loadStats = async () => {
+    try {
+      const data = await userAPI.getAllUsers({
+        pageNumber: 1,
+        pageSize: 9999,
+      });
+
+      const allUsers = data.objects || data.items || data || [];
+
+      setStats({
+        total: allUsers.length,
+        admin: allUsers.filter((u) => (u.role || "").toLowerCase() === "admin")
+          .length,
+        staff: allUsers.filter((u) => (u.role || "").toLowerCase() === "staff")
+          .length,
+        driver: allUsers.filter(
+          (u) => (u.role || "").toLowerCase() === "driver"
+        ).length,
+      });
+    } catch (err) {
+      console.error("Error loading stats:", err);
+    }
+  };
+
   const handleDeleteUser = async (userId) => {
     if (!window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
       return;
@@ -128,6 +161,7 @@ export default function Users() {
     try {
       await userAPI.deleteUser(userId);
       await loadUsers();
+      await loadStats();
       toast.success("Xóa tài khoản thành công!");
     } catch (err) {
       console.error("Error deleting user:", err);
@@ -142,14 +176,68 @@ export default function Users() {
 
   const handleUpdateUser = async (userData) => {
     try {
-      await userAPI.updateUser(selectedUser.userID, userData);
+      const userId = resolveUserId(selectedUser);
+      if (!userId) {
+        throw new Error("Missing user id");
+      }
+
+      await userAPI.updateUser(userId, userData);
       await loadUsers();
+      await loadStats();
       setShowEditModal(false);
       setSelectedUser(null);
       toast.success("Cập nhật tài khoản thành công!");
     } catch (err) {
       console.error("Error updating user:", err);
       toast.error("Không thể cập nhật tài khoản. Vui lòng thử lại.");
+    }
+  };
+
+  const handleCreateUser = async (formData) => {
+    try {
+      if (formData.role === "driver" && formData.driverLicense) {
+        await driverAPI.createDriver({
+          FullName: formData.fullName,
+          Phone: formData.phone,
+          Email: formData.email,
+          Password: formData.password,
+          ExperienceYears: 0,
+          DriverStatus: "available",
+          Licenses: [
+            {
+              LicenseClassID: formData.driverLicense.licenseClassId,
+              ExpiryDate: formData.driverLicense.licenseExpiry,
+            },
+          ],
+        });
+      } else {
+        const registerPayload = {
+          FullName: formData.fullName,
+          Phone: formData.phone,
+          Password: formData.password,
+        };
+
+        const created = await userAPI.register(registerPayload);
+        const userId = resolveUserId(created);
+
+        if (userId) {
+          const updatePayload = {
+            FullName: formData.fullName,
+            Email: formData.email,
+            Phone: formData.phone,
+            Role: formData.role,
+          };
+          await userAPI.updateUser(userId, updatePayload);
+        }
+      }
+
+      await loadUsers();
+      await loadStats();
+      setShowAddModal(false);
+      toast.success("Đã tạo tài khoản thành công!");
+    } catch (err) {
+      console.error("Error creating user:", err);
+      toast.error("Không thể tạo tài khoản. Vui lòng thử lại.");
     }
   };
 
@@ -168,44 +256,6 @@ export default function Users() {
   const handleFilterChange = (filterType, value) => {
     setFilters((prev) => ({ ...prev, [filterType]: value }));
     setPagination((prev) => ({ ...prev, currentPage: 1 }));
-  };
-
-  // Load stats once on mount
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  // Stats state - tổng thể không phụ thuộc pagination
-  const [stats, setStats] = useState({
-    total: 0,
-    admin: 0,
-    staff: 0,
-    driver: 0,
-  });
-
-  const loadStats = async () => {
-    try {
-      // Load all users without pagination to get accurate stats
-      const data = await userAPI.getAllUsers({
-        pageNumber: 1,
-        pageSize: 9999, // Get all
-      });
-
-      const allUsers = data.objects || data.items || data || [];
-
-      setStats({
-        total: allUsers.length,
-        admin: allUsers.filter((u) => (u.role || "").toLowerCase() === "admin")
-          .length,
-        staff: allUsers.filter((u) => (u.role || "").toLowerCase() === "staff")
-          .length,
-        driver: allUsers.filter(
-          (u) => (u.role || "").toLowerCase() === "driver"
-        ).length,
-      });
-    } catch (err) {
-      console.error("Error loading stats:", err);
-    }
   };
 
   if (loading) {
@@ -230,6 +280,9 @@ export default function Users() {
               Quản lý người dùng trong hệ thống
             </div>
           </div>
+          <button type="button" className="users-add-btn" disabled>
+            + Thêm tài khoản
+          </button>
         </div>
 
         <div className="users-stats-row">
@@ -312,6 +365,13 @@ export default function Users() {
             Quản lý người dùng trong hệ thống
           </div>
         </div>
+        <button
+          type="button"
+          className="users-add-btn"
+          onClick={() => setShowAddModal(true)}
+        >
+          + Thêm tài khoản
+        </button>
       </div>
 
       {error && (
@@ -349,7 +409,6 @@ export default function Users() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="users-filters">
         <div className="users-search-box">
           <FaSearch />
@@ -481,7 +540,7 @@ export default function Users() {
                           <button
                             className="users-icon-btn users-icon-delete"
                             title="Xóa"
-                            onClick={() => handleDeleteUser(user.userID)}
+                            onClick={() => handleDeleteUser(resolveUserId(user))}
                           >
                             <FaTrash />
                           </button>
@@ -496,7 +555,6 @@ export default function Users() {
         </div>
       </div>
 
-      {/* Pagination */}
       {pagination.totalItems > 0 && (
         <Pagination
           currentPage={pagination.currentPage}
@@ -516,6 +574,13 @@ export default function Users() {
             setSelectedUser(null);
           }}
           onSave={handleUpdateUser}
+        />
+      )}
+
+      {showAddModal && (
+        <AddUserModal
+          onClose={() => setShowAddModal(false)}
+          onSave={handleCreateUser}
         />
       )}
 
