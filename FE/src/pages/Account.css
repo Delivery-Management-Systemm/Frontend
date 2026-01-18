@@ -1,4 +1,4 @@
-.account-container {
+﻿.account-container {
   padding: 24px 32px;
   color: #1e293b;
 }
@@ -96,13 +96,13 @@ label {
 
 input {
   padding: 10px 12px;
-  width: 100%; /* Đảm bảo input chiếm đủ không gian */
+  width: 100%; /* Äáº£m báº£o input chiáº¿m Ä‘á»§ khÃ´ng gian */
 
-  /* border-radius: 8px; */ /* BỎ: Đã chuyển lên .input-wrapper */
-  /* border: 1px solid #cbd5e1; */ /* BỎ: Đã chuyển lên .input-wrapper */
-  border: none; /* XÓA border của input, chỉ giữ border của wrapper */
+  /* border-radius: 8px; */ /* Bá»Ž: ÄÃ£ chuyá»ƒn lÃªn .input-wrapper */
+  /* border: 1px solid #cbd5e1; */ /* Bá»Ž: ÄÃ£ chuyá»ƒn lÃªn .input-wrapper */
+  border: none; /* XÃ“A border cá»§a input, chá»‰ giá»¯ border cá»§a wrapper */
   font-size: 14px;
-  background: transparent; /* Nền trong suốt để thấy background của wrapper */
+  background: transparent; /* Ná»n trong suá»‘t Ä‘á»ƒ tháº¥y background cá»§a wrapper */
 }
 
 input:focus {
@@ -110,36 +110,46 @@ input:focus {
   /*border-color: #2563eb;*/
 }
 
-/* [MỚI] Thêm lớp focus cho .input-wrapper */
+/* [Má»šI] ThÃªm lá»›p focus cho .input-wrapper */
 .input-wrapper:has(input:focus) {
-  border-color: #2563eb; /* Khi input bên trong focus, wrapper sẽ thay đổi border */
-  box-shadow: 0 0 0 1px #2563eb; /* Thêm shadow nhẹ cho hiệu ứng focus đẹp hơn */
+  border-color: #2563eb; /* Khi input bÃªn trong focus, wrapper sáº½ thay Ä‘á»•i border */
+  box-shadow: 0 0 0 1px #2563eb; /* ThÃªm shadow nháº¹ cho hiá»‡u á»©ng focus Ä‘áº¹p hÆ¡n */
 }
 
 .input-wrapper {
-  position: relative; /* NGỮ CẢNH: Thiết lập điểm neo cho icon (position: absolute) */
-  margin-top: 6px; /* Thay thế margin-top cũ của input */
-  border-radius: 8px; /* Giữ border-radius cho wrapper */
-  border: 1px solid #cbd5e1; /* Giữ border cho wrapper */
-  background: #fff; /* Đảm bảo nền trắng */
+  position: relative; /* NGá»® Cáº¢NH: Thiáº¿t láº­p Ä‘iá»ƒm neo cho icon (position: absolute) */
+  margin-top: 6px; /* Thay tháº¿ margin-top cÅ© cá»§a input */
+  border-radius: 8px; /* Giá»¯ border-radius cho wrapper */
+  border: 1px solid #cbd5e1; /* Giá»¯ border cho wrapper */
+  background: #fff; /* Äáº£m báº£o ná»n tráº¯ng */
   display: flex;
   align-items: center;
-  padding: 0; /* Xóa padding ở wrapper */
+  padding: 0; /* XÃ³a padding á»Ÿ wrapper */
 }
 
-/* [MỚI] Style cho Icon */
+/* [Má»šI] Style cho Icon */
 .input-icon {
-  position: absolute; /* VỊ TRÍ TUYỆT ĐỐI: Đặt icon bên trong wrapper */
-  left: 12px; /* Đẩy icon cách lề trái 12px */
+  position: absolute; /* Vá»Š TRÃ TUYá»†T Äá»I: Äáº·t icon bÃªn trong wrapper */
+  left: 12px; /* Äáº©y icon cÃ¡ch lá» trÃ¡i 12px */
   font-size: 16px;
-  color: #64748b; /* Màu xám cho icon */
+  color: #64748b; /* MÃ u xÃ¡m cho icon */
   top: 50%;
-  transform: translateY(-50%); /* Căn giữa dọc */
-  z-index: 2; /* Đảm bảo icon nằm trên input */
+  transform: translateY(-50%); /* CÄƒn giá»¯a dá»c */
+  z-index: 2; /* Äáº£m báº£o icon náº±m trÃªn input */
 }
 .input-wrapper:has(.input-icon) input {
-  /* Áp dụng padding-left lớn hơn chỉ khi icon TỒN TẠI bên trong wrapper */
+  /* Ãp dá»¥ng padding-left lá»›n hÆ¡n chá»‰ khi icon Tá»’N Táº I bÃªn trong wrapper */
   padding-left: 40px;
+}
+.input-wrapper.is-readonly {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+.input-wrapper.is-readonly input {
+  color: #64748b;
+}
+.input-wrapper.is-readonly .input-icon {
+  color: #94a3b8;
 }
 .save-btn {
   margin-top: 14px;
@@ -208,13 +218,13 @@ input:focus {
 }
 
 .notification-row input[type="checkbox"] {
-  /* Xóa mọi margin và border không cần thiết từ các rule input chung */
+  /* XÃ³a má»i margin vÃ  border khÃ´ng cáº§n thiáº¿t tá»« cÃ¡c rule input chung */
   margin: 0;
   border: 1px solid #ccc;
-  /* Tùy chỉnh kích thước nếu cần, ví dụ 18px */
+  /* TÃ¹y chá»‰nh kÃ­ch thÆ°á»›c náº¿u cáº§n, vÃ­ dá»¥ 18px */
   width: 18px;
   height: 18px;
-  /* Đảm bảo nó không bị ảnh hưởng bởi các padding/styles khác của input thường */
+  /* Äáº£m báº£o nÃ³ khÃ´ng bá»‹ áº£nh hÆ°á»Ÿng bá»Ÿi cÃ¡c padding/styles khÃ¡c cá»§a input thÆ°á»ng */
   padding: 0;
 }
 
@@ -278,4 +288,34 @@ input:focus {
   margin-top: 12px;
   font-size: 12px;
   color: #94a3b8;
+}
+
+
+.gender-group {
+  margin-top: 6px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.gender-pill {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gender-pill:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+}
+
+.gender-pill.is-active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
 }

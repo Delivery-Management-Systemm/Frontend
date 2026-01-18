@@ -1,7 +1,49 @@
 ﻿import React, { useEffect, useState } from "react";
-import { FaUser, FaEnvelope, FaPhone, FaLock } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaIdCard } from "react-icons/fa";
 import userAPI from "../services/userAPI";
 import "./Account.css";
+
+const normalizeRole = (role) => (role || "").toLowerCase();
+
+const formatRoleLabel = (role) => {
+  const normalized = normalizeRole(role);
+  const roleMap = {
+    admin: "Quản trị viên",
+    staff: "Nhân viên",
+    driver: "Tài xế",
+  };
+  return roleMap[normalized] || role || "Nhân viên";
+};
+
+const getDriverGplx = (user) =>
+  user?.gplx ??
+  user?.GPLX ??
+  user?.driver?.gplx ??
+  user?.driver?.GPLX ??
+  user?.driverProfile?.gplx ??
+  user?.driverInfo?.gplx ??
+  "";
+
+const getDriverExpiry = (user) =>
+  user?.licenseExpiry ??
+  user?.LicenseExpiry ??
+  user?.driverLicense?.expiryDate ??
+  user?.driverLicense?.ExpiryDate ??
+  user?.driver?.licenseExpiry ??
+  user?.driver?.expiryDate ??
+  user?.driverLicenses?.[0]?.expiryDate ??
+  user?.driverLicenses?.[0]?.ExpiryDate ??
+  "";
+
+const formatDate = (dateValue) => {
+  if (!dateValue) return "";
+  try {
+    const date = new Date(dateValue);
+    return date.toLocaleDateString("vi-VN");
+  } catch {
+    return String(dateValue);
+  }
+};
 
 const Account = ({ currentUser, onUpdateUser }) => {
   const [profile, setProfile] = useState({
@@ -272,6 +314,11 @@ const Account = ({ currentUser, onUpdateUser }) => {
       ? `Mã OTP đã được gửi tới email ${otpState.pendingEmail}. Nhập mã để đổi mật khẩu.`
       : "Mã OTP đã được gửi tới email mới. Nhập OTP để lưu thay đổi.";
 
+  const roleLabel = formatRoleLabel(profile.role);
+  const isDriver = normalizeRole(profile.role) === "driver";
+  const gplx = getDriverGplx(currentUser);
+  const expiry = formatDate(getDriverExpiry(currentUser));
+
   return (
     <div className="account-container">
       <h2 className="account-title">Quản lý tài khoản</h2>
@@ -387,42 +434,80 @@ const Account = ({ currentUser, onUpdateUser }) => {
 
             <label>
               Giới tính
-              <div className="input-wrapper">
-                <select
-                  value={profile.gender}
-                  onChange={(e) => updateProfile("gender", e.target.value)}
+              <div className="gender-group">
+                <button
+                  type="button"
+                  className={`gender-pill${
+                    profile.gender === "male" ? " is-active" : ""
+                  }`}
+                  onClick={() => updateProfile("gender", "male")}
                 >
-                  <option value="">-- Chọn giới tính --</option>
-                  <option value="male">Nam</option>
-                  <option value="female">Nữ</option>
-                  <option value="other">Khác</option>
-                </select>
+                  Nam
+                </button>
+                <button
+                  type="button"
+                  className={`gender-pill${
+                    profile.gender === "female" ? " is-active" : ""
+                  }`}
+                  onClick={() => updateProfile("gender", "female")}
+                >
+                  Nữ
+                </button>
+                <button
+                  type="button"
+                  className={`gender-pill${
+                    profile.gender === "other" ? " is-active" : ""
+                  }`}
+                  onClick={() => updateProfile("gender", "other")}
+                >
+                  Khác
+                </button>
               </div>
             </label>
 
             <label>
               Chức vụ
-              <div className="input-wrapper">
-                <input
-                  type="text"
-                  placeholder="Chức vụ"
-                  value={profile.role}
-                  onChange={(e) => updateProfile("role", e.target.value)}
-                />
+              <div className="input-wrapper is-readonly">
+                <input type="text" value={roleLabel} readOnly />
               </div>
             </label>
 
             <label className="full-width">
               Phòng ban
-              <div className="input-wrapper">
+              <div className="input-wrapper is-readonly">
                 <input
                   type="text"
-                  placeholder="Phòng ban"
-                  value={profile.department}
-                  onChange={(e) => updateProfile("department", e.target.value)}
+                  value={profile.department || "Chưa cập nhật"}
+                  readOnly
                 />
               </div>
             </label>
+
+            {isDriver && (
+              <>
+                <label>
+                  Số GPLX
+                  <div className="input-wrapper is-readonly">
+                    <FaIdCard className="input-icon" />
+                    <input
+                      type="text"
+                      value={gplx || "Chưa cập nhật"}
+                      readOnly
+                    />
+                  </div>
+                </label>
+                <label>
+                  Ngày hết hạn
+                  <div className="input-wrapper is-readonly">
+                    <input
+                      type="text"
+                      value={expiry || "Chưa cập nhật"}
+                      readOnly
+                    />
+                  </div>
+                </label>
+              </>
+            )}
           </div>
 
           <button
@@ -542,9 +627,7 @@ const Account = ({ currentUser, onUpdateUser }) => {
                 Xác nhận
               </button>
             </div>
-            <p className="account-otp-hint">
-              Mã OTP có hiệu lực trong 10 phút.
-            </p>
+            <p className="account-otp-hint">Mã OTP có hiệu lực trong 10 phút.</p>
           </div>
         </div>
       )}

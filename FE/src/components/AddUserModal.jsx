@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+﻿import React, { useState } from "react";
 import "./AddUserModal.css";
 
 const roleOptions = [
@@ -8,51 +8,91 @@ const roleOptions = [
 ];
 
 const licenseOptions = [
-  { value: 1, label: "A1" },
-  { value: 2, label: "A2" },
-  { value: 3, label: "B1" },
-  { value: 4, label: "B2" },
-  { value: 5, label: "C" },
-  { value: 6, label: "D" },
-  { value: 7, label: "E" },
-  { value: 8, label: "F" },
+  { value: 1, label: "B1" },
+  { value: 2, label: "B" },
+  { value: 3, label: "C1" },
+  { value: 4, label: "C" },
+  { value: 5, label: "D1" },
+  { value: 6, label: "D2" },
+  { value: 7, label: "D" },
+  { value: 8, label: "BE" },
+  { value: 9, label: "C1E" },
+  { value: 10, label: "CE" },
+  { value: 11, label: "D1E" },
+  { value: 12, label: "D2E" },
+  { value: 13, label: "DE" },
 ];
+
+const emptyLicense = () => ({
+  licenseClassId: "",
+  expiryDate: "",
+});
 
 export default function AddUserModal({ onClose, onSave }) {
   const [form, setForm] = useState({
-    username: "",
     password: "",
     fullName: "",
     email: "",
     phone: "",
     role: "staff",
-    licenseClassId: "",
-    licenseId: "",
-    licenseExpiry: "",
+    gplx: "",
+    licenses: [emptyLicense()],
   });
   const [error, setError] = useState("");
 
   const update = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
 
+  const updateLicense = (index, field, value) => {
+    setForm((prev) => ({
+      ...prev,
+      licenses: prev.licenses.map((item, idx) =>
+        idx === index ? { ...item, [field]: value } : item
+      ),
+    }));
+  };
+
+  const addLicense = () =>
+    setForm((prev) => ({
+      ...prev,
+      licenses: [...prev.licenses, emptyLicense()],
+    }));
+
+  const removeLicense = (index) =>
+    setForm((prev) => ({
+      ...prev,
+      licenses: prev.licenses.filter((_, idx) => idx !== index),
+    }));
+
   const isDriver = form.role === "driver";
+  const modalTitle = isDriver ? "Thêm tài xế mới" : "Thêm tài khoản mới";
+  const submitLabel = isDriver ? "Thêm tài xế" : "Thêm tài khoản";
 
   const handleSubmit = (event) => {
     event.preventDefault();
     setError("");
 
-    if (
-      !form.username.trim() ||
-      !form.password.trim() ||
-      !form.fullName.trim() ||
-      !form.email.trim()
-    ) {
+    if (!form.password.trim() || !form.fullName.trim() || !form.phone.trim()) {
       setError("Vui lòng điền đầy đủ thông tin bắt buộc.");
       return;
     }
 
     if (isDriver) {
-      if (!form.licenseClassId || !form.licenseId.trim() || !form.licenseExpiry) {
+      if (!form.licenses.length) {
+        setError("Vui lòng thêm ít nhất một bằng lái.");
+        return;
+      }
+
+      if (!form.gplx.trim()) {
+        setError("Vui lòng nhập số GPLX.");
+        return;
+      }
+
+      const invalidLicense = form.licenses.some(
+        (license) => !license.licenseClassId || !license.expiryDate
+      );
+
+      if (invalidLicense) {
         setError("Vui lòng nhập đầy đủ thông tin bằng lái.");
         return;
       }
@@ -60,7 +100,6 @@ export default function AddUserModal({ onClose, onSave }) {
 
     if (onSave) {
       onSave({
-        username: form.username.trim(),
         password: form.password,
         fullName: form.fullName.trim(),
         email: form.email.trim(),
@@ -68,9 +107,11 @@ export default function AddUserModal({ onClose, onSave }) {
         role: form.role,
         driverLicense: isDriver
           ? {
-              licenseClassId: Number(form.licenseClassId),
-              licenseId: form.licenseId.trim(),
-              licenseExpiry: form.licenseExpiry,
+              gplx: form.gplx.trim(),
+              licenses: form.licenses.map((license) => ({
+                licenseClassId: Number(license.licenseClassId),
+                expiryDate: license.expiryDate,
+              })),
             }
           : null,
       });
@@ -81,7 +122,7 @@ export default function AddUserModal({ onClose, onSave }) {
     <div className="user-add-overlay">
       <div className="user-add-container">
         <div className="user-add-header">
-          <h3>Thêm tài khoản mới</h3>
+          <h3>{modalTitle}</h3>
           <button
             type="button"
             className="user-add-close"
@@ -93,17 +134,6 @@ export default function AddUserModal({ onClose, onSave }) {
         </div>
         <form className="user-add-form" onSubmit={handleSubmit}>
           <div className="user-add-grid two">
-            <div>
-              <label>
-                Username <span className="required">*</span>
-              </label>
-              <input
-                className="input"
-                value={form.username}
-                onChange={(event) => update("username", event.target.value)}
-                placeholder="admin"
-              />
-            </div>
             <div>
               <label>
                 Mật khẩu <span className="required">*</span>
@@ -134,9 +164,7 @@ export default function AddUserModal({ onClose, onSave }) {
 
           <div className="user-add-grid two mt-3">
             <div>
-              <label>
-                Email <span className="required">*</span>
-              </label>
+              <label>Email</label>
               <input
                 className="input"
                 type="email"
@@ -146,7 +174,9 @@ export default function AddUserModal({ onClose, onSave }) {
               />
             </div>
             <div>
-              <label>Số điện thoại</label>
+              <label>
+                Số điện thoại <span className="required">*</span>
+              </label>
               <input
                 className="input"
                 value={form.phone}
@@ -177,50 +207,64 @@ export default function AddUserModal({ onClose, onSave }) {
 
           {isDriver && (
             <div className="user-add-driver">
-              <div className="user-add-grid two mt-3">
-                <div>
-                  <label>
-                    Hạng bằng <span className="required">*</span>
-                  </label>
-                  <select
-                    className="input"
-                    value={form.licenseClassId}
-                    onChange={(event) =>
-                      update("licenseClassId", event.target.value)
-                    }
-                  >
-                    <option value="">-- Chọn hạng bằng --</option>
-                    {licenseOptions.map((license) => (
-                      <option key={license.value} value={license.value}>
-                        {license.label}
-                      </option>
-                    ))}
-                  </select>
+              <div className="user-add-grid mt-3">
+                <label>
+                  Bằng lái <span className="required">*</span>
+                </label>
+                <div className="user-add-license-list">
+                  {form.licenses.map((license, index) => (
+                    <div key={`license-${index}`} className="user-add-license-row">
+                      <select
+                        className="input"
+                        value={license.licenseClassId}
+                        onChange={(event) =>
+                          updateLicense(index, "licenseClassId", event.target.value)
+                        }
+                      >
+                        <option value="">-- Loại bằng --</option>
+                        {licenseOptions.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            Bằng {option.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="input"
+                        type="date"
+                        value={license.expiryDate}
+                        onChange={(event) =>
+                          updateLicense(index, "expiryDate", event.target.value)
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="user-add-license-remove"
+                        onClick={() => removeLicense(index)}
+                        disabled={form.licenses.length === 1}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label>
-                    Mã bằng <span className="required">*</span>
-                  </label>
-                  <input
-                    className="input"
-                    value={form.licenseId}
-                    onChange={(event) => update("licenseId", event.target.value)}
-                    placeholder="GPLX-123456"
-                  />
-                </div>
+                <button
+                  type="button"
+                  className="user-add-license-add"
+                  onClick={addLicense}
+                >
+                  + Thêm bằng
+                </button>
               </div>
               <div className="user-add-grid mt-3">
                 <div>
                   <label>
-                    Ngày hết hạn <span className="required">*</span>
+                    Số GPLX <span className="required">*</span>
                   </label>
                   <input
                     className="input"
-                    type="date"
-                    value={form.licenseExpiry}
-                    onChange={(event) =>
-                      update("licenseExpiry", event.target.value)
-                    }
+                    value={form.gplx}
+                    onChange={(event) => update("gplx", event.target.value)}
+                    placeholder="VD: 0123456789"
                   />
                 </div>
               </div>
@@ -230,15 +274,11 @@ export default function AddUserModal({ onClose, onSave }) {
           {error && <div className="user-add-error">{error}</div>}
 
           <div className="user-add-actions">
-            <button
-              type="button"
-              className="btn btn-ghost"
-              onClick={onClose}
-            >
+            <button type="button" className="btn btn-ghost" onClick={onClose}>
               Hủy
             </button>
             <button type="submit" className="btn btn-primary">
-              Thêm tài khoản
+              {submitLabel}
             </button>
           </div>
         </form>
