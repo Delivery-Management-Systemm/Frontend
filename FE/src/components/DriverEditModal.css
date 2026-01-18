@@ -112,6 +112,63 @@
   resize: vertical;
   font-family: inherit;
 }
+.de-license-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.de-license-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.de-license-row select,
+.de-license-row input {
+  padding: 10px 12px;
+  border: 1px solid #a0a0a0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.de-license-remove {
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #475569;
+  border-radius: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.de-license-remove:hover:not(:disabled) {
+  border-color: #cbd5f5;
+  color: #1d4ed8;
+}
+
+.de-license-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.de-license-add {
+  margin-top: 10px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.de-license-add:hover {
+  background: #dbeafe;
+}
 
 .de-modal-footer {
   display: flex;

@@ -1,6 +1,7 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaIdCard } from "react-icons/fa";
 import userAPI from "../services/userAPI";
+import driverAPI from "../services/driverAPI";
 import "./Account.css";
 
 const normalizeRole = (role) => (role || "").toLowerCase();
@@ -15,25 +16,18 @@ const formatRoleLabel = (role) => {
   return roleMap[normalized] || role || "Nhân viên";
 };
 
-const getDriverGplx = (user) =>
-  user?.gplx ??
-  user?.GPLX ??
-  user?.driver?.gplx ??
-  user?.driver?.GPLX ??
-  user?.driverProfile?.gplx ??
-  user?.driverInfo?.gplx ??
-  "";
-
-const getDriverExpiry = (user) =>
-  user?.licenseExpiry ??
-  user?.LicenseExpiry ??
-  user?.driverLicense?.expiryDate ??
-  user?.driverLicense?.ExpiryDate ??
-  user?.driver?.licenseExpiry ??
-  user?.driver?.expiryDate ??
-  user?.driverLicenses?.[0]?.expiryDate ??
-  user?.driverLicenses?.[0]?.ExpiryDate ??
-  "";
+const formatDateInput = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+      return trimmed.slice(0, 10);
+    }
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+};
 
 const formatDate = (dateValue) => {
   if (!dateValue) return "";
@@ -45,17 +39,74 @@ const formatDate = (dateValue) => {
   }
 };
 
+const computeAge = (birthDate) => {
+  if (!birthDate) return "";
+  const date = new Date(birthDate);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Date().getFullYear() - date.getFullYear();
+};
+
+const resolveDriverId = (user) =>
+  user?.driverId ??
+  user?.driverID ??
+  user?.DriverID ??
+  user?.driver?.driverId ??
+  user?.driver?.driverID ??
+  user?.driver?.DriverID ??
+  user?.driverInfo?.driverId ??
+  user?.driverInfo?.driverID ??
+  user?.driverProfile?.driverId ??
+  user?.driverProfile?.driverID ??
+  null;
+
+const getDriverGplx = (user, driverInfo) =>
+  driverInfo?.gplx ??
+  driverInfo?.GPLX ??
+  driverInfo?.driver?.gplx ??
+  user?.gplx ??
+  user?.GPLX ??
+  user?.driver?.gplx ??
+  user?.driver?.GPLX ??
+  user?.driverProfile?.gplx ??
+  user?.driverInfo?.gplx ??
+  "";
+
+const getDriverExpiry = (user, driverInfo) =>
+  driverInfo?.licenseExpiry ??
+  driverInfo?.LicenseExpiry ??
+  driverInfo?.licenses?.[0]?.expiryDate ??
+  driverInfo?.licenses?.[0]?.ExpiryDate ??
+  driverInfo?.Licenses?.[0]?.expiryDate ??
+  driverInfo?.Licenses?.[0]?.ExpiryDate ??
+  user?.licenseExpiry ??
+  user?.LicenseExpiry ??
+  user?.driverLicense?.expiryDate ??
+  user?.driverLicense?.ExpiryDate ??
+  user?.driver?.licenseExpiry ??
+  user?.driver?.expiryDate ??
+  user?.driverLicenses?.[0]?.expiryDate ??
+  user?.driverLicenses?.[0]?.ExpiryDate ??
+  "";
+
 const Account = ({ currentUser, onUpdateUser }) => {
   const [profile, setProfile] = useState({
     fullName: "",
-    age: "",
     gender: "",
     email: "",
     phone: "",
     role: "",
     department: "",
+    birthPlace: "",
+    birthDate: "",
+  });
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarState, setAvatarState] = useState({
+    isUploading: false,
+    isDeleting: false,
+    error: "",
   });
 
+  const [driverInfo, setDriverInfo] = useState(null);
   const [password, setPassword] = useState({
     current: "",
     next: "",
@@ -92,14 +143,89 @@ const Account = ({ currentUser, onUpdateUser }) => {
     }
 
     setProfile({
-      fullName: currentUser.fullName || currentUser.username || "",
-      age: currentUser.age || "",
-      gender: currentUser.gender || "",
-      email: currentUser.email || "",
-      phone: currentUser.phone || "",
-      role: currentUser.role || "",
-      department: currentUser.department || "",
+      fullName: currentUser.fullName || currentUser.FullName || currentUser.username || "",
+      gender: currentUser.gender || currentUser.Gender || "",
+      email: currentUser.email || currentUser.Email || "",
+      phone: currentUser.phone || currentUser.Phone || "",
+      role: currentUser.role || currentUser.Role || "",
+      department: currentUser.department || currentUser.Department || "",
+      birthPlace: currentUser.birthPlace || currentUser.BirthPlace || "",
+      birthDate: formatDateInput(currentUser.birthDate || currentUser.BirthDate || ""),
     });
+    setAvatarUrl(currentUser.avatar || currentUser.Avatar || "");
+  }, [currentUser]);
+
+  useEffect(() => {
+    const loadDriverInfo = async () => {
+      const role = normalizeRole(currentUser?.role || currentUser?.Role);
+      if (role !== "driver") {
+        setDriverInfo(null);
+        return;
+      }
+
+      try {
+        let driverId = resolveDriverId(currentUser);
+
+        if (!driverId) {
+          const keyword =
+            currentUser?.phone ||
+            currentUser?.Phone ||
+            currentUser?.email ||
+            currentUser?.Email ||
+            currentUser?.fullName ||
+            currentUser?.FullName ||
+            "";
+          if (keyword) {
+            const listResponse = await driverAPI.getAllDrivers({
+              pageNumber: 1,
+              pageSize: 10,
+              keyword,
+            });
+            const list =
+              listResponse?.objects ||
+              listResponse?.items ||
+              listResponse ||
+              [];
+            const normalizedKeyword = keyword.toString().trim().toLowerCase();
+            const matched = Array.isArray(list)
+              ? list.find((driver) => {
+                  const phone =
+                    driver?.phone || driver?.Phone || driver?.userPhone || "";
+                  const email =
+                    driver?.email || driver?.Email || driver?.userEmail || "";
+                  const name =
+                    driver?.fullName || driver?.FullName || driver?.userName || "";
+                  return (
+                    phone?.toString().trim() === normalizedKeyword ||
+                    email?.toString().trim().toLowerCase() ===
+                      normalizedKeyword ||
+                    name?.toString().trim().toLowerCase() === normalizedKeyword
+                  );
+                })
+              : null;
+            driverId =
+              matched?.driverID ??
+              matched?.DriverID ??
+              matched?.driverId ??
+              matched?.DriverId ??
+              null;
+          }
+        }
+
+        if (!driverId) {
+          setDriverInfo(null);
+          return;
+        }
+
+        const data = await driverAPI.getDriverDetails(driverId);
+        setDriverInfo(data);
+      } catch (error) {
+        console.error("Error loading driver details:", error);
+        setDriverInfo(null);
+      }
+    };
+
+    loadDriverInfo();
   }, [currentUser]);
 
   const syncProfileFromUser = (user) => {
@@ -109,11 +235,16 @@ const Account = ({ currentUser, onUpdateUser }) => {
 
     setProfile((prev) => ({
       ...prev,
-      fullName: user.fullName ?? prev.fullName,
-      email: user.email ?? prev.email,
-      phone: user.phone ?? prev.phone,
-      role: user.role ?? prev.role,
-      department: user.department ?? prev.department,
+      fullName: user.fullName ?? user.FullName ?? prev.fullName,
+      email: user.email ?? user.Email ?? prev.email,
+      phone: user.phone ?? user.Phone ?? prev.phone,
+      role: user.role ?? user.Role ?? prev.role,
+      department: user.department ?? user.Department ?? prev.department,
+      gender: user.gender ?? user.Gender ?? prev.gender,
+      birthPlace: user.birthPlace ?? user.BirthPlace ?? prev.birthPlace,
+      birthDate: formatDateInput(
+        user.birthDate ?? user.BirthDate ?? prev.birthDate
+      ),
     }));
   };
 
@@ -123,7 +254,7 @@ const Account = ({ currentUser, onUpdateUser }) => {
     }
 
     const nextEmail = profile.email?.trim() || "";
-    const currentEmail = currentUser?.email?.trim() || "";
+    const currentEmail = currentUser?.email?.trim() || currentUser?.Email?.trim() || "";
 
     if (nextEmail && nextEmail !== currentEmail) {
       setSaveState({ isSaving: true, error: "", success: "" });
@@ -151,12 +282,92 @@ const Account = ({ currentUser, onUpdateUser }) => {
     try {
       const updatedUser = await onUpdateUser({ ...profile });
       syncProfileFromUser(updatedUser);
-      setSaveState({ isSaving: false, error: "", success: "Đã lưu thay đổi." });
+      setSaveState({
+        isSaving: false,
+        error: "",
+        success: "Đã lưu thay đổi.",
+      });
     } catch (error) {
       setSaveState({
         isSaving: false,
         error: error?.message || "Lưu thay đổi thất bại.",
         success: "",
+      });
+    }
+  };
+
+  const resolveUserId = (user) =>
+    user?.userID ?? user?.UserID ?? user?.id ?? user?.userId ?? null;
+
+  const handleAvatarUpload = async (file) => {
+    if (!file || !currentUser) {
+      return;
+    }
+
+    const userId = resolveUserId(currentUser);
+    if (!userId) {
+      setAvatarState((prev) => ({
+        ...prev,
+        error: "Không tìm thấy userId.",
+      }));
+      return;
+    }
+
+    setAvatarState({ isUploading: true, isDeleting: false, error: "" });
+    try {
+      const result = await userAPI.uploadAvatar(userId, file);
+      const nextAvatar =
+        result?.avatarUrl || result?.AvatarUrl || result?.avatar || "";
+      if (nextAvatar) {
+        setAvatarUrl(nextAvatar);
+      }
+
+      if (onUpdateUser) {
+        await onUpdateUser({ avatar: nextAvatar });
+      }
+    } catch (error) {
+      setAvatarState({
+        isUploading: false,
+        isDeleting: false,
+        error: error?.message || "Không thể upload ảnh.",
+      });
+      return;
+    }
+
+    setAvatarState({ isUploading: false, isDeleting: false, error: "" });
+  };
+
+  const handleAvatarDelete = async () => {
+    if (!currentUser) {
+      return;
+    }
+
+    const userId = resolveUserId(currentUser);
+    if (!userId) {
+      setAvatarState((prev) => ({
+        ...prev,
+        error: "Không tìm thấy userId.",
+      }));
+      return;
+    }
+
+    if (!window.confirm("Bạn có chắc chắn muốn xóa ảnh đại diện?")) {
+      return;
+    }
+
+    setAvatarState({ isUploading: false, isDeleting: true, error: "" });
+    try {
+      await userAPI.deleteAvatar(userId);
+      setAvatarUrl("");
+      if (onUpdateUser) {
+        await onUpdateUser({});
+      }
+      setAvatarState({ isUploading: false, isDeleting: false, error: "" });
+    } catch (error) {
+      setAvatarState({
+        isUploading: false,
+        isDeleting: false,
+        error: error?.message || "Không thể xóa ảnh.",
       });
     }
   };
@@ -236,7 +447,7 @@ const Account = ({ currentUser, onUpdateUser }) => {
     if (otpState.purpose === "email-change") {
       setProfile((prev) => ({
         ...prev,
-        email: currentUser?.email || "",
+        email: currentUser?.email || currentUser?.Email || "",
       }));
     }
 
@@ -252,7 +463,7 @@ const Account = ({ currentUser, onUpdateUser }) => {
   const handleChangePassword = async () => {
     setPasswordState({ isSaving: false, error: "", success: "" });
 
-    if (!currentUser?.email) {
+    if (!currentUser?.email && !currentUser?.Email) {
       setPasswordState({
         isSaving: false,
         error: "Vui lòng cập nhật email trước khi đổi mật khẩu.",
@@ -290,10 +501,11 @@ const Account = ({ currentUser, onUpdateUser }) => {
 
     setPasswordState({ isSaving: true, error: "", success: "" });
     try {
-      await userAPI.sendOtp(currentUser.email, "password");
+      const currentEmail = currentUser.email || currentUser.Email;
+      await userAPI.sendOtp(currentEmail, "password");
       setPendingPassword(password.next);
       setOtpState({
-        pendingEmail: currentUser.email,
+        pendingEmail: currentEmail,
         code: "",
         isOpen: true,
         error: "",
@@ -316,8 +528,9 @@ const Account = ({ currentUser, onUpdateUser }) => {
 
   const roleLabel = formatRoleLabel(profile.role);
   const isDriver = normalizeRole(profile.role) === "driver";
-  const gplx = getDriverGplx(currentUser);
-  const expiry = formatDate(getDriverExpiry(currentUser));
+  const gplx = getDriverGplx(currentUser, driverInfo);
+  const expiry = formatDate(getDriverExpiry(currentUser, driverInfo));
+  const age = computeAge(profile.birthDate);
 
   return (
     <div className="account-container">
@@ -330,9 +543,9 @@ const Account = ({ currentUser, onUpdateUser }) => {
 
           <div className="avatar-box">
             <div className="avatar-circle">
-              {currentUser?.avatar ? (
+              {avatarUrl ? (
                 <img
-                  src={currentUser.avatar}
+                  src={avatarUrl}
                   alt="Avatar"
                   className="avatar-img"
                 />
@@ -345,12 +558,47 @@ const Account = ({ currentUser, onUpdateUser }) => {
               )}
             </div>
 
-            <label className="upload-btn">
-              <span>Thay đổi ảnh</span>
-              <input type="file" hidden accept="image/*" />
-            </label>
+            <div className="avatar-actions">
+              <label
+                className={`upload-btn${
+                  avatarState.isUploading ? " is-loading" : ""
+                }`}
+              >
+                <span>
+                  {avatarState.isUploading ? "Đang tải..." : "Thay đổi ảnh"}
+                </span>
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*"
+                  onChange={(event) => {
+                    const [file] = event.target.files || [];
+                    if (file) {
+                      handleAvatarUpload(file);
+                    }
+                    event.target.value = "";
+                  }}
+                  disabled={avatarState.isUploading || avatarState.isDeleting}
+                />
+              </label>
+              <button
+                type="button"
+                className="avatar-delete"
+                onClick={handleAvatarDelete}
+                disabled={
+                  avatarState.isUploading ||
+                  avatarState.isDeleting ||
+                  !avatarUrl
+                }
+              >
+                {avatarState.isDeleting ? "Đang xóa..." : "Xóa ảnh"}
+              </button>
+            </div>
 
             <p className="avatar-note">JPG, PNG tối đa 2MB</p>
+            {avatarState.error && (
+              <p className="avatar-error">{avatarState.error}</p>
+            )}
           </div>
 
           <hr className="divider" />
@@ -421,13 +669,30 @@ const Account = ({ currentUser, onUpdateUser }) => {
 
             <label>
               Tuổi
+              <div className="input-wrapper is-readonly">
+                <input type="text" placeholder="Tuổi" value={age} readOnly />
+              </div>
+            </label>
+
+            <label>
+              Ngày sinh
               <div className="input-wrapper">
                 <input
-                  type="number"
-                  min="0"
-                  placeholder="Tuổi"
-                  value={profile.age}
-                  onChange={(e) => updateProfile("age", e.target.value)}
+                  type="date"
+                  value={profile.birthDate}
+                  onChange={(e) => updateProfile("birthDate", e.target.value)}
+                />
+              </div>
+            </label>
+
+            <label>
+              Nơi sinh
+              <div className="input-wrapper">
+                <input
+                  type="text"
+                  placeholder="TP. Hồ Chí Minh"
+                  value={profile.birthPlace}
+                  onChange={(e) => updateProfile("birthPlace", e.target.value)}
                 />
               </div>
             </label>

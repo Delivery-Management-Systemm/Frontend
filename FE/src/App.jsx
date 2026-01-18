@@ -52,6 +52,10 @@ function App() {
     role: updates.role,
     department: updates.department,
     avatar: updates.avatar,
+    birthPlace: updates.birthPlace,
+    birthDate: updates.birthDate,
+    BirthPlace: updates.birthPlace,
+    BirthDate: updates.birthDate,
   });
 
   const handleUpdateUser = async (updates) => {
