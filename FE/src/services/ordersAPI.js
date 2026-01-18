@@ -1,88 +1,64 @@
-// Orders API Service (kept for TripManagement integration)
+import { API_CONFIG } from "../config/api";
+import { fetchWithRetry } from "../utils/apiUtils";
 
-const mockOrders = [
-  {
-    id: "ord1",
-    tripId: "trip1",
-    customerName: "Công ty ABC",
-    address: "123 Đường Lê Lợi, Q1, TP.HCM",
-    phone: "0901234567",
-    status: "waiting",
-    items: ["Hàng điện tử", "Máy tính"],
-    weight: "50kg",
-    value: "10,000,000 VNĐ",
-    steps: [
-      { key: "pickup", label: "Lấy hàng", done: true },
-      { key: "gps", label: "Xác nhận GPS", done: false },
-      { key: "phone", label: "Gọi điện xác nhận", done: false },
-      { key: "delivery", label: "Giao hàng", done: false },
-    ],
-  },
-  {
-    id: "ord2",
-    tripId: "trip1",
-    customerName: "Cửa hàng XYZ",
-    address: "456 Đường Nguyễn Huệ, Q1, TP.HCM",
-    phone: "0907654321",
-    status: "in_transit",
-    items: ["Thực phẩm", "Đồ uống"],
-    weight: "30kg",
-    value: "5,000,000 VNĐ",
-    steps: [
-      { key: "pickup", label: "Lấy hàng", done: true },
-      { key: "gps", label: "Xác nhận GPS", done: true },
-      { key: "phone", label: "Gọi điện xác nhận", done: false },
-      { key: "delivery", label: "Giao hàng", done: false },
-    ],
-  },
-  {
-    id: "ord3",
-    tripId: "trip2",
-    customerName: "Nhà hàng DEF",
-    address: "789 Đường Pasteur, Q3, TP.HCM",
-    phone: "0912345678",
-    status: "delivered",
-    items: ["Nguyên liệu nấu ăn"],
-    weight: "25kg",
-    value: "3,000,000 VNĐ",
-    steps: [
-      { key: "pickup", label: "Lấy hàng", done: true },
-      { key: "gps", label: "Xác nhận GPS", done: true },
-      { key: "phone", label: "Gọi điện xác nhận", done: true },
-      { key: "delivery", label: "Giao hàng", done: true },
-    ],
-  },
-];
+// Get orders / trip details from backend: GET /api/Trip/{tripId}/orders
+export const getOrders = async (tripId) => {
+  try {
+    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/${tripId}/orders`, {
+      method: "GET",
+      headers: API_CONFIG.getAuthHeaders(),
+    });
+    const data = await resp.json();
+    if (!data) return [];
+    // Map backend OrderListDto to frontend expected shape
+    const mapOrder = (o) => {
+      return {
+        id: o.Id ?? o.id ?? o.tripID ?? o.TripID,
+        customer: o.Customer ?? o.customer ?? o.CustomerName ?? null,
+        contact: o.Contact ?? o.contact ?? o.CustomerPhone ?? null,
+        pickup: o.Pickup ?? o.pickup ?? o.StartLocation ?? null,
+        dropoff: o.Dropoff ?? o.dropoff ?? o.EndLocation ?? null,
+        vehicle: o.Vehicle ?? o.vehicle ?? o.Vehicle ?? null,
+        driver: o.Driver ?? o.driver ?? null,
+        status: o.Status ?? o.status ?? null,
+        steps:
+          (o.Steps ?? o.steps ?? []).map((s) => ({
+            key: s.Key ?? s.key,
+            label: s.Label ?? s.label,
+            done: s.Done ?? s.done,
+            time: s.Time ?? s.time,
+          })) || [],
+        cost: o.Cost ?? o.cost ?? null,
+      };
+    };
 
-export const getOrders = () => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockOrders), 300);
-  });
+    // Backend returns a single OrderListDto (trip-level); also accept array
+    if (Array.isArray(data)) {
+      return data.map(mapOrder);
+    } else {
+      return [mapOrder(data)];
+    }
+  } catch (err) {
+    console.error("Failed to get orders from backend:", err);
+    throw err;
+  }
 };
 
-export const confirmOrderStep = (orderId, stepKey) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const order = mockOrders.find((o) => o.id === orderId);
-      if (!order) {
-        resolve(null);
-        return;
-      }
-
-      const step = order.steps.find((s) => s.key === stepKey);
-      if (step) {
-        step.done = true;
-      }
-
-      // Update status based on completed steps
-      const allDone = order.steps.every((s) => s.done);
-      if (allDone) {
-        order.status = "delivered";
-      } else if (order.steps.some((s) => s.done)) {
-        order.status = "in_transit";
-      }
-
-      resolve(order);
-    }, 500);
-  });
+// Confirm a step: PUT /api/Trip/{tripId}/step/{stepKey}/confirm
+export const confirmOrderStep = async (tripId, stepKey) => {
+  try {
+    const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/${tripId}/step/${stepKey}/confirm`, {
+      method: "PUT",
+      headers: API_CONFIG.getAuthHeaders(),
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error(`Confirm failed: ${resp.status} ${txt}`);
+    }
+    const updatedOrder = await resp.json();
+    return updatedOrder;
+  } catch (err) {
+    console.error("Failed to confirm order step:", err);
+    throw err;
+  }
 };

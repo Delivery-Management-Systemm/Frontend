@@ -44,13 +44,13 @@ export default function TripDetailModal({ tripId, onClose }) {
   };
 
   const getStatusBadge = (status) => {
-    const statusLower = (status || "").toLowerCase();
+    const statusLower = (status || "").toString().trim().toLowerCase();
     const badges = {
-      completed: { text: "Hoàn thành", class: "status-completed" },
-      "in progress": { text: "Đang thực hiện", class: "status-in-progress" },
-      in_transit: { text: "Đang thực hiện", class: "status-in-progress" },
-      waiting: { text: "Chờ xử lý", class: "status-waiting" },
-      confirmed: { text: "Đã xác nhận", class: "status-confirmed" },
+      completed: { text: "Hoàn Thành", class: "status-completed" },
+      "in progress": { text: "Đang Thực Hiện", class: "status-in-progress" },
+      in_transit: { text: "Đang Thực Hiện", class: "status-in-progress" },
+      waiting: { text: "Chờ Xử Lý", class: "status-waiting" },
+      confirmed: { text: "Đã Xác Nhận", class: "status-confirmed" },
     };
     return badges[statusLower] || { text: status, class: "status-default" };
   };

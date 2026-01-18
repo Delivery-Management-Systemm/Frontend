@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./TripCostModal.css";
+import { API_CONFIG } from "../config/api";
+import { toast } from "react-toastify";
 
 function formatVnd(value) {
   if (value === null || value === undefined) return "0đ";
@@ -10,26 +12,150 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
   const [type, setType] = useState("Phạt nguội");
   const [amount, setAmount] = useState(0);
   const [desc, setDesc] = useState("");
+  const [existing, setExisting] = useState([]);
+  const [loadingExisting, setLoadingExisting] = useState(false);
+ 
+  useEffect(() => {
+    if (!trip) return;
+    // Load extra expenses for this trip from backend
+    const load = async () => {
+      setLoadingExisting(true);
+      try {
+        const rawTripId = trip.tripID ?? trip.id;
+        const numericTripId = (() => {
+          if (rawTripId == null) return "";
+          const asNum = Number(rawTripId);
+          if (!isNaN(asNum) && asNum > 0) return String(asNum);
+          const m = String(rawTripId).match(/(\d+)/);
+          return m ? m[1] : String(rawTripId);
+        })();
 
-  if (!trip) return null;
-
-  const existing = trip.charges || [];
-
-  const handleAdd = () => {
-    const amtNum = Number(amount) || 0;
-    const newCharge = {
-      id: `c${Date.now()}`,
-      type,
-      amount: formatVnd(amtNum),
-      amountNumber: amtNum,
-      desc,
-      date: new Date().toLocaleDateString(),
+        const endpoints = ["ExtraExpense", "ExtraExpenses", "extraexpense", "extraexpenses"];
+        let resp = null;
+        let data = null;
+        for (const ep of endpoints) {
+          try {
+            const params = new URLSearchParams();
+            if (numericTripId) params.append("tripId", numericTripId);
+            const url = `${API_CONFIG.BASE_URL}/${ep}?${params.toString()}`;
+            resp = await fetch(url, { headers: API_CONFIG.getAuthHeaders() });
+            if (resp.status === 404) {
+              // try next endpoint
+              continue;
+            }
+            if (!resp.ok) {
+              console.error("Failed to load extra expenses", resp.status, await resp.text());
+              resp = null;
+              continue;
+            }
+            data = await resp.json();
+            break;
+          } catch (innerErr) {
+            console.warn("Endpoint try failed", innerErr);
+            resp = null;
+            continue;
+          }
+        }
+        if (!resp || !data) {
+          setExisting([]);
+          return;
+        }
+        const list = data.objects || data.items || data || [];
+        const mapped = (list || []).map((e) => ({
+          id: e.id || e.extraExpenseID || e.extraExpenseId || e.ExtraExpenseID,
+          type: e.expenseType || e.ExpenseType,
+          amount: formatVnd(e.amount || e.Amount || 0),
+          amountNumber: e.amount || e.Amount || 0,
+          desc: e.description || e.Description || "",
+          date: e.expenseDate
+            ? new Date(e.expenseDate).toLocaleDateString()
+            : "",
+        }));
+        setExisting(mapped);
+      } catch (err) {
+        console.error("Error loading extra expenses", err);
+        setExisting([]);
+      } finally {
+        setLoadingExisting(false);
+      }
     };
-    onAddCharge(trip.id, newCharge);
-    setType("Phạt nguội");
-    setAmount(0);
-    setDesc("");
-    onClose();
+
+    load();
+  }, [trip]);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleAdd = async () => {
+    if (!trip) return;
+    const amtNum = Number(amount) || 0;
+    const payload = {
+      tripId: trip.id || trip.tripID,
+      expenseType: type,
+      amount: amtNum,
+      expenseDate: new Date().toISOString(),
+      location: null,
+      description: desc,
+    };
+
+    setSubmitting(true);
+    try {
+      const endpoints = ["ExtraExpense", "ExtraExpenses", "extraexpense", "extraexpenses"];
+      let resp = null;
+      let created = null;
+      for (const ep of endpoints) {
+        try {
+          resp = await fetch(`${API_CONFIG.BASE_URL}/${ep}`, {
+            method: "POST",
+            headers: API_CONFIG.getAuthHeaders(),
+            body: JSON.stringify(payload),
+          });
+          if (resp.status === 404 || resp.status === 405) {
+            // try next endpoint variation
+            continue;
+          }
+          if (!resp.ok) {
+            const txt = await resp.text();
+            console.error("Failed to create expense", resp.status, txt);
+            resp = null;
+            continue;
+          }
+          created = await resp.json();
+          break;
+        } catch (inner) {
+          console.warn("POST attempt failed", inner);
+          resp = null;
+          continue;
+        }
+      }
+      if (!resp || !created) {
+        toast.error("Không thể thêm chi phí. Vui lòng thử lại.");
+        return;
+      }
+      const createdId = created?.id;
+
+      const newCharge = {
+        id: createdId || `c${Date.now()}`,
+        type,
+        amount: formatVnd(amtNum),
+        amountNumber: amtNum,
+        desc,
+        date: new Date().toLocaleDateString(),
+      };
+
+      // update UI: add to existing list and inform parent
+      setExisting((prev) => [newCharge, ...(prev || [])]);
+      if (onAddCharge) onAddCharge(trip.id || trip.tripID, newCharge);
+      toast.success("Thêm chi phí thành công");
+      setType("Phạt nguội");
+      setAmount(0);
+      setDesc("");
+      onClose();
+    } catch (err) {
+      console.error("Error creating extra expense", err);
+      toast.error("Lỗi khi tạo chi phí");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -43,7 +169,9 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
           <div className="trip-cost-section">
             <div className="section-title">Chi phí hiện có</div>
             <div className="existing-list">
-              {existing.length === 0 ? (
+              {loadingExisting ? (
+                <div className="empty">Đang tải...</div>
+              ) : existing.length === 0 ? (
                 <div className="empty">Chưa có chi phí</div>
               ) : (
                 existing.map((charge) => (
@@ -66,7 +194,11 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
             <select value={type} onChange={(e) => setType(e.target.value)}>
               <option>Phạt nguội</option>
               <option>Phí cầu đường</option>
+              <option>Ăn uống</option>
+              <option>Xăng / Nhiên liệu</option>
+              <option>Lưu trú</option>
               <option>Bảo trì phương tiện</option>
+              <option>Khác</option>
             </select>
 
             <label>Số tiền (VND)</label>

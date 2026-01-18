@@ -82,7 +82,9 @@ const TripManagement = () => {
   const handleOpenOrders = (trip) => {
     setOrderTrip(trip);
     setLoadingOrders(true);
-    getOrders()
+    // pass trip id to backend call (backend expects tripId)
+    const tripId = trip?.tripID || trip?.id;
+    getOrders(tripId)
       .then((data) => {
         setOrders(data || []);
       })
@@ -118,6 +120,24 @@ const TripManagement = () => {
       }
       if (filters.year) {
         queryParams.append("year", filters.year);
+      }
+
+      // If current user is a driver, limit trips to those assigned to them
+      try {
+        const stored = localStorage.getItem("fms.currentUser");
+        if (stored) {
+          const cu = JSON.parse(stored);
+          const role = (cu?.role || "").toString().trim().toLowerCase();
+          if (role === "driver") {
+            // support multiple possible id field names
+            const uid = cu?.userID ?? cu?.UserID ?? cu?.id ?? cu?.userId ?? null;
+            if (uid) {
+              queryParams.append("driverUserId", uid);
+            }
+          }
+        }
+      } catch {
+        // ignore
       }
 
       const response = await fetch(
@@ -205,12 +225,12 @@ const TripManagement = () => {
   const getStatusBadge = (status) => {
     const statusLower = (status || "").toLowerCase();
     const badges = {
-      completed: { text: "Hoàn thành", class: "status-completed" },
-      delivered: { text: "Hoàn thành", class: "status-completed" },
-      "in-progress": { text: "Đang thực hiện", class: "status-in-progress" },
-      in_transit: { text: "Đang thực hiện", class: "status-in-progress" },
-      waiting: { text: "Chờ xử lý", class: "status-waiting" },
-      confirmed: { text: "Đã xác nhận", class: "status-confirmed" },
+      completed: { text: "Hoàn Thành", class: "status-completed" },
+      delivered: { text: "Hoàn Thành", class: "status-completed" },
+      "in-progress": { text: "Đang Thực Hiện", class: "status-in-progress" },
+      in_transit: { text: "Đang Thực Hiện", class: "status-in-progress" },
+      waiting: { text: "Chờ Xử Lý", class: "status-waiting" },
+      confirmed: { text: "Đã Xác Nhận", class: "status-confirmed" },
     };
     return (
       badges[statusLower] || {
@@ -273,17 +293,37 @@ const TripManagement = () => {
     in_transit: orders.filter((o) => o.status === "in_transit").length,
     delivered: orders.filter((o) => o.status === "delivered").length,
     gps_confirm: orders.filter((o) =>
-      o.steps.some((s) => s.key === "gps" && s.done)
+      Array.isArray(o.steps) && o.steps.some((s) => s.key === "gps" && s.done)
     ).length,
     phone_confirm: orders.filter((o) =>
-      o.steps.some((s) => s.key === "phone" && s.done)
+      Array.isArray(o.steps) && o.steps.some((s) => s.key === "phone" && s.done)
     ).length,
   };
 
   const handleConfirmOrderStep = async (orderId, stepKey) => {
+    // Only drivers can confirm steps
+    let currentUser = null;
+    try {
+      const stored = localStorage.getItem("fms.currentUser");
+      currentUser = stored ? JSON.parse(stored) : null;
+    } catch {
+      currentUser = null;
+    }
+    const role = (currentUser?.role || "").toString().trim().toLowerCase();
+    if (role !== "driver") {
+      toast.error("Chỉ có tài xế mới có thể xác nhận");
+      return;
+    }
+
+    try {
     const updated = await confirmOrderStep(orderId, stepKey);
     if (!updated) return;
     setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
+      toast.success("Xác nhận thành công");
+    } catch (err) {
+      console.error("Error confirming step:", err);
+      toast.error("Xác nhận thất bại");
+    }
   };
 
   if (loading) {
@@ -506,29 +546,29 @@ const TripManagement = () => {
                 const segments = Array.isArray(o.steps) ? Math.max(o.steps.length - 1, 1) : 1;
                 const progressPercent = Math.round((Math.min(completedCount, segments) / segments) * 100);
                 return (
-                  <div className="order-card" key={o.id}>
-                    <div className="order-card-top">
+                <div className="order-card" key={o.id}>
+                  <div className="order-card-top">
                       <div className="order-left">
-                        <div className="order-id">
-                          {o.id}{" "}
-                          <span className={`order-badge order-${o.status}`}>
-                            {o.status === "in_transit"
-                              ? "Đang vận chuyển"
-                              : o.status === "delivered"
-                              ? "Đã giao"
-                              : "Đang chờ"}
-                          </span>
-                        </div>
-                        <div className="cust-label">Khách hàng</div>
-                        <div className="order-customer">{o.customer}</div>
-                        <div className="order-contact">{o.contact}</div>
+                      <div className="order-id">
+                        {o.id}{" "}
+                        <span className={`order-badge order-${o.status}`}>
+                          {o.status === "in_transit"
+                            ? "Đang vận chuyển"
+                            : o.status === "delivered"
+                            ? "Đã giao"
+                            : "Đang chờ"}
+                        </span>
                       </div>
+                        <div className="cust-label">Khách hàng</div>
+                      <div className="order-customer">{o.customer}</div>
+                      <div className="order-contact">{o.contact}</div>
+                    </div>
 
                       <div className="order-right">
-                        <div className="order-vehicle">
-                          <div className="ov-label">Phương tiện / Tài xế</div>
-                          <div className="ov-main">{o.vehicle}</div>
-                          <div className="ov-sub">{o.driver}</div>
+                    <div className="order-vehicle">
+                      <div className="ov-label">Phương tiện / Tài xế</div>
+                      <div className="ov-main">{o.vehicle}</div>
+                      <div className="ov-sub">{o.driver}</div>
                         </div>
                         <button
                           className="order-detail-btn"
@@ -539,87 +579,87 @@ const TripManagement = () => {
                         >
                           Chi tiết
                         </button>
+                    </div>
+                  </div>
+
+                  <div className="order-locations">
+                    <div className="loc">
+                      <MdLocationOn className="loc-icon" />
+                      <div>
+                        <div className="loc-title">Điểm lấy hàng</div>
+                        <div className="loc-text">{o.pickup}</div>
                       </div>
                     </div>
-
-                    <div className="order-locations">
-                      <div className="loc">
-                        <MdLocationOn className="loc-icon" />
-                        <div>
-                          <div className="loc-title">Điểm lấy hàng</div>
-                          <div className="loc-text">{o.pickup}</div>
-                        </div>
-                      </div>
-                      <div className="loc">
-                        <MdLocationOn className="loc-icon loc-dest" />
-                        <div>
-                          <div className="loc-title">Điểm giao hàng</div>
-                          <div className="loc-text">{o.dropoff}</div>
-                        </div>
+                    <div className="loc">
+                      <MdLocationOn className="loc-icon loc-dest" />
+                      <div>
+                        <div className="loc-title">Điểm giao hàng</div>
+                        <div className="loc-text">{o.dropoff}</div>
                       </div>
                     </div>
+                  </div>
 
-                    <div className="order-steps">
+                  <div className="order-steps">
                       <div className="steps-track" style={{ ["--progress"]: `${progressPercent}%` }}>
-                        {o.steps.map((s, idx) => (
-                          <div
+                      {o.steps.map((s, idx) => (
+                        <div
                             className={`step ${s.key === "delivered" ? "deliver-step" : ""}`}
-                            key={s.key}
-                          >
+                          key={s.key}
+                        >
                             <div className="step-wrapper">
                               <div
                                 className={`step-card ${s.done ? "done" : ""} ${s.key}`}
                               >
-                                <div
+                          <div
                                   className={`step-node ${s.key} ${s.done ? "done" : ""} ${s.key === "delivered" && s.done ? "done-delivered" : ""}`}
-                                >
-                                  {s.done ? (
-                                    <FaCheckCircle />
-                                  ) : s.key === "phone" ? (
-                                    <FaPhone />
-                                  ) : (
-                                    <FaClock />
-                                  )}
+                          >
+                            {s.done ? (
+                              <FaCheckCircle />
+                            ) : s.key === "phone" ? (
+                              <FaPhone />
+                            ) : (
+                              <FaClock />
+                            )}
                                 </div>
-                              </div>
+                          </div>
 
-                              {idx < o.steps.length - 1 && (
-                                <div
-                                  className={`connector ${s.done ? "done" : ""}`}
-                                />
-                              )}
+                          {idx < o.steps.length - 1 && (
+                            <div
+                              className={`connector ${s.done ? "done" : ""}`}
+                            />
+                          )}
                             </div>
 
-                            <div className="step-label">{s.label}</div>
-                            {s.time ? (
+                          <div className="step-label">{s.label}</div>
+                          {s.time ? (
                               <div className={`step-time ${s.done ? "done" : ""}`}>{s.time}</div>
-                            ) : null}
+                          ) : null}
 
                             {/* only allow action on the next pending step */}
                             {idx === nextStepIndex && !s.done && (
-                              <div className="step-action">
+                            <div className="step-action">
                                 {s.key === "delivered" ? (
-                                  <button
+                              <button
                                     className="btn-complete"
                                     onClick={() => handleConfirmOrderStep(o.id, s.key)}
-                                  >
+                              >
                                     Hoàn thành
-                                  </button>
+                              </button>
                                 ) : (
-                                  <button
+                              <button
                                     className="btn btn-primary"
                                     onClick={() => handleConfirmOrderStep(o.id, s.key)}
-                                  >
+                              >
                                     Xác nhận
-                                  </button>
+                              </button>
                                 )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
+                </div>
                 );
               })
             )}
@@ -715,10 +755,12 @@ const TripManagement = () => {
                     </tr>
                   ) : (
                     trips.map((trip) => {
-                      // tripStatus could be in different fields
-                      const status =
-                        trip.status || trip.tripStatus || trip.Status || "";
-                      const badge = getStatusBadge(status);
+                      // tripStatus could be in different fields - normalize/trim to avoid whitespace/casing issues
+                      const rawStatus =
+                        trip.status ?? trip.tripStatus ?? trip.Status ?? "";
+                      const status = (rawStatus || "").toString().trim();
+                      const statusKey = status.toLowerCase();
+                      const badge = getStatusBadge(statusKey);
                       return (
                         <tr key={trip.id || trip.tripID} className="trip-tr">
                           <td className="trip-td">
