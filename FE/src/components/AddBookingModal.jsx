@@ -24,6 +24,8 @@ const vehicleOptions = [
   { key: "big_truck", label: "Xe tải lớn" },
   { key: "container", label: "Xe container" },
   { key: "bus", label: "Xe khách" },
+  { key: "pickup_truck", label: "Xe bán tải" },
+  { key: "car", label: "Xe con" },
 ];
 
 const defaultCenter = [10.8231, 106.6297];
