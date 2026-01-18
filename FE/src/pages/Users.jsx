@@ -196,19 +196,24 @@ export default function Users() {
   const handleCreateUser = async (formData) => {
     try {
       if (formData.role === "driver" && formData.driverLicense) {
+        const licenses = Array.isArray(formData.driverLicense.licenses)
+          ? formData.driverLicense.licenses
+          : [];
+        if (licenses.length === 0) {
+          throw new Error("Missing license class");
+        }
         await driverAPI.createDriver({
           FullName: formData.fullName,
           Phone: formData.phone,
           Email: formData.email,
           Password: formData.password,
+          GPLX: formData.driverLicense.gplx,
           ExperienceYears: 0,
           DriverStatus: "available",
-          Licenses: [
-            {
-              LicenseClassID: formData.driverLicense.licenseClassId,
-              ExpiryDate: formData.driverLicense.licenseExpiry,
-            },
-          ],
+          Licenses: licenses.map((license) => ({
+            LicenseClassID: license.licenseClassId,
+            ExpiryDate: license.expiryDate,
+          })),
         });
       } else {
         const registerPayload = {
