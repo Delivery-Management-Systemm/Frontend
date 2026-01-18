@@ -133,23 +133,23 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
       }
       const createdId = created?.id;
 
-      const newCharge = {
+    const newCharge = {
         id: createdId || `c${Date.now()}`,
-        type,
-        amount: formatVnd(amtNum),
-        amountNumber: amtNum,
-        desc,
-        date: new Date().toLocaleDateString(),
-      };
+      type,
+      amount: formatVnd(amtNum),
+      amountNumber: amtNum,
+      desc,
+      date: new Date().toLocaleDateString(),
+    };
 
       // update UI: add to existing list and inform parent
       setExisting((prev) => [newCharge, ...(prev || [])]);
       if (onAddCharge) onAddCharge(trip.id || trip.tripID, newCharge);
       toast.success("Thêm chi phí thành công");
-      setType("Phạt nguội");
-      setAmount(0);
-      setDesc("");
-      onClose();
+    setType("Phạt nguội");
+    setAmount(0);
+    setDesc("");
+    onClose();
     } catch (err) {
       console.error("Error creating extra expense", err);
       toast.error("Lỗi khi tạo chi phí");

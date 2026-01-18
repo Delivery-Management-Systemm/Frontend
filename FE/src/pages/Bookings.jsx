@@ -79,7 +79,14 @@ export default function Bookings() {
 
       const data = await response.json();
       const bookingsList = data.objects || data.items || data || [];
-      setBookings(Array.isArray(bookingsList) ? bookingsList : []);
+      const arr = Array.isArray(bookingsList) ? bookingsList : [];
+      // sort ascending by tripID (support both tripID and id)
+      arr.sort((a, b) => {
+        const aid = Number(a.tripID ?? a.id ?? 0);
+        const bid = Number(b.tripID ?? b.id ?? 0);
+        return aid - bid;
+      });
+      setBookings(arr);
       setPagination((prev) => ({
         ...prev,
         totalItems: data.total || bookingsList.length || 0,
@@ -201,6 +208,8 @@ export default function Bookings() {
     await loadBookings();
     await loadStats();
   };
+
+  // AddBookingModal will handle creation; handleBookingSaved refreshes list after modal calls onSave()
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -383,13 +392,6 @@ export default function Bookings() {
             Quản lý các chuyến đã được đặt lịch
           </div>
         </div>
-        <button
-          type="button"
-          className="bookings-new-btn"
-          onClick={() => setAddBookingOpen(true)}
-        >
-          Đặt lịch trước
-        </button>
       </div>
 
       {error && (
@@ -464,7 +466,7 @@ export default function Bookings() {
             ]}
             placeholder="Chọn năm"
           />
-          <button className="bookings-new-btn" onClick={() => setSelectedBookingId("new")}>
+          <button className="bookings-new-btn" onClick={() => setAddBookingOpen(true)}>
             + Đặt lịch mới
           </button>
         </div>
@@ -602,6 +604,12 @@ export default function Bookings() {
             await loadBookings();
             await loadStats();
           }}
+        />
+      )}
+      {addBookingOpen && (
+        <AddBookingModal
+          onClose={() => setAddBookingOpen(false)}
+          onSave={handleBookingSaved}
         />
       )}
       {/* 'Đặt lịch mới' uses BookingDetailModal in create mode (bookingId === "new") */}
