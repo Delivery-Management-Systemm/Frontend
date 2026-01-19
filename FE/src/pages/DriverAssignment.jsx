@@ -12,6 +12,9 @@ export default function DriverAssignment() {
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [cancelTrip, setCancelTrip] = useState(null);
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   // Assignment modal state
   const [showAssignModal, setShowAssignModal] = useState(false);
@@ -270,6 +273,36 @@ export default function DriverAssignment() {
       return date.toLocaleDateString("vi-VN");
     } catch {
       return dateString;
+    }
+  };
+
+  const handleCancelTrip = async (tripId) => {
+    const confirmed = window.confirm(
+      `Bạn có chắc chắn muốn hủy chuyến #${tripId} không?`
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await tripApi.deleteTripById(tripId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      toast.success("Hủy chuyến thành công!");
+
+      // Reload danh sách
+      await loadTrips();
+
+      // Reload stats
+      try {
+        await loadStats();
+      } catch {
+        calculateStats();
+      }
+    } catch (err) {
+      console.error("Cancel trip error:", err);
+      toast.error("Không thể hủy chuyến. Vui lòng thử lại.");
     }
   };
 
@@ -617,6 +650,12 @@ export default function DriverAssignment() {
                           >
                             <FaRoute /> Phân công
                           </button>
+                            <button
+                                className="assignment-btn-cancel"
+                                onClick={() => handleCancelTrip(trip.tripID)}
+                              >
+                               ❌ Hủy
+                              </button>
                         </div>
                       </td>
                     </tr>

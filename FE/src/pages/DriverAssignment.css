@@ -4,6 +4,21 @@
   min-height: 100vh;
 }
 
+
+.assignment-btn-cancel {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.assignment-btn-cancel:hover {
+  background: #fecaca;
+}
+
 .assignment-header-simple {
   display: flex;
   justify-content: space-between;
