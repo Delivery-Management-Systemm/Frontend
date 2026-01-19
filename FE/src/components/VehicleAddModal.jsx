@@ -11,7 +11,7 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
     year: 2024,
     capacity: "",
     km: 0,
-    fuelType: "Diesel",
+    fuelType: "Dầu",
     status: "Sẵn sàng",
     lastMaintenance: "",
     nextMaintenance: "",
@@ -30,7 +30,7 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
           typeof vehicle.km === "string" && vehicle.km.includes("km")
             ? Number(String(vehicle.km).replace(/[^\d]/g, "")) || 0
             : vehicle.km || 0,
-        fuelType: vehicle.fuelType || "Diesel",
+        fuelType: vehicle.fuelType || "Dầu",
         status: vehicle.status || "Sẵn sàng",
         lastMaintenance: vehicle.lastMaintenance || "",
         nextMaintenance: vehicle.nextMaintenance || "",
@@ -188,7 +188,7 @@ export default function VehicleAddModal({ onClose, onSubmit, vehicle = null }) {
               value={form.fuelType}
               onChange={(value) => update("fuelType", value)}
               options={[
-                { value: "Diesel", label: "Diesel" },
+                { value: "Dầu", label: "Dầu" },
                 { value: "Xăng", label: "Xăng" },
                 { value: "Điện", label: "Điện" },
                 { value: "Hybrid", label: "Hybrid" },

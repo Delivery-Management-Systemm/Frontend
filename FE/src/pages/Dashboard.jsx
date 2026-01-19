@@ -91,7 +91,7 @@ const MENU_ITEMS = [
     key: "fuel-management",
     label: "Nhiên liệu",
     icon: <FaGasPump />,
-    roles: ["admin", "user"],
+    roles: ["admin", "staff", "driver"],
   },
   {
     key: "account-management",
