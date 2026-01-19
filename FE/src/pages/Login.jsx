@@ -257,12 +257,7 @@ const Login = ({ onLogin }) => {
               Quên mật khẩu?
             </button>
 
-            <button type="button" className="login-register">
-              <span className="login-register-icon" aria-hidden="true">
-                +
-              </span>
-              Đăng ký tài khoản mới
-            </button>
+            
           </form>
         </div>
       </div>

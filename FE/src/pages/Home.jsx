@@ -1,4 +1,6 @@
-﻿import React from "react";
+﻿import React from "react";    
+import { useEffect, useState } from "react";
+import { getTopCards } from "../services/homeAPI";
 import {
   FaTruck,
   FaUser,
@@ -8,8 +10,22 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import "./Home.css";
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+
 
 // Mock data for dashboard cards
+
+
 const homeMockData = {
   user: {
     name: "Trần Thị Bình",
@@ -95,6 +111,34 @@ const homeMockData = {
       },
     ],
   },
+  monthlyStats: [
+    {
+      month: "T1",
+      distance: 4200,   // km
+      maintenance: 12000000, // VND
+    },
+    {
+      month: "T2",
+      distance: 3800,
+      maintenance: 8000000,
+    },
+    {
+      month: "T3",
+      distance: 5100,
+      maintenance: 15000000,
+    },
+    {
+      month: "T4",
+      distance: 4600,
+      maintenance: 6000000,
+    },
+    {
+      month: "T5",
+      distance: 5300,
+      maintenance: 9000000,
+    },
+  ]
+  ,
   capabilityByType: [
     {
       key: "small_truck",
@@ -163,13 +207,30 @@ function HomeProgressRow({ item, maxValue }) {
 }
 
 export default function Home({ currentUser }) {
-  const { topCards, vehicleStatus, driverStatus, recentActivities } =
+  const [topCards, setTopCards] = useState([]);
+  const [loadingTopCards, setLoadingTopCards] = useState(true);
+  const {vehicleStatus, driverStatus, recentActivities } =
     homeMockData;
   const capabilityByType = homeMockData.capabilityByType || [];
   const displayName = currentUser?.fullName || homeMockData.user.name;
 
   const vehicleMax = Math.max(...vehicleStatus.items.map((x) => x.value), 0);
   const driverMax = Math.max(...driverStatus.items.map((x) => x.value), 0);
+
+  useEffect(() => {
+    const loadTopCards = async () => {
+      try {
+        const data = await getTopCards();
+        setTopCards(data);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoadingTopCards(false);
+      }
+    };
+
+    loadTopCards();
+  }, []);
 
   return (
     <div className="home-container">
@@ -207,6 +268,8 @@ export default function Home({ currentUser }) {
       </div>
 
       <div className="home-status-grid">
+       
+
         <div className="home-panel-card">
           <div className="home-panel-title">{vehicleStatus.title}</div>
           <div className="home-progress-list">
@@ -234,6 +297,45 @@ export default function Home({ currentUser }) {
         </div>
       </div>
 
+
+       <div className="home-panel-card">
+            <div className="home-panel-title">Thống kê theo tháng</div>
+
+            <div className="home-chart-grid">
+              {/* Quãng đường */}
+              <div className="home-chart-card">
+                <div className="home-chart-title">Tổng quãng đường (km)</div>
+                <ResponsiveContainer width="100%" height={260}>
+                  <LineChart data={homeMockData.monthlyStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Line
+                      type="monotone"
+                      dataKey="distance"
+                      stroke="#3b82f6"
+                      strokeWidth={3}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Chi phí bảo trì */}
+              <div className="home-chart-card">
+                <div className="home-chart-title">Chi phí bảo trì (VND)</div>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={homeMockData.monthlyStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="maintenance" fill="#ef4444" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
       <div className="home-panel-card">
         <div className="home-panel-title">{recentActivities.title}</div>
 

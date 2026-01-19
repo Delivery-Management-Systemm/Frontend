@@ -312,9 +312,7 @@ export default function Drivers() {
             options={[{ value: "", label: "Tất cả trạng thái" }]}
             placeholder="Tất cả trạng thái"
           />
-          <button className="drivers-new-btn" disabled>
-            + Thêm tài xế
-          </button>
+         
         </div>
 
         <div className="drivers-list">
@@ -489,12 +487,7 @@ export default function Drivers() {
             step="0.1"
           />
 
-          <button
-            className="drivers-new-btn"
-            onClick={() => setShowAddModal(true)}
-          >
-            + Thêm tài xế
-          </button>
+         
         </div>
       </div>
 

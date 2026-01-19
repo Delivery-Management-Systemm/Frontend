@@ -156,13 +156,10 @@ export default function VehicleDetailModal({ vehicleId, onClose }) {
                     </span>
                   </div>
                   <div className="vd-info-item">
-                    <span className="vd-label">Tiêu hao nhiên liệu:</span>
+                    <span className="vd-label">Loại bằng lái tối thiểu yêu cầu:</span>
                     <span className="vd-value">
-                      {vehicle.fuelConsumption || vehicle.FuelConsumption
-                        ? `${
-                            vehicle.fuelConsumption || vehicle.FuelConsumption
-                          } L/100km`
-                        : "-"}
+                      {vehicle.requiredLicense || vehicle.requiredLicense
+                        || vehicle.RequiredLicense || "-"}
                     </span>
                   </div>
                 </div>

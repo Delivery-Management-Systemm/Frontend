@@ -82,6 +82,18 @@ export default function DriverDetailModal({ driverId, onClose }) {
                       {driver.email || driver.Email || "-"}
                     </span>
                   </div>
+                   <div className="dd-info-item">
+                    <span className="dd-label">Nơi sinh:</span>
+                    <span className="dd-value">
+                      {driver.birthPlace || driver.BirthPlace || "-"}
+                    </span>
+                  </div>
+                  <div className="dd-info-item">
+                    <span className="dd-label">Ngày tháng năm sinh:</span>
+                    <span className="dd-value">
+                      {driver.birthDate || driver.BirthDate || "-"}
+                    </span>
+                  </div>
                   <div className="dd-info-item">
                     <span className="dd-label">Trạng thái:</span>
                     <span
@@ -116,7 +128,7 @@ export default function DriverDetailModal({ driverId, onClose }) {
                         ?.map((l) => l.licenseClass || l.licenseClassName)
                         .join(", ") ||
                         driver.Licenses?.map(
-                          (l) => l.licenseClass || l.LicenseClass
+                          (l) => l.licenseClass || l.licenseClassName
                         ).join(", ") ||
                         "-"}
                     </span>
@@ -150,11 +162,11 @@ export default function DriverDetailModal({ driverId, onClose }) {
                     </span>
                   </div>
                   <div className="dd-info-item">
-                    <span className="dd-label">Phương tiện hiện tại:</span>
+                    <span className="dd-label">GPLX:</span>
                     <span className="dd-value">
-                      {driver.assignedVehicle ||
-                        driver.AssignedVehicle ||
-                        "Đang rảnh"}
+                      {driver.gplx ||
+                        driver.gplx ||
+                        "-"}
                     </span>
                   </div>
                 </div>

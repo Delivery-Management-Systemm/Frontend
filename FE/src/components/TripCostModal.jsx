@@ -195,7 +195,6 @@ export default function TripCostModal({ trip, onClose, onAddCharge }) {
               <option>Phạt nguội</option>
               <option>Phí cầu đường</option>
               <option>Ăn uống</option>
-              <option>Xăng / Nhiên liệu</option>
               <option>Lưu trú</option>
               <option>Bảo trì phương tiện</option>
               <option>Khác</option>
