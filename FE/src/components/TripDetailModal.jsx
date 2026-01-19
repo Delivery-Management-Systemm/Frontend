@@ -18,6 +18,11 @@ export default function TripDetailModal({ tripId, onClose }) {
     loadTripDetails();
   }, [tripId]);
 
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined) return "0đ";
+    return value.toLocaleString("vi-VN") + "đ";
+  };
+
   const loadTripDetails = async () => {
     try {
       setLoading(true);
@@ -108,7 +113,15 @@ export default function TripDetailModal({ tripId, onClose }) {
                     </span>
                   </div>
                   <div className="trip-detail-item">
-                    <label>Chi phí:</label>
+                    <label>Chi phí nhiên liệu:</label>
+                    <span className="trip-cost">{formatCurrency(trip.fuelCost) || "0đ"}</span>
+                  </div>
+                  <div className="trip-detail-item">
+                    <label>Chi phí phát sinh:</label>
+                    <span className="trip-cost">{formatCurrency(trip.tollCost) || "0đ"}</span>
+                  </div>
+                  <div className="trip-detail-item">
+                    <label>Tổng chi phí:</label>
                     <span className="trip-cost">{trip.cost || "0đ"}</span>
                   </div>
                 </div>

@@ -152,11 +152,15 @@ export default function BookingDetailModal({ bookingId, onClose }) {
                     <span>{booking.passengers || "-"}</span>
                   </div>
                   {booking.requestedCargo && (
-                    <div className="booking-detail-item booking-detail-item--full">
+                    <div className="booking-detail-item booking-detail-item">
                       <label>Hàng hóa:</label>
                       <span>{booking.requestedCargo}</span>
                     </div>
                   )}
+                  <div className="booking-detail-item">
+                    <label>Số km ước tính:</label>
+                    <span>{booking.estimatedDistanceKm || "-"}</span>
+                  </div>
                 </div>
               </div>
 
