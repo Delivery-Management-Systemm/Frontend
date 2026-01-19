@@ -84,3 +84,16 @@ export const getBookedTrips = async (params = {}) => {
     throw err;
   }
 };
+  export const deleteTripById = async (id) => {
+    try {
+      const resp = await fetchWithRetry(`${API_CONFIG.BASE_URL}/Trip/${id}`, {
+        method: "DELETE",
+        headers: API_CONFIG.getAuthHeaders(),
+      });
+      return resp.ok;
+    } catch (err) {
+      console.error("Error deleting trip by id:", err);
+      throw err;
+    }
+  };
+
