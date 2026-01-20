@@ -31,13 +31,13 @@ const vehicleOptions = [
 const defaultCenter = [10.8231, 106.6297];
 const pickupIcon = L.divIcon({
   className: "route-marker route-marker--pickup",
-  html: "<span class=\"route-marker__dot\">P</span>",
+  html: '<span class="route-marker__dot">P</span>',
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });
 const deliveryIcon = L.divIcon({
   className: "route-marker route-marker--delivery",
-  html: "<span class=\"route-marker__dot\">D</span>",
+  html: '<span class="route-marker__dot">D</span>',
   iconSize: [28, 28],
   iconAnchor: [14, 28],
 });
@@ -79,6 +79,7 @@ export default function AddBookingModal({ onClose, onSave }) {
     date: "",
     time: "",
     vehicleTypeKey: "big_truck",
+    passengers: "",
     vehicleNote: "",
     notes: "",
   });
@@ -167,7 +168,6 @@ export default function AddBookingModal({ onClose, onSave }) {
     }
   };
 
-  // clear form error when user types
   useEffect(() => {
     if (formError == null) return;
     const clear = setTimeout(() => setFormError(null), 6000);
@@ -228,7 +228,7 @@ export default function AddBookingModal({ onClose, onSave }) {
       !form.delivery.trim() ||
       !form.date
     ) {
-      const msg = "Vui lòng nhập đầy đủ thông tin!!!!";
+      const msg = "Vui lòng nhập đầy đủ thông tin bắt buộc.";
       setFormError(msg);
       toast.error(msg);
       return;
@@ -239,16 +239,23 @@ export default function AddBookingModal({ onClose, onSave }) {
       return;
     }
 
+    let scheduledIso = null;
+    try {
+      const time = form.time || "00:00";
+      const dt = new Date(`${form.date}T${time}`);
+      if (!isNaN(dt)) scheduledIso = dt.toISOString();
+    } catch {}
+
+    if (!scheduledIso) {
+      const msg = "Vui lòng chọn ngày giờ hợp lệ.";
+      setFormError(msg);
+      toast.error(msg);
+      return;
+    }
+
     try {
       setFormError(null);
       setSubmitting(true);
-      // Build payload similar to backend DTO
-      let scheduledIso = null;
-      try {
-        const time = form.time || "00:00";
-        const dt = new Date(`${form.date}T${time}`);
-        if (!isNaN(dt)) scheduledIso = dt.toISOString();
-      } catch {}
 
       const routeMeta = selectedRoute
         ? {
@@ -258,31 +265,33 @@ export default function AddBookingModal({ onClose, onSave }) {
           }
         : null;
 
+      const distanceKm = Number(routeMeta?.distanceKm);
+      const durationMin = Number(routeMeta?.durationMin);
+
       const payload = {
-        customerName: form.customer || null,
-        customerPhone: form.contact || null,
-        customerEmail: form.email || null,
-        startLocation: form.pickup || null,
-        endLocation: form.delivery || null,
-        scheduledStartTime: scheduledIso,
-        requestedVehicleType:
-          vehicleOptions.find((item) => item.key === form.vehicleTypeKey)?.label ||
-          form.vehicleTypeKey ||
-          null,
-        requestedPassengers: null,
-        requestedCargo: form.vehicleNote || form.notes || null,
-        notes: form.notes || null,
-        VehicleID: null,
-        startTime: null,
-        endTime: null,
-        totalDistanceKm: routeMeta ? routeMeta.distanceKm : null,
-        totalFuelConsumed: null,
-        tripStatus: "planned",
-        estimatedDurationMin: routeMeta ? routeMeta.durationMin : null,
-        actualDurationMin: null,
-        routeGeometryJson:
+        CustomerName: form.customer.trim(),
+        CustomerPhone: form.contact.trim(),
+        CustomerEmail: form.email.trim() || null,
+        StartLocation: form.pickup.trim(),
+        EndLocation: form.delivery.trim(),
+        RouteGeometryJson:
           routeMeta && routeMeta.geometry ? JSON.stringify(routeMeta.geometry) : null,
-        estimatedDistanceKm: routeMeta ? routeMeta.distanceKm : null,
+        EstimatedDistanceKm: Number.isFinite(distanceKm)
+          ? Math.round(distanceKm)
+          : null,
+        EstimatedDurationMin: Number.isFinite(durationMin)
+          ? Math.round(durationMin)
+          : null,
+        ScheduledStartTime: scheduledIso,
+        VehicleID: null,
+        RequestedVehicleType:
+          vehicleOptions.find((item) => item.key === form.vehicleTypeKey)?.label ||
+          form.vehicleTypeKey,
+        RequestedPassengers: form.passengers
+          ? Number(form.passengers) || null
+          : null,
+        RequestedCargo: form.vehicleNote.trim() || null,
+        Notes: form.notes.trim() || null,
       };
 
       const resp = await fetch(`${API_CONFIG.BASE_URL}/Trip/booked`, {
@@ -303,8 +312,7 @@ export default function AddBookingModal({ onClose, onSave }) {
       const msg = err.message || "Lỗi khi tạo lịch";
       setFormError(msg);
       toast.error(msg);
-    }
-    finally {
+    } finally {
       setSubmitting(false);
     }
   };
@@ -339,131 +347,130 @@ export default function AddBookingModal({ onClose, onSave }) {
             <label>Email</label>
             <input
               className="input"
+              type="email"
               value={form.email}
               onChange={(e) => update("email", e.target.value)}
               placeholder="email@example.com"
             />
           </div>
 
-          <h4 className="section-title">Thông tin chuyến đi</h4>
-          <div>
-            <label>Điểm đầu</label>
-            <input
-              className="input"
-              value={form.pickup}
-              onChange={(e) => update("pickup", e.target.value)}
-              placeholder="Nhập điểm đầu"
-            />
-            <button
-              type="button"
-              className="btn-link"
-              onClick={() => handleLocateAddress("pickup")}
-            >
-              Định vị điểm đầu trên bản đồ
-            </button>
-          </div>
-          <div className="mt-3">
-            <label>Điểm cuối</label>
-            <input
-              className="input"
-              value={form.delivery}
-              onChange={(e) => update("delivery", e.target.value)}
-              placeholder="Nhập điểm cuối"
-            />
-            <button
-              type="button"
-              className="btn-link"
-              onClick={() => handleLocateAddress("delivery")}
-            >
-              Định vị điểm cuối trên bản đồ
-            </button>
-          </div>
+          <div className="section">
+            <h4 className="section-title">Thông tin chuyến đi</h4>
+            <div className="grid two">
+              <div>
+                <label>Điểm đầu</label>
+                <input
+                  className="input"
+                  value={form.pickup}
+                  onChange={(e) => update("pickup", e.target.value)}
+                  placeholder="Nhập điểm đầu"
+                />
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => handleLocateAddress("pickup")}
+                >
+                  Định vị điểm đầu trên bản đồ
+                </button>
+              </div>
+              <div>
+                <label>Điểm cuối</label>
+                <input
+                  className="input"
+                  value={form.delivery}
+                  onChange={(e) => update("delivery", e.target.value)}
+                  placeholder="Nhập điểm cuối"
+                />
+                <button
+                  type="button"
+                  className="link-btn"
+                  onClick={() => handleLocateAddress("delivery")}
+                >
+                  Định vị điểm cuối trên bản đồ
+                </button>
+              </div>
+            </div>
 
-          <div className="route-map mt-3">
-            <div className="route-map-toolbar">
+            <div className="route-select mt-3">
               <span>Chọn điểm trên bản đồ:</span>
               <button
                 type="button"
-                className={`btn btn-secondary ${
-                  activePoint === "pickup" ? "is-active" : ""
-                }`}
+                className={
+                  activePoint === "pickup" ? "btn-outline active" : "btn-outline"
+                }
                 onClick={() => setActivePoint("pickup")}
               >
                 Điểm đầu
               </button>
               <button
                 type="button"
-                className={`btn btn-secondary ${
-                  activePoint === "delivery" ? "is-active" : ""
-                }`}
+                className={
+                  activePoint === "delivery" ? "btn-outline active" : "btn-outline"
+                }
                 onClick={() => setActivePoint("delivery")}
               >
                 Điểm cuối
               </button>
               <span className="route-hint">Click bản đồ để chọn điểm.</span>
             </div>
-            <div className="route-map-frame">
-              <MapContainer
-                center={mapCenter}
-                zoom={11}
-                scrollWheelZoom={false}
-                className="route-map-canvas"
-              >
+
+            <div className="route-map mt-2">
+              <div className="route-map-frame">
+                <MapContainer
+                  center={defaultCenter}
+                  zoom={12}
+                  scrollWheelZoom={false}
+                  className="route-map-canvas"
+                >
                 <TileLayer
-                  attribution='&copy; OpenStreetMap contributors'
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                   url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
-                <MapClickHandler onPick={handleMapPick} />
                 <MapAutoFit
                   routeLine={routeLine}
                   markers={markers}
                   center={mapCenter}
                 />
-                {pickupCoord ? (
+                <MapClickHandler onPick={handleMapPick} />
+                {pickupCoord && (
                   <Marker
                     position={[pickupCoord.lat, pickupCoord.lon]}
                     icon={pickupIcon}
                   />
-                ) : null}
-                {deliveryCoord ? (
+                )}
+                {deliveryCoord && (
                   <Marker
                     position={[deliveryCoord.lat, deliveryCoord.lon]}
                     icon={deliveryIcon}
                   />
-                ) : null}
-                {routeLine.length > 0 ? (
-                  <Polyline positions={routeLine} />
-                ) : null}
-              </MapContainer>
+                )}
+                {routeLine.length > 0 && (
+                  <Polyline positions={routeLine} color="#2563eb" weight={4} />
+                )}
+                </MapContainer>
+              </div>
             </div>
-          </div>
 
-          <div className="route-section mt-3">
-            <div className="route-actions">
+            {routeError && <div className="route-error">{routeError}</div>}
+
+            <div className="mt-3">
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-outline"
                 onClick={handleGenerateRoutes}
                 disabled={loadingRoutes}
               >
                 {loadingRoutes ? "Đang tính tuyến..." : "Tạo tuyến gợi ý"}
               </button>
-              <span className="route-hint">
+              <div className="route-note">
                 Gợi ý tuyến dựa trên quãng đường, giao thông và chi phí ước tính.
-              </span>
+              </div>
             </div>
 
-            {routeError ? <div className="route-error">{routeError}</div> : null}
-
             {routes.length > 0 ? (
-              <div className="route-options">
-                {routes.map((route, idx) => (
-                  <label
-                    key={route.id}
-                    className={`route-option${
-                      route.id === selectedRouteId ? " is-selected" : ""
-                    }`}
-                  >
+              <div className="route-options mt-3">
+                {routes.map((route) => (
+                  <label key={route.id} className="route-option">
                     <input
                       type="radio"
                       name="route"
@@ -471,17 +478,16 @@ export default function AddBookingModal({ onClose, onSave }) {
                       onChange={() => setSelectedRouteId(route.id)}
                     />
                     <div className="route-option-body">
-                      <div className="route-title">
-                        Tuyến {idx + 1}: {route.distanceKm} km - {route.durationMin} phút
+                      <div className="route-option-title">
+                        Tuyến {route.index + 1}: {route.distanceKm} km - {route.durationMin} phút
                       </div>
-                      <div className="route-total">
+                      <div className="route-option-sub">
                         Tổng chi phí: {formatVnd(route.costs.total)}
                       </div>
-                      <div className="route-breakdown">
+                      <div className="route-option-meta">
                         Nhiên liệu: {formatVnd(route.costs.fuel)} - Cao tốc:{" "}
-                        {formatVnd(route.costs.toll)} - Phà:{" "}
-                        {formatVnd(route.costs.ferry)} - Thời gian:{" "}
-                        {formatVnd(route.costs.time)}
+                        {formatVnd(route.costs.toll)} - Phà: {formatVnd(route.costs.ferry)}
+                        - Thời gian: {formatVnd(route.costs.time)}
                       </div>
                     </div>
                   </label>
@@ -528,7 +534,14 @@ export default function AddBookingModal({ onClose, onSave }) {
             </div>
             <div>
               <label>Số hành khách</label>
-              <input className="input" type="number" min="0" placeholder="0" />
+              <input
+                className="input"
+                type="number"
+                min="0"
+                placeholder="0"
+                value={form.passengers}
+                onChange={(e) => update("passengers", e.target.value)}
+              />
             </div>
           </div>
 
@@ -557,8 +570,8 @@ export default function AddBookingModal({ onClose, onSave }) {
             <button type="button" className="btn btn-ghost" onClick={onClose}>
               Hủy
             </button>
-            <button type="submit" className="btn btn-primary">
-              Đặt lịch
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              {submitting ? "Đang tạo..." : "Đặt lịch"}
             </button>
           </div>
         </form>
@@ -566,5 +579,3 @@ export default function AddBookingModal({ onClose, onSave }) {
     </div>
   );
 }
-
-
