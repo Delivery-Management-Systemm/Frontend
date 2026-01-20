@@ -8,6 +8,8 @@ import {
 } from "react-icons/fa";
 import "./TripDetailModal.css";
 import { API_CONFIG } from "../config/api";
+import { MapContainer, TileLayer, Polyline, Marker } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
 
 export default function TripDetailModal({ tripId, onClose }) {
   const [trip, setTrip] = useState(null);
@@ -21,6 +23,19 @@ export default function TripDetailModal({ tripId, onClose }) {
   const formatCurrency = (value) => {
     if (value === null || value === undefined) return "0đ";
     return value.toLocaleString("vi-VN") + "đ";
+  };
+
+  const parseRoute = (routeGeometryJson) => {
+    try {
+      if (!routeGeometryJson) return [];
+      const parsed = JSON.parse(routeGeometryJson);
+      return parsed.coordinates.map(
+        ([lng, lat]) => [lat, lng]
+      );
+    } catch (e) {
+      console.error("Route parse error:", e);
+      return [];
+    }
   };
 
   const loadTripDetails = async () => {
@@ -48,6 +63,12 @@ export default function TripDetailModal({ tripId, onClose }) {
     }
   };
 
+  const truckIcon = new L.Icon({
+    iconUrl: "/icons/truck.png",
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+  });
+
   const getStatusBadge = (status) => {
     const statusLower = (status || "").toString().trim().toLowerCase();
     const badges = {
@@ -59,6 +80,9 @@ export default function TripDetailModal({ tripId, onClose }) {
     };
     return badges[statusLower] || { text: status, class: "status-default" };
   };
+  const routeLatLngs = trip?.routeGeometryJson
+  ? parseRoute(trip.routeGeometryJson)
+  : [];
 
   return (
     <div className="trip-detail-modal-overlay" onClick={onClose}>
@@ -148,6 +172,31 @@ export default function TripDetailModal({ tripId, onClose }) {
                     </div>
                   </div>
                 </div>
+                 {/* ===== MAP ===== */}
+                  {routeLatLngs.length > 0 && (
+                    <div className="trip-route-map">
+                      <MapContainer
+                        center={routeLatLngs[0]}
+                        zoom={10}
+                        style={{ height: "300px", width: "100%", borderRadius: "8px" }}
+                      >
+                        <TileLayer
+                          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                        />
+
+                        <Polyline
+                          positions={routeLatLngs}
+                          pathOptions={{ color: "#007bff", weight: 5 }}
+                        />
+
+                        {/* Marker điểm đầu */}
+                        <Marker position={routeLatLngs[0]} icon={truckIcon} />
+
+                        {/* Marker điểm cuối */}
+                        <Marker position={routeLatLngs[routeLatLngs.length - 1]} icon={truckIcon} />
+                      </MapContainer>
+                    </div>
+                  )}
               </div>
 
               {trip.steps && trip.steps.length > 0 && (
