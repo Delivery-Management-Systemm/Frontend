@@ -11,6 +11,15 @@
   z-index: 2000;
 }
 
+.trip-route-map {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+
+
 .trip-detail-modal-content {
   background: white;
   border-radius: 12px;
