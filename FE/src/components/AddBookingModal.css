@@ -179,6 +179,46 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
 }
 
+.link-btn {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #dbeafe;
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.link-btn:hover {
+  background: #dbeafe;
+  border-color: #bfdbfe;
+}
+
+.btn-outline {
+  border: 1px solid #cbd5f5;
+  background: #ffffff;
+  color: #1e293b;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-outline.active,
+.btn-outline:hover {
+  border-color: #2563eb;
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
 .route-map {
   display: flex;
   flex-direction: column;
